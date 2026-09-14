@@ -688,9 +688,7 @@
       <section class="panel section-card">
         <div class="section-heading">
           <div>
-            <p class="section-kicker">게임 관리</p>
             <h2>게임목록</h2>
-            <p>게임제목을 클릭하면 경기요강과 참가현황을 확인할 수 있습니다.</p>
           </div>
           <div class="game-list-actions" aria-label="게임 목록 작업">
             <button type="button" class="game-list-action game-list-action--primary" data-show-create-game>게임 생성</button>
