@@ -227,9 +227,10 @@ button {
 
 .brand-name {
   margin: 0;
-  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+  font-size: clamp(1.18rem, 2.2vw, 1.55rem);
   font-weight: 800;
   letter-spacing: -0.03em;
+  white-space: nowrap;
 }
 
 .brand-subtitle {
