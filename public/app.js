@@ -61,6 +61,20 @@
     localStorage.setItem(key, JSON.stringify(value));
   }
 
+  async function apiRequest(path, options = {}) {
+    const response = await fetch(path, {
+      credentials: 'include',
+      headers: {
+        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(options.headers || {}),
+      },
+      ...options,
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || '서버 요청에 실패했습니다.');
+    return payload;
+  }
+
   function normalizeId(value) {
     return String(value || '').trim().toLowerCase();
   }
@@ -103,7 +117,21 @@
     return `plain:${source}`;
   }
 
-  function loadState() {
+  async function loadState() {
+    try {
+      const [session, games] = await Promise.all([
+        apiRequest('/api/auth/me'),
+        apiRequest('/api/games'),
+      ]);
+      const currentUser = session.user || null;
+      state.users = currentUser ? [currentUser] : [];
+      state.games = Array.isArray(games.games) ? games.games : [];
+      state.sessionUserId = currentUser?.id || null;
+      return;
+    } catch {
+      // Keep local development usable before the database environment is configured.
+    }
+
     const storedUsers = readJson(STORAGE_KEYS.users, []);
     const storedGames = readJson(STORAGE_KEYS.games, []);
     state.users = Array.isArray(storedUsers) ? storedUsers : [];
@@ -1689,7 +1717,7 @@
     render();
   }
 
-  function handleRegistrationSubmit(form) {
+  async function handleRegistrationSubmit(form) {
     const currentUser = getCurrentUser();
     const game = state.games.find((item) => item.id === form.dataset.gameId);
     const format = form.dataset.format;
@@ -1705,6 +1733,24 @@
       render();
       return;
     }
+
+    try {
+      await apiRequest(`/api/games/${encodeURIComponent(game.id)}/registrations`, {
+        method: 'POST',
+        body: JSON.stringify({ format, nickname, memberId, rank, teamName }),
+      });
+      await loadState();
+      setFlash(`${FORMAT_LABELS[format]} 참가신청 내용이 저장되었습니다.`, 'success');
+      render();
+      return;
+    } catch (error) {
+      if (!error.message.includes('Failed to fetch') && !error.message.includes('서버 요청')) {
+        setFlash(error.message, 'error');
+        render();
+        return;
+      }
+    }
+
     const registrations = getGameRegistrations(game);
     const existingRegistration = registrations.find((item) => item.userId === currentUser.id && item.format === format);
     if (getGameRegistrations(game, format).length >= game.maxParticipants) {
@@ -1825,6 +1871,25 @@
       return;
     }
 
+    try {
+      await apiRequest('/api/auth/signup', {
+        method: 'POST',
+        body: JSON.stringify({ nickname, memberId, password, phone, gender, rank, region, address }),
+      });
+      form.reset();
+      state.signupCompleted = true;
+      state.page = 'signup-success';
+      setFlash('회원가입이 완료되었습니다.', 'success');
+      render();
+      return;
+    } catch (error) {
+      if (!error.message.includes('Failed to fetch') && !error.message.includes('서버 요청')) {
+        setFlash(`회원가입 실패: ${error.message}`, 'error');
+        render();
+        return;
+      }
+    }
+
     if (state.users.some((user) => user.memberIdKey === memberIdKey)) {
       setFlash('이미 사용 중인 아이디입니다. 다른 아이디를 입력해 주세요.', 'error');
       render();
@@ -1865,6 +1930,30 @@
       setFlash('아이디와 비밀번호를 입력해 주세요.', 'error');
       render();
       return;
+    }
+
+    try {
+      const result = await apiRequest('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ memberId: memberIdKey, password }),
+      });
+      state.users = [result.user];
+      state.sessionUserId = result.user.id;
+      state.page = 'dashboard';
+      state.selectedGameId = state.pendingGameId;
+      state.pendingGameId = null;
+      form.reset();
+      await loadState();
+      clearFlash();
+      setFlash(`${result.user.nickname}님, 로그인되었습니다.`, 'success');
+      render();
+      return;
+    } catch (error) {
+      if (!error.message.includes('Failed to fetch') && !error.message.includes('서버 요청')) {
+        setFlash(error.message, 'error');
+        render();
+        return;
+      }
     }
 
     const user = state.users.find((item) => item.memberIdKey === memberIdKey);
@@ -1925,7 +2014,7 @@
     render();
   }
 
-  function handleGameCreate(form) {
+  async function handleGameCreate(form) {
     const currentUser = getCurrentUser();
     if (!currentUser) {
       setFlash('로그인이 필요합니다.', 'error');
@@ -1952,6 +2041,25 @@
       setFlash('경기형식을 개인전, 복식, 단체전 중에서 선택해 주세요.', 'error');
       render();
       return;
+    }
+
+    try {
+      await apiRequest('/api/games', {
+        method: 'POST',
+        body: JSON.stringify({ title, location, formats, scheduledAt, maxParticipants, note }),
+      });
+      await loadState();
+      form.reset();
+      state.showCreateGame = false;
+      setFlash('새 게임이 생성되었습니다. 생성한 회원이 해당 게임의 운영자입니다.', 'success');
+      render();
+      return;
+    } catch (error) {
+      if (!error.message.includes('Failed to fetch') && !error.message.includes('서버 요청')) {
+        setFlash(error.message, 'error');
+        render();
+        return;
+      }
     }
 
     state.games.push({
@@ -2014,7 +2122,7 @@
     render();
   }
 
-  function handleAppClick(event) {
+  async function handleAppClick(event) {
     const authAction = event.target.closest('[data-open-auth]');
     if (authAction) {
       openAuthTab(authAction.dataset.openAuth);
@@ -2267,6 +2375,11 @@
 
     const logoutButton = event.target.closest('[data-logout]');
     if (logoutButton) {
+      try {
+        await apiRequest('/api/auth/logout', { method: 'POST' });
+      } catch {
+        // Local fallback still clears the browser session.
+      }
       state.sessionUserId = null;
       persistSession();
       setFlash('로그아웃되었습니다.', 'info');
@@ -2296,12 +2409,12 @@
     }
 
     if (form.dataset.form === 'game') {
-      handleGameCreate(form);
+      await handleGameCreate(form);
       return;
     }
 
     if (form.dataset.form === 'game-apply') {
-      handleRegistrationSubmit(form);
+      await handleRegistrationSubmit(form);
       return;
     }
 
@@ -2346,8 +2459,8 @@
     }
   }
 
-  function handleStorageChange() {
-    loadState();
+  async function handleStorageChange() {
+    await loadState();
     render();
   }
 
@@ -2360,8 +2473,8 @@
     window.addEventListener('storage', handleStorageChange);
   }
 
-  function init() {
-    loadState();
+  async function init() {
+    await loadState();
     wireEvents();
     render();
   }

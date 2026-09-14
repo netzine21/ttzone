@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs/promises');
 const path = require('path');
 const { checkDatabase } = require('./server/db');
+const { handleApi } = require('./server/api');
 
 const rootDir = __dirname;
 const port = Number(process.env.PORT || 3000);
@@ -50,6 +51,11 @@ const server = http.createServer(async (req, res) => {
         });
         res.end(JSON.stringify({ ok: false, database: { configured: true, connected: false } }));
       }
+      return;
+    }
+
+    if (requestPath.startsWith('/api/')) {
+      await handleApi(req, res, requestPath);
       return;
     }
 
