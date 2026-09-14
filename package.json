@@ -1,0 +1,9 @@
+{
+  "name": "ttgms",
+  "private": true,
+  "version": "1.0.0",
+  "description": "탁구장 게임관리 시스템",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
