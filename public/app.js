@@ -472,13 +472,6 @@
       : '<div class="empty-state">아직 생성된 게임이 없습니다. 운영자가 게임을 생성하면 이곳에 표시됩니다.</div>';
 
     return `
-      <section class="panel public-hero">
-        <div>
-          <p class="section-kicker">게임 찾기</p>
-          <h1>참여할 탁구 게임을 찾아보세요</h1>
-          <p>생성된 게임 목록을 확인하고, 원하는 게임의 참가신청을 진행할 수 있습니다.</p>
-        </div>
-      </section>
       <section class="panel section-card">
         <div class="section-heading">
           <div>
