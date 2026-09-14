@@ -1497,7 +1497,6 @@
   }
 
   function renderDashboard(currentUser) {
-    const myGames = state.games.filter((game) => game.operatorId === currentUser.id);
     const createPanel = state.showCreateGame ? `
       <section class="panel create-game-panel">
         <div class="section-heading">
@@ -1521,12 +1520,7 @@
     return `
       <section class="panel dashboard-welcome">
         <div class="dashboard-welcome__message">
-          <p class="section-kicker">환영합니다</p>
-          <h1>${escapeHtml(currentUser.nickname)}님, 오늘 어떤 게임을 만들까요?</h1>
-          <p>내 정보를 확인하고, 새로운 탁구 게임을 만들어 보세요.</p>
-        </div>
-        <div class="dashboard-profile dashboard-profile--summary">
-          <div class="dashboard-profile__item dashboard-profile__item--count"><span>내가 만든 게임</span><strong>${formatCount(myGames.length)}개</strong></div>
+          <h1>환영합니다. ${escapeHtml(currentUser.nickname)}님, 즐거운 게임 되세요.</h1>
         </div>
       </section>
       ${createPanel}
