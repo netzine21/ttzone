@@ -102,6 +102,14 @@ button {
   padding: 22px 0 36px;
 }
 
+.site-footer {
+  margin-top: 28px;
+  color: var(--muted-2);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .topbar {
   display: flex;
   align-items: center;
