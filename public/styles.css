@@ -1283,20 +1283,19 @@ button {
 
 .detail-tabs {
   display: flex;
-  gap: 6px;
+  gap: 20px;
   margin-top: 22px;
-  padding: 5px;
+  padding: 0;
   overflow-x: auto;
-  border: 1px solid rgba(165, 190, 214, 0.12);
-  border-radius: 16px;
-  background: rgba(6, 13, 24, 0.5);
+  border-bottom: 1px solid rgba(165, 190, 214, 0.12);
 }
 
 .detail-tab {
   flex: 1 0 auto;
   border: 0;
-  border-radius: 11px;
-  padding: 11px 14px;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 10px 2px 9px;
   color: var(--muted);
   background: transparent;
   font-weight: 700;
@@ -1304,8 +1303,19 @@ button {
 }
 
 .detail-tab.is-active {
-  color: #04101a;
-  background: var(--primary);
+  color: var(--primary);
+  background: transparent;
+  border-bottom-color: var(--primary);
+}
+
+.public-apply-action .btn-primary,
+.public-apply-cta .btn-primary {
+  padding: 8px 2px;
+  border: 0;
+  border-radius: 0;
+  color: var(--primary);
+  background: transparent;
+  box-shadow: none;
 }
 
 .public-apply-cta {
