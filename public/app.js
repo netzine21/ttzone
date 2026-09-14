@@ -451,11 +451,12 @@
     const participants = getGameRegistrations(game);
     const isOwner = currentUser && game.operatorId === currentUser.id;
     const formats = getGameFormats(game);
+    const ownerBadge = isOwner ? '<span class="pill pill-owner">내가 운영</span>' : '';
     return `
       <article class="game-card game-list-item" data-game-open="${escapeHtml(game.id)}">
         <div class="game-card__top">
           <span class="format-pills">${formats.map((format) => `<span class="pill pill-format ${escapeHtml(format)}">${escapeHtml(FORMAT_LABELS[format])}</span>`).join('')}</span>
-          <span class="pill pill-owner">${isOwner ? '내가 운영' : `운영자: ${escapeHtml(game.operatorNickname)}`}</span>
+          ${ownerBadge}
         </div>
         <div class="game-list-item__body"><h3 class="game-title-link" data-game-open="${escapeHtml(game.id)}">${escapeHtml(game.title)}</h3></div>
       </article>
@@ -476,7 +477,6 @@
           <div>
             <p class="section-kicker">공개 게임목록</p>
             <h2>현재 생성된 게임</h2>
-            <p>게임제목을 클릭하면 경기요강과 대회현황을 확인할 수 있습니다.</p>
           </div>
           <span class="status-chip">${formatCount(games.length)}개 게임</span>
         </div>
