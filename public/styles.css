@@ -866,10 +866,15 @@ button {
   width: 100%;
 }
 
-.public-game-detail h1 {
+.public-game-detail h1.game-detail-title {
   margin: 0;
-  font-size: clamp(1.8rem, 4vw, 3rem);
+  max-width: 100%;
+  overflow: hidden;
+  font-size: clamp(1.15rem, 4.2vw, 2.4rem);
   letter-spacing: -0.05em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .public-detail-meta {
@@ -1290,11 +1295,6 @@ button {
 
 .game-title-link:hover {
   color: var(--primary);
-}
-
-.game-list-item__hint {
-  color: var(--muted-2);
-  font-size: 0.86rem;
 }
 
 .detail-tabs {
@@ -2786,7 +2786,8 @@ button {
   .brand-mark {
     width: 46px;
     height: 46px;
-    border-radius: 16px;
+    aspect-ratio: 1;
+    border-radius: 50%;
   }
 
   .session-pill {

@@ -458,7 +458,7 @@
           <span class="format-pills">${formats.map((format) => `<span class="pill pill-format ${escapeHtml(format)}">${escapeHtml(FORMAT_LABELS[format])}</span>`).join('')}</span>
           <span class="pill pill-owner">${isOwner ? '내가 운영' : `운영자: ${escapeHtml(game.operatorNickname)}`}</span>
         </div>
-        <div class="game-list-item__body"><h3 class="game-title-link" data-game-open="${escapeHtml(game.id)}">${escapeHtml(game.title)}</h3><span class="game-list-item__hint">제목을 클릭해 상세내용 보기</span></div>
+        <div class="game-list-item__body"><h3 class="game-title-link" data-game-open="${escapeHtml(game.id)}">${escapeHtml(game.title)}</h3></div>
       </article>
     `;
   }
@@ -599,7 +599,7 @@
     const formats = getGameFormats(game);
     const format = getPublicFormat(game);
     const isOwner = currentUser && game.operatorId === currentUser.id;
-    return `<section class="panel section-card public-game-detail"><div class="section-heading"><div><button type="button" class="btn btn-ghost" ${currentUser ? 'data-back-games' : 'data-public-back'}>게임 목록으로</button><p class="section-kicker">게임 상세내용</p><h1>${escapeHtml(game.title)}</h1><p>${escapeHtml(game.location)} · ${escapeHtml(formatDateTime(game.scheduledAt))}</p></div>${isOwner ? `<div class="button-row"><button type="button" class="btn btn-primary" data-open-operations="${escapeHtml(game.id)}">경기운영</button><button type="button" class="btn btn-secondary" data-edit-game="${escapeHtml(game.id)}">게임 수정</button></div>` : ''}</div>${renderDetailTabs()}${state.detailTab === 'status' ? renderGameRules(game, currentUser) : ''}${state.detailTab === 'progress' ? renderCompetitionView(game, format) : ''}${state.detailTab === 'applications' ? renderApplicationsView(game, currentUser) : ''}</section>`;
+    return `<section class="panel section-card public-game-detail"><div class="section-heading"><div><button type="button" class="btn btn-ghost" ${currentUser ? 'data-back-games' : 'data-public-back'}>게임 목록으로</button><p class="section-kicker">게임 상세내용</p><h1 class="game-detail-title">${escapeHtml(game.title)}</h1><p>${escapeHtml(game.location)} · ${escapeHtml(formatDateTime(game.scheduledAt))}</p></div>${isOwner ? `<div class="button-row"><button type="button" class="btn btn-primary" data-open-operations="${escapeHtml(game.id)}">경기운영</button><button type="button" class="btn btn-secondary" data-edit-game="${escapeHtml(game.id)}">게임 수정</button></div>` : ''}</div>${renderDetailTabs()}${state.detailTab === 'status' ? renderGameRules(game, currentUser) : ''}${state.detailTab === 'progress' ? renderCompetitionView(game, format) : ''}${state.detailTab === 'applications' ? renderApplicationsView(game, currentUser) : ''}</section>`;
   }
 
   function renderPublicGameDetail(game) {
