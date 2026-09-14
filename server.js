@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs/promises');
 const path = require('path');
+const { checkDatabase } = require('./server/db');
 
 const rootDir = __dirname;
 const port = Number(process.env.PORT || 3000);
@@ -33,6 +34,25 @@ function contentTypeFor(filePath) {
 const server = http.createServer(async (req, res) => {
   try {
     const requestPath = decodeURIComponent((req.url || '/').split('?')[0]);
+
+    if (requestPath === '/api/health') {
+      try {
+        const database = await checkDatabase();
+        res.writeHead(200, {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Cache-Control': 'no-store',
+        });
+        res.end(JSON.stringify({ ok: true, database }));
+      } catch (error) {
+        res.writeHead(503, {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Cache-Control': 'no-store',
+        });
+        res.end(JSON.stringify({ ok: false, database: { configured: true, connected: false } }));
+      }
+      return;
+    }
+
     const requestedFile = requestPath === '/' ? 'index.html' : requestPath.replace(/^\/+/, '');
     const absolutePath = path.normalize(path.join(rootDir, requestedFile));
     const relativePath = path.relative(rootDir, absolutePath);

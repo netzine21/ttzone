@@ -5,5 +5,8 @@
   "description": "탁구장 게임관리 시스템",
   "scripts": {
     "start": "node server.js"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
   }
 }
