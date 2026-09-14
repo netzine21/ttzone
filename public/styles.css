@@ -387,8 +387,10 @@ button {
 
 .dashboard-welcome__message h1 {
   margin: 0;
-  font-size: clamp(1.45rem, 3vw, 2.25rem);
+  font-size: clamp(1.25rem, 2.6vw, 2rem);
   letter-spacing: -0.05em;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .dashboard-welcome__message p:last-child {
@@ -2803,6 +2805,11 @@ button {
 
   .topbar {
     padding-bottom: 16px;
+  }
+
+  .dashboard-welcome__message h1 {
+    font-size: 1.15rem;
+    line-height: 1.4;
   }
 
   .brand-mark {
