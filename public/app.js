@@ -1526,11 +1526,7 @@
           <h1>${escapeHtml(currentUser.nickname)}님, 오늘 어떤 게임을 만들까요?</h1>
           <p>내 정보를 확인하고, 새로운 탁구 게임을 만들어 보세요.</p>
         </div>
-        <div class="dashboard-profile">
-          <div class="dashboard-profile__item"><span>닉네임</span><strong>${escapeHtml(currentUser.nickname)}</strong></div>
-          <div class="dashboard-profile__item"><span>휴대폰번호</span><strong>${escapeHtml(currentUser.phone)}</strong></div>
-          <div class="dashboard-profile__item"><span>활동지역</span><strong>${escapeHtml(currentUser.region || '미입력')}</strong></div>
-          <div class="dashboard-profile__item"><span>탁구부수</span><strong>${escapeHtml(currentUser.rank || '미입력')}</strong></div>
+        <div class="dashboard-profile dashboard-profile--summary">
           <div class="dashboard-profile__item dashboard-profile__item--count"><span>내가 만든 게임</span><strong>${formatCount(myGames.length)}개</strong></div>
         </div>
       </section>

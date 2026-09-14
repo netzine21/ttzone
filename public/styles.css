@@ -422,6 +422,11 @@ button {
   gap: 10px;
 }
 
+.dashboard-profile--summary {
+  grid-template-columns: minmax(150px, 0.9fr);
+  justify-content: end;
+}
+
 .dashboard-profile__item {
   display: grid;
   gap: 5px;
