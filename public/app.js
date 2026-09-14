@@ -42,7 +42,6 @@
   let flashTimer = null;
 
   const app = document.getElementById('app');
-  const sessionBadge = document.getElementById('sessionBadge');
   const topActions = document.getElementById('topActions');
   const brand = document.querySelector('.brand');
 
@@ -1583,20 +1582,6 @@
     `;
   }
 
-  function updateSessionBadge(currentUser) {
-    if (!sessionBadge) return;
-    if (currentUser) {
-      sessionBadge.textContent = currentUser.nickname;
-      sessionBadge.classList.add('is-active');
-      sessionBadge.classList.remove('is-hidden');
-      return;
-    }
-
-    sessionBadge.textContent = '';
-    sessionBadge.classList.remove('is-active');
-    sessionBadge.classList.add('is-hidden');
-  }
-
   function renderLockIcon(isLocked) {
     return `<svg class="top-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3" class="top-action__shackle ${isLocked ? '' : 'is-open'}" /><rect x="5" y="10" width="14" height="10" rx="1.5" class="top-action__lock" /><circle cx="12" cy="15" r="1.3" class="top-action__keyhole" /></svg>`;
   }
@@ -1610,7 +1595,6 @@
 
   function render() {
     const currentUser = getCurrentUser();
-    updateSessionBadge(currentUser);
     updateTopActions(currentUser);
 
     if (!app) return;
