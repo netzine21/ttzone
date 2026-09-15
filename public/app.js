@@ -1624,7 +1624,7 @@
 
     const publicGame = state.games.find((game) => game.id === state.selectedPublicGameId);
     app.className = currentUser ? 'app app--dashboard' : state.page === 'auth' ? 'app app--auth' : 'app app--public';
-    const showPublicHome = state.page === 'public' && !state.selectedGameId && !publicGame;
+    const showPublicHome = !currentUser && state.page === 'public' && !state.selectedGameId && !publicGame;
     app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : showPublicHome ? renderPublicGamesPage() : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : state.page === 'auth' ? renderAuthPage() : publicGame ? renderPublicGameDetail(publicGame) : renderPublicGamesPage()}`;
   }
 
