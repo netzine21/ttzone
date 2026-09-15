@@ -2919,6 +2919,10 @@ button {
     padding-bottom: 16px;
   }
 
+  .topbar-actions {
+    display: none;
+  }
+
   .mobile-menu-toggle {
     display: inline-grid;
     place-items: center;
