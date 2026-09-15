@@ -2107,14 +2107,18 @@
     }
 
     try {
-      await apiRequest(`/api/games/${encodeURIComponent(game.id)}`, {
+      const savedPayload = await apiRequest(`/api/games/${encodeURIComponent(game.id)}`, {
         method: 'PATCH',
         body: JSON.stringify({ title, location, formats, scheduledAt, maxParticipants, note }),
       });
+      const savedFormats = savedPayload.game?.formats;
+      if (!Array.isArray(savedFormats) || savedFormats.length !== formats.length || formats.some((format) => !savedFormats.includes(format))) {
+        throw new Error('서버에 경기방식이 모두 저장되지 않았습니다. 잠시 후 다시 시도해 주세요.');
+      }
       await loadState();
       state.editingGameId = null;
       state.selectedGameId = game.id;
-      setFlash('게임 정보가 수정되었습니다.', 'success');
+      setFlash('게임 정보가 서버에 저장되었습니다.', 'success');
       render();
       return;
     } catch (error) {
@@ -2129,7 +2133,7 @@
     persistGames();
     state.editingGameId = null;
     state.selectedGameId = game.id;
-    setFlash('게임 정보가 수정되었습니다.', 'success');
+    setFlash('서버 연결이 없어 이 브라우저에만 임시 저장되었습니다.', 'info');
     render();
   }
 
