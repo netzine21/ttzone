@@ -677,6 +677,7 @@
     const currentPage = Math.min(Math.max(state.gamePage, 1), totalPages);
     const pageStart = (currentPage - 1) * gamesPerPage;
     const visibleGames = filteredGames.slice(pageStart, pageStart + gamesPerPage);
+    const listTitle = state.gameFilter === 'mine' ? '내 게임' : '공개 게임목록';
 
     const gameList = visibleGames.length
       ? visibleGames.map((game) => renderGameCard(game, currentUser)).join('')
@@ -700,7 +701,7 @@
       <section class="panel section-card">
         <div class="section-heading">
           <div>
-            <h2>게임목록</h2>
+            <h2>${listTitle} <span class="public-game-list-count">· ${formatCount(filteredGames.length)}개 게임</span></h2>
           </div>
           <div class="game-list-actions" aria-label="게임 목록 작업">
             <button type="button" class="game-list-action game-list-action--primary" data-show-create-game>게임 생성</button>
