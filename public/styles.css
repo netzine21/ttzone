@@ -1001,6 +1001,7 @@ button {
   margin: 0;
   color: var(--muted);
   line-height: 1.7;
+  white-space: pre-line;
 }
 
 .hero-banner {
