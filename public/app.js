@@ -497,9 +497,8 @@
     `;
   }
 
-  function renderDetailTabs() {
-    const tabs = [['status', '경기요강'], ['progress', '경기진행현황']];
-    return `<div class="detail-tabs" role="tablist" aria-label="게임 상세 메뉴">${tabs.map(([value, label]) => `<button type="button" class="detail-tab ${state.detailTab === value ? 'is-active' : ''}" data-detail-tab="${value}">${label}</button>`).join('')}</div>`;
+  function renderGameDetailMenu(game, isOwner) {
+    return `<div class="game-detail-actions" aria-label="게임 메뉴"><button type="button" class="game-list-action" ${getCurrentUser() ? 'data-back-games' : 'data-public-back'}><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg><span>전체게임목록</span></button><button type="button" class="game-list-action ${state.detailTab === 'status' ? 'is-active' : ''}" data-detail-tab="status"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6M9 12h6M9 16h4" /></svg><span>경기요강</span></button><button type="button" class="game-list-action ${state.detailTab === 'progress' ? 'is-active' : ''}" data-detail-tab="progress"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-7" /></svg><span>경기진행현황</span></button>${isOwner ? `<button type="button" class="game-list-action" data-open-operations="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18" /><circle cx="12" cy="12" r="8" /></svg><span>경기운영</span></button>` : ''}</div>`;
   }
 
   function getPublicFormat(game) {
@@ -512,7 +511,8 @@
     const formats = getGameFormats(game);
     const hasAppliedAllFormats = currentUser && formats.length > 0 && formats.every((format) => getGameRegistrations(game, format).some((registration) => registration.userId === currentUser.id));
     const applyAction = hasAppliedAllFormats ? '' : `<div class="public-apply-action"><button type="button" class="btn btn-primary" data-game-apply="${escapeHtml(game.id)}">참가신청</button></div>`;
-    return `<dl class="meta-grid public-detail-meta"><div><dt>게임장소</dt><dd>${escapeHtml(game.location)}</dd></div><div><dt>게임일시</dt><dd>${escapeHtml(formatDateTime(game.scheduledAt))}</dd></div><div><dt>운영자</dt><dd>${escapeHtml(game.operatorNickname)}</dd></div><div><dt>운영자 휴대폰</dt><dd>${escapeHtml(operator?.phone || '미입력')}</dd></div><div><dt>경기방식</dt><dd>${formats.map((format) => escapeHtml(FORMAT_LABELS[format])).join(' · ')}</dd></div><div><dt>최대참가인원</dt><dd>${escapeHtml(String(game.maxParticipants))}명</dd></div></dl><div class="public-detail-note"><p class="section-kicker">게임안내</p><p>${game.note ? escapeHtml(game.note) : '<span class="muted">추가 안내가 없습니다.</span>'}</p></div>${applyAction}`;
+    const editAction = currentUser?.id === game.operatorId ? `<div class="game-edit-bottom-action"><button type="button" class="game-list-action" data-edit-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h4L19 9l-4-4L5 15v4zM13 7l4 4" /></svg><span>게임수정</span></button></div>` : '';
+    return `<dl class="meta-grid public-detail-meta"><div><dt>게임장소</dt><dd>${escapeHtml(game.location)}</dd></div><div><dt>게임일시</dt><dd>${escapeHtml(formatDateTime(game.scheduledAt))}</dd></div><div><dt>운영자</dt><dd>${escapeHtml(game.operatorNickname)}</dd></div><div><dt>운영자 휴대폰</dt><dd>${escapeHtml(operator?.phone || '미입력')}</dd></div><div><dt>경기방식</dt><dd>${formats.map((format) => escapeHtml(FORMAT_LABELS[format])).join(' · ')}</dd></div><div><dt>최대참가인원</dt><dd>${escapeHtml(String(game.maxParticipants))}명</dd></div></dl><div class="public-detail-note"><p class="section-kicker">게임안내</p><p>${game.note ? escapeHtml(game.note) : '<span class="muted">추가 안내가 없습니다.</span>'}</p></div>${applyAction}${editAction}`;
   }
 
   function getPublicGroupStandings(game, format) {
@@ -603,7 +603,7 @@
     const formats = getGameFormats(game);
     const format = getPublicFormat(game);
     const isOwner = currentUser && game.operatorId === currentUser.id;
-    return `<section class="panel section-card public-game-detail"><div class="game-detail-header"><h1 class="game-detail-title">${escapeHtml(game.title)}</h1><div class="game-detail-actions" aria-label="게임 메뉴"><button type="button" class="game-list-action" ${currentUser ? 'data-back-games' : 'data-public-back'}><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg><span>게임목록</span></button>${isOwner ? `<button type="button" class="game-list-action" data-open-operations="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18" /><circle cx="12" cy="12" r="8" /></svg><span>경기운영</span></button><button type="button" class="game-list-action" data-edit-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h4L19 9l-4-4L5 15v4zM13 7l4 4" /></svg><span>게임수정</span></button>` : ''}</div></div>${renderDetailTabs()}${state.detailTab === 'status' ? renderGameRules(game, currentUser) : ''}${state.detailTab === 'progress' ? renderCompetitionView(game, format) : ''}${state.detailTab === 'applications' ? renderApplicationsView(game, currentUser) : ''}</section>`;
+    return `<section class="panel section-card public-game-detail"><div class="game-detail-header"><h1 class="game-detail-title">${escapeHtml(game.title)}</h1>${renderGameDetailMenu(game, isOwner)}</div>${state.detailTab === 'status' ? renderGameRules(game, currentUser) : ''}${state.detailTab === 'progress' ? renderCompetitionView(game, format) : ''}${state.detailTab === 'applications' ? renderApplicationsView(game, currentUser) : ''}</section>`;
   }
 
   function renderPublicGameDetail(game) {

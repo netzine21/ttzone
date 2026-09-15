@@ -996,6 +996,14 @@ button {
   white-space: nowrap;
 }
 
+.game-edit-bottom-action {
+  display: flex;
+  justify-content: center;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(165, 190, 214, 0.12);
+}
+
 .public-game-detail h1.game-detail-title {
   margin: 0;
   max-width: 100%;
