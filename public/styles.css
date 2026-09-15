@@ -199,13 +199,13 @@ button {
   place-items: center;
   width: 52px;
   height: 52px;
-  border-radius: 50%;
-  background:
-    linear-gradient(145deg, rgba(118, 240, 196, 0.96), rgba(55, 214, 154, 0.82));
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 16px;
+  background: #fff;
   color: #04101a;
   font-weight: 900;
   font-size: 1.1rem;
-  box-shadow: 0 18px 36px rgba(55, 214, 154, 0.28);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.2);
   flex: none;
 }
 
@@ -216,7 +216,7 @@ button {
 }
 
 .brand-mark__ball {
-  fill: #04101a;
+  fill: #37d69a;
 }
 
 .brand-mark__paddle {
@@ -225,11 +225,11 @@ button {
 }
 
 .brand-mark__paddle--one {
-  fill: #f5c84c;
+  fill: #04101a;
 }
 
 .brand-mark__paddle--two {
-  fill: #f6f8fb;
+  fill: #76f0c4;
 }
 
 .brand-mark__handle {
@@ -3097,7 +3097,7 @@ button {
     width: 46px;
     height: 46px;
     aspect-ratio: 1;
-    border-radius: 50%;
+    border-radius: 14px;
   }
 
   .tabs {
