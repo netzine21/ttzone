@@ -1806,6 +1806,22 @@ button {
   width: 100%;
 }
 
+.operations-page > .section-heading {
+  position: relative;
+  justify-content: center;
+  text-align: center;
+}
+
+.operations-page > .section-heading > div {
+  width: 100%;
+}
+
+.operations-page > .section-heading > .status-chip {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
 .operation-menu {
   display: flex;
   gap: 4px;
@@ -1830,7 +1846,8 @@ button {
   color: var(--muted);
   background: transparent;
   font-weight: 700;
-  flex: 0 0 auto;
+  flex: 1 1 0;
+  min-width: 0;
   white-space: nowrap;
 }
 
@@ -2999,6 +3016,31 @@ button {
   .game-detail-actions .game-list-action__icon {
     width: 13px;
     height: 13px;
+  }
+
+  .operations-page > .section-heading > .status-chip {
+    top: 0;
+    right: 0;
+  }
+
+  .operation-menu {
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .operation-menu__item {
+    gap: 3px;
+    padding: 9px 3px;
+    font-size: 0.72rem;
+  }
+
+  .operation-menu__item.is-active {
+    padding: 9px 3px;
+  }
+
+  .operation-menu__icon {
+    width: 14px;
+    height: 14px;
   }
 
   .create-game-heading {
