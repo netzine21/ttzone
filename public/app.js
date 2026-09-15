@@ -202,6 +202,14 @@
     return format ? legacy.filter((registration) => registration.format === format) : legacy;
   }
 
+  function getRegistrationSource(registration) {
+    if (registration.registrationSource === 'bulk') return { key: 'bulk', label: '일괄등록' };
+    if (registration.registrationSource === 'online') return { key: 'online', label: '온라인등록' };
+    return registration.registeredBy && registration.userId && registration.registeredBy === registration.userId
+      ? { key: 'online', label: '온라인등록' }
+      : { key: 'bulk', label: '일괄등록' };
+  }
+
   function getGameFormats(game) {
     if (Array.isArray(game.formats) && game.formats.length) return game.formats;
     return game.format && FORMAT_LABELS[game.format] ? [game.format] : [];
@@ -909,6 +917,11 @@
 
   function renderRosterOperationPanel(games, game, formats, format) {
     const registrations = getGameRegistrations(game, format);
+    const bulkCount = registrations.filter((registration) => getRegistrationSource(registration).key === 'bulk').length;
+    const onlineCount = registrations.length - bulkCount;
+    const registrationList = registrations.length
+      ? `<div class="roster-list-table-wrap"><table class="roster-list-table"><thead><tr><th>번호</th><th>선수명</th><th>아이디</th><th>부수</th><th>팀명</th><th>등록방법</th></tr></thead><tbody>${registrations.map((registration, index) => { const source = getRegistrationSource(registration); return `<tr><td>${index + 1}</td><td>${escapeHtml(registration.nickname || '-')}</td><td>${escapeHtml(registration.memberId || '-')}</td><td>${escapeHtml(registration.rank || '-')}</td><td>${escapeHtml(registration.teamName || '-')}</td><td><span class="registration-source registration-source--${source.key}">${source.label}</span></td></tr>`; }).join('')}</tbody></table></div>`
+      : '<div class="empty-state">아직 등록된 선수가 없습니다.</div>';
     return `
       <div class="roster-operation-panel">
         <div class="operation-controls roster-controls">
@@ -921,6 +934,7 @@
           <div class="button-row"><label class="btn btn-primary file-button" for="operationRosterFile">명부 파일 선택</label><input id="operationRosterFile" class="file-input" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" data-roster-upload="${escapeHtml(game.id)}" /><button type="button" class="btn btn-ghost" data-download-roster-template>양식 다운로드</button></div>
           <div class="roster-registration-status"><p class="subtle-note">현재 ${escapeHtml(String(registrations.length))}명(팀) 등록 · 참가형식별로 한 번씩 업로드하세요.</p>${game.registrationClosed ? '<span class="status-chip">선수등록 마감</span>' : `<button type="button" class="btn btn-secondary" data-close-registration="${escapeHtml(game.id)}">선수등록 마감</button>`}</div>
         </div>
+        <section class="roster-list-panel"><div class="roster-list-heading"><div><p class="section-kicker">등록 현황</p><h2>${escapeHtml(FORMAT_LABELS[format])} 참가선수 명부</h2></div><span>${registrations.length}명(팀)</span></div><div class="roster-list-summary"><span class="registration-source registration-source--bulk">일괄등록 ${bulkCount}</span><span class="registration-source registration-source--online">온라인등록 ${onlineCount}</span></div>${registrationList}</section>
       </div>
     `;
   }
@@ -1735,9 +1749,9 @@
       return;
     }
     if (existingRegistration) {
-      Object.assign(existingRegistration, { nickname, memberId, rank, teamName, appliedAt: new Date().toISOString() });
+      Object.assign(existingRegistration, { nickname, memberId, rank, teamName, registrationSource: 'online', appliedAt: new Date().toISOString() });
     } else {
-      game.registrations = [...registrations, { userId: currentUser.id, nickname, memberId, rank, teamName, format, appliedAt: new Date().toISOString() }];
+      game.registrations = [...registrations, { userId: currentUser.id, nickname, memberId, rank, teamName, format, registrationSource: 'online', appliedAt: new Date().toISOString() }];
     }
     persistGames();
     setFlash(`${FORMAT_LABELS[format]} 참가신청 내용이 ${existingRegistration ? '수정' : '등록'}되었습니다.`, 'success');
@@ -1790,6 +1804,7 @@
         format,
         appliedAt: new Date().toISOString(),
         registeredBy: currentUser.id,
+        registrationSource: 'bulk',
       });
       existingKeys.add(participantKey);
       added += 1;
