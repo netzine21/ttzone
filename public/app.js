@@ -121,27 +121,33 @@
   }
 
   async function loadState() {
+    let session = null;
+    let games = null;
     try {
-      const [session, games] = await Promise.all([
-        apiRequest('/api/auth/me'),
-        apiRequest('/api/games'),
-      ]);
-      const currentUser = session.user || null;
+      session = await apiRequest('/api/auth/me');
+    } catch {
+      // A temporary session failure should not prevent the public game list from loading.
+    }
+    try {
+      games = await apiRequest('/api/games');
+    } catch {
+      // Fall back to local development data only when the game API is unavailable.
+    }
+    if (games) {
+      const currentUser = session?.user || null;
       state.users = currentUser ? [currentUser] : [];
       const registrationClosures = readJson(STORAGE_KEYS.registrationClosures, {});
       state.games = (Array.isArray(games.games) ? games.games : []).map((game) => registrationClosures[game.id] ? { ...game, registrationClosed: true } : game);
       state.sessionUserId = currentUser?.id || null;
       return;
-    } catch {
-      // Keep local development usable before the database environment is configured.
     }
 
     const storedUsers = readJson(STORAGE_KEYS.users, []);
     const storedGames = readJson(STORAGE_KEYS.games, []);
     state.users = Array.isArray(storedUsers) ? storedUsers : [];
     state.games = Array.isArray(storedGames) ? storedGames : [];
-    const session = readJson(STORAGE_KEYS.session, null);
-    state.sessionUserId = session && typeof session.userId === 'string' ? session.userId : null;
+    const storedSession = readJson(STORAGE_KEYS.session, null);
+    state.sessionUserId = storedSession && typeof storedSession.userId === 'string' ? storedSession.userId : null;
 
     const existingUser = getCurrentUser();
     if (state.sessionUserId && !existingUser) {
