@@ -773,48 +773,42 @@
   function renderEditGameForm(game) {
     return `
       <section class="panel section-card game-edit">
-        <div class="section-heading">
+        <div class="section-heading create-game-heading">
           <div>
-            <p class="section-kicker">운영자 전용</p>
-            <h2>게임 정보 수정</h2>
-            <p>게임명, 장소, 경기형식, 일시, 최대참가인원과 안내문을 수정할 수 있습니다.</p>
+            <h2>게임 수정</h2>
           </div>
-          <button type="button" class="btn btn-ghost" data-cancel-game-edit>취소</button>
+          <button type="button" class="create-game-close" aria-label="게임 수정 닫기" data-cancel-game-edit><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg></button>
         </div>
 
         <form class="form-stack" data-form="game-edit" data-game-id="${escapeHtml(game.id)}">
           <div class="field">
-            <label for="editGameTitle">게임명</label>
+            <label for="editGameTitle"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10l4 4v12H5zM14 4v5h5" /></svg>게임명</span></label>
             <input id="editGameTitle" name="title" type="text" required value="${escapeHtml(game.title)}" />
           </div>
           <div class="field">
-            <label for="editGameLocation">게임장소</label>
+            <label for="editGameLocation"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>게임장소</span></label>
             <input id="editGameLocation" name="location" type="text" required value="${escapeHtml(game.location)}" />
           </div>
-          <div class="field-grid">
-            <div class="field">
-              <span class="field-label">경기형식</span>
+          <div class="field">
+              <span class="field-label"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c3 0 5 2 5 5v4M17 20c-3 0-5-2-5-5V9" /><ellipse cx="7" cy="4" rx="3" ry="2" /><ellipse cx="17" cy="20" rx="3" ry="2" /></svg>경기형식</span></span>
               <div class="format-options">
                 ${['singles', 'doubles', 'team'].map((format) => `<label><span>${FORMAT_LABELS[format]}</span><input type="checkbox" name="formats" value="${format}" ${getGameFormats(game).includes(format) ? 'checked' : ''} /></label>`).join('')}
               </div>
-              <span class="subtle-note">개인전·복식·단체전을 여러 개 선택할 수 있습니다.</span>
-            </div>
+          </div>
+
+          <div class="field-grid create-game-date-row">
             <div class="field">
-              <label for="editGameMaxParticipants">최대참가인원</label>
+              <label for="editGameMaxParticipants"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3" /><path d="M5 20c.8-3.3 3.2-5 7-5s6.2 1.7 7 5" /></svg>최대참가인원</span></label>
               <input id="editGameMaxParticipants" name="maxParticipants" type="number" min="${Math.max(1, getGameParticipants(game).length)}" step="1" required value="${escapeHtml(String(game.maxParticipants))}" />
             </div>
+            <div class="field">
+              <label for="editGameScheduledAt"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M8 3v4M16 3v4M4 10h16" /></svg>게임일시</span></label>
+              <input id="editGameScheduledAt" name="scheduledAt" type="datetime-local" required value="${escapeHtml(game.scheduledAt)}" />
+            </div>
           </div>
           <div class="field">
-            <label for="editGameScheduledAt">게임일시</label>
-            <input id="editGameScheduledAt" name="scheduledAt" type="datetime-local" required value="${escapeHtml(game.scheduledAt)}" />
-          </div>
-          <div class="field">
-            <label for="editGameNote">게임 안내(선택)</label>
-            <textarea id="editGameNote" name="note">${escapeHtml(game.note || '')}</textarea>
-          </div>
-          <div class="helper-row">
-            <span>경기형식: 개인전 · 복식 · 단체전</span>
-            <span>현재 참가자 ${escapeHtml(String(getGameParticipants(game).length))}명</span>
+            <label for="editGameNote"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /></svg>게임안내(선택)</span></label>
+            <div class="bullet-textarea"><span aria-hidden="true">•</span><textarea id="editGameNote" name="note">${escapeHtml(game.note || '')}</textarea></div>
           </div>
           <div class="button-row">
             <button class="btn btn-primary" type="submit">수정 내용 저장</button>
