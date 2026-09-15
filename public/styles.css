@@ -1128,12 +1128,12 @@ button {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 8px;
+  gap: 5px;
   margin-top: 18px;
 }
 
 .game-card {
-  padding: 12px 14px;
+  padding: 9px 12px;
   border-radius: 22px;
   border: 1px solid rgba(165, 190, 214, 0.12);
   background: linear-gradient(180deg, rgba(6, 13, 24, 0.74), rgba(6, 13, 24, 0.56));
@@ -1301,15 +1301,25 @@ button {
 }
 
 .game-list-item__body {
+  display: grid;
+  gap: 4px;
+}
+
+.game-list-item__title-row {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-top: 8px;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
 }
 
 .game-list-item__body h3 {
   margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 1rem;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .game-title-link {
@@ -1322,42 +1332,40 @@ button {
   color: var(--primary);
 }
 
-.game-list-item__meta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  flex: 0 0 auto;
+.game-list-item__date {
+  display: block;
   color: var(--muted-2);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
+  line-height: 1.25;
   white-space: nowrap;
 }
 
 .game-status {
-  padding: 3px 7px;
+  flex: 0 0 auto;
+  padding: 2px 8px;
   border-radius: 999px;
-  font-size: 0.72rem;
+  border: 1px solid currentColor;
+  background: transparent;
+  font-size: 0.7rem;
   font-weight: 800;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
 .game-status--open {
   color: var(--primary);
-  background: rgba(118, 240, 196, 0.1);
 }
 
 .game-status--closed {
   color: var(--accent);
-  background: rgba(255, 180, 91, 0.1);
 }
 
 .game-status--progress {
   color: #8bc8ff;
-  background: rgba(139, 200, 255, 0.1);
 }
 
 .game-status--done {
   color: var(--muted);
-  background: rgba(165, 190, 214, 0.1);
 }
 
 .detail-tabs {
@@ -2943,13 +2951,8 @@ button {
     align-items: flex-start;
   }
 
-  .game-list-item__body {
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .game-list-item__meta {
-    justify-content: flex-start;
+  .game-list-item__body h3 {
+    font-size: 0.96rem;
   }
 }
 
