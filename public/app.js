@@ -781,7 +781,7 @@
       <section class="panel section-card game-edit">
         <div class="section-heading create-game-heading">
           <div>
-            <h2>게임 수정</h2>
+            <h2><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10l4 4v12H5zM14 4v5h5" /></svg>게임 수정</span></h2>
           </div>
           <button type="button" class="create-game-close" aria-label="게임 수정 닫기" data-cancel-game-edit><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg></button>
         </div>
