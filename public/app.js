@@ -768,8 +768,8 @@
             <textarea id="gameNote" name="note"></textarea>
           </div>
 
-          <div class="button-row">
-            <button class="btn btn-primary" type="submit">게임 생성</button>
+          <div class="game-edit-bottom-action">
+            <button class="game-list-action game-list-action--primary" type="submit"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg><span>게임 생성</span></button>
           </div>
         </form>
       </section>
