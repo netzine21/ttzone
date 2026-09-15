@@ -1524,15 +1524,7 @@
     if (editingGame && editingGame.operatorId === currentUser.id) return `${renderEditGameForm(editingGame)}`;
     if (selectedGame) return `${renderGameDetailView(selectedGame, currentUser)}`;
 
-    return `
-      <section class="panel dashboard-welcome">
-        <div class="dashboard-welcome__message">
-          <h1>환영합니다. ${escapeHtml(currentUser.nickname)}님, 즐거운 게임 되세요.</h1>
-        </div>
-      </section>
-      ${createPanel}
-      ${renderGamesSection(currentUser)}
-    `;
+    return `${createPanel}${renderGamesSection(currentUser)}`;
   }
   function renderMyPage(currentUser) {
     return `
