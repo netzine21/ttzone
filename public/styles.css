@@ -244,9 +244,11 @@ button {
 }
 
 .brand-subtitle {
-  margin: 4px 0 0;
+  margin: 3px 0 0;
   color: var(--muted);
-  font-size: 0.92rem;
+  font-size: 0.72rem;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
 }
 
 .app {
@@ -3066,6 +3068,10 @@ button {
 
   .brand-name {
     font-size: 1rem;
+  }
+
+  .brand-subtitle {
+    font-size: 0.58rem;
   }
 
   .topbar-actions,
