@@ -509,8 +509,9 @@
   function renderGameRules(game, currentUser) {
     const operator = state.users.find((user) => user.id === game.operatorId);
     const formats = getGameFormats(game);
+    const isOwner = currentUser?.id === game.operatorId;
     const hasAppliedAllFormats = currentUser && formats.length > 0 && formats.every((format) => getGameRegistrations(game, format).some((registration) => registration.userId === currentUser.id));
-    const applyAction = hasAppliedAllFormats ? '' : `<div class="public-apply-action"><button type="button" class="btn btn-primary" data-game-apply="${escapeHtml(game.id)}">참가신청</button></div>`;
+    const applyAction = isOwner || hasAppliedAllFormats ? '' : `<div class="public-apply-action"><button type="button" class="btn btn-primary" data-game-apply="${escapeHtml(game.id)}">참가신청</button></div>`;
     const editAction = currentUser?.id === game.operatorId ? `<div class="game-edit-bottom-action"><button type="button" class="game-list-action" data-edit-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h4L19 9l-4-4L5 15v4zM13 7l4 4" /></svg><span>게임수정</span></button></div>` : '';
     return `<dl class="meta-grid public-detail-meta"><div><dt>게임장소</dt><dd>${escapeHtml(game.location)}</dd></div><div><dt>게임일시</dt><dd>${escapeHtml(formatDateTime(game.scheduledAt))}</dd></div><div><dt>운영자</dt><dd>${escapeHtml(game.operatorNickname)}</dd></div><div><dt>운영자 휴대폰</dt><dd>${escapeHtml(operator?.phone || '미입력')}</dd></div><div><dt>경기방식</dt><dd>${formats.map((format) => escapeHtml(FORMAT_LABELS[format])).join(' · ')}</dd></div><div><dt>최대참가인원</dt><dd>${escapeHtml(String(game.maxParticipants))}명</dd></div></dl><div class="public-detail-note"><p class="section-kicker">게임안내</p><p>${game.note ? escapeHtml(game.note) : '<span class="muted">추가 안내가 없습니다.</span>'}</p></div>${applyAction}${editAction}`;
   }
