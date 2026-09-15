@@ -699,13 +699,13 @@
 
     return `
       <section class="panel section-card">
-        <div class="section-heading">
+        <div class="section-heading dashboard-game-list-heading">
           <div>
             <h2>${listTitle} <span class="public-game-list-count">· ${formatCount(filteredGames.length)}개 게임</span></h2>
           </div>
           <div class="game-list-actions" aria-label="게임 목록 작업">
-            <button type="button" class="game-list-action game-list-action--primary" data-show-create-game>게임 생성</button>
-            <button type="button" class="game-list-action ${state.gameFilter === 'mine' ? 'is-active' : ''}" data-game-filter="mine" aria-pressed="${state.gameFilter === 'mine'}">내 게임</button>
+            <button type="button" class="game-list-action game-list-action--primary" data-show-create-game><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg><span>게임 생성</span></button>
+            <button type="button" class="game-list-action ${state.gameFilter === 'mine' ? 'is-active' : ''}" data-game-filter="mine" aria-pressed="${state.gameFilter === 'mine'}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3" /><path d="M5 20c.8-3.3 3.2-5 7-5s6.2 1.7 7 5" /></svg><span>내 게임</span></button>
           </div>
         </div>
         <div class="game-list">

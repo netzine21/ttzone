@@ -1081,7 +1081,26 @@ button {
   letter-spacing: normal;
 }
 
+.dashboard-game-list-heading {
+  position: relative;
+  justify-content: center;
+}
+
+.dashboard-game-list-heading h2 {
+  text-align: center;
+}
+
+.dashboard-game-list-heading .game-list-actions {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 .game-list-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   border: 0;
   border-bottom: 2px solid transparent;
   border-radius: 0;
@@ -1091,6 +1110,16 @@ button {
   font: inherit;
   font-weight: 750;
   cursor: pointer;
+}
+
+.game-list-action__icon {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
 .game-list-action:hover,
@@ -2800,6 +2829,17 @@ button {
     width: auto;
     margin-left: auto;
     justify-content: flex-end;
+  }
+
+  .dashboard-game-list-heading {
+    align-items: center;
+  }
+
+  .dashboard-game-list-heading .game-list-actions {
+    position: static;
+    align-self: flex-end;
+    transform: none;
+    margin-top: 4px;
   }
 
   .feature-grid,
