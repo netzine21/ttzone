@@ -110,13 +110,15 @@ async function findSession(req) {
   return result.rows[0] || null;
 }
 
-function sessionCookie(token, maxAge = SESSION_DAYS * 24 * 60 * 60) {
-  return `${SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
+function sessionCookie(token, maxAge = null) {
+  const age = maxAge === null ? '' : `; Max-Age=${maxAge}`;
+  return `${SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/${age}`;
 }
 
-async function createSession(userId) {
+async function createSession(userId, remember = false) {
   const token = crypto.randomBytes(32).toString('base64url');
-  const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
+  const sessionDays = remember ? SESSION_DAYS : 1;
+  const expiresAt = new Date(Date.now() + sessionDays * 24 * 60 * 60 * 1000);
   await getPool().query(
     'insert into public.sessions (user_id, token_hash, expires_at) values ($1, $2, $3)',
     [userId, hashToken(token), expiresAt]
@@ -206,8 +208,9 @@ async function handleApi(req, res, requestPath) {
       if (!user || !(await verifyPassword(password, user.password_hash))) {
         return sendJson(res, 401, { error: '아이디 또는 비밀번호가 일치하지 않습니다.' });
       }
-      const token = await createSession(user.id);
-      return sendJson(res, 200, { user: publicUser(user) }, { 'Set-Cookie': sessionCookie(token) });
+      const remember = body.remember === true;
+      const token = await createSession(user.id, remember);
+      return sendJson(res, 200, { user: publicUser(user) }, { 'Set-Cookie': sessionCookie(token, remember ? SESSION_DAYS * 24 * 60 * 60 : null) });
     }
 
     if (requestPath === '/api/auth/logout' && req.method === 'POST') {

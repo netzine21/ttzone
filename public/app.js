@@ -339,19 +339,16 @@
   function renderAuthTab() {
     if (state.authTab === 'login') {
       return `
-        <form class="form-stack" data-form="login">
+        <form class="form-stack auth-login-form" data-form="login">
           <div class="field">
             <label for="loginMemberId">아이디</label>
-            <input id="loginMemberId" name="memberId" type="text" autocomplete="username" required placeholder="등록한 아이디를 입력하세요" />
+            <input id="loginMemberId" name="memberId" type="text" autocomplete="username" required placeholder="아이디" />
           </div>
           <div class="field">
             <label for="loginPassword">비밀번호</label>
-            <input id="loginPassword" name="password" type="password" autocomplete="current-password" required placeholder="비밀번호를 입력하세요" />
+            <input id="loginPassword" name="password" type="password" autocomplete="current-password" required placeholder="비밀번호" />
           </div>
-          <div class="helper-row">
-            <span>회원가입 후 바로 로그인할 수 있습니다.</span>
-            <span>필수 입력만 사용합니다.</span>
-          </div>
+          <label class="check-line login-remember"><input type="checkbox" name="remember" /> 로그인 상태 유지</label>
           <div class="button-row">
             <button class="btn btn-primary" type="submit">로그인</button>
           </div>
@@ -412,9 +409,7 @@
     return `
       <section class="auth-simple">
         <div class="panel auth-simple__card">
-          <p class="section-kicker">탁구장 게임관리 시스템</p>
           <h1>${isLogin ? '로그인' : '회원가입'}</h1>
-          <p class="auth-simple__note">${state.pendingGameId && isLogin ? '참가신청을 계속하려면 로그인해 주세요.' : '아이디와 비밀번호를 입력해 주세요.'}</p>
           ${renderAuthTab()}
           <button type="button" class="btn btn-ghost auth-simple__back" data-open-public>게임목록으로 돌아가기</button>
         </div>
@@ -1919,9 +1914,10 @@
     }
 
     try {
+      const remember = formData.remember === 'on';
       const result = await apiRequest('/api/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ memberId: memberIdKey, password }),
+        body: JSON.stringify({ memberId: memberIdKey, password, remember }),
       });
       state.users = [result.user];
       state.sessionUserId = result.user.id;
