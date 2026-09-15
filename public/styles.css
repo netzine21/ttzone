@@ -974,6 +974,28 @@ button {
   width: 100%;
 }
 
+.game-detail-header {
+  text-align: center;
+}
+
+.game-detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.game-detail-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.game-detail-actions .game-list-action {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .public-game-detail h1.game-detail-title {
   margin: 0;
   max-width: 100%;
