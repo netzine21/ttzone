@@ -729,12 +729,12 @@
         <form class="form-stack" data-form="game">
           <div class="field">
             <label for="gameTitle">게임명</label>
-            <input id="gameTitle" name="title" type="text" required placeholder="예: 토요 벙개게임 / 분당 정기모임" />
+            <input id="gameTitle" name="title" type="text" required />
           </div>
 
           <div class="field">
             <label for="gameLocation">게임장소</label>
-            <input id="gameLocation" name="location" type="text" required placeholder="예: ○○탁구장 2번대" />
+            <input id="gameLocation" name="location" type="text" required />
           </div>
 
           <div class="field-grid">
@@ -748,7 +748,7 @@
             </div>
             <div class="field">
               <label for="gameMaxParticipants">최대참가인원</label>
-              <input id="gameMaxParticipants" name="maxParticipants" type="number" min="1" step="1" required placeholder="예: 16" />
+              <input id="gameMaxParticipants" name="maxParticipants" type="number" min="1" step="1" required />
             </div>
           </div>
 
@@ -759,7 +759,7 @@
 
           <div class="field">
             <label for="gameNote">게임 안내(선택)</label>
-            <textarea id="gameNote" name="note" placeholder="예: 남자/여자 구분 없이 진행, 참가비 1만원, 지각 시 자동 패널티 등"></textarea>
+            <textarea id="gameNote" name="note"></textarea>
           </div>
 
           <div class="button-row">
@@ -1512,7 +1512,7 @@
     if (editingGame && editingGame.operatorId === currentUser.id) return `${renderEditGameForm(editingGame)}`;
     if (selectedGame) return `${renderGameDetailView(selectedGame, currentUser)}`;
 
-    return `${createPanel}${renderGamesSection(currentUser)}`;
+    return state.showCreateGame ? createPanel : renderGamesSection(currentUser);
   }
   function renderMyPage(currentUser) {
     return `
