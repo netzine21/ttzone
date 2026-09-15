@@ -740,9 +740,9 @@
           <div class="field">
             <span class="field-label"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c3 0 5 2 5 5v4M17 20c-3 0-5-2-5-5V9" /><ellipse cx="7" cy="4" rx="3" ry="2" /><ellipse cx="17" cy="20" rx="3" ry="2" /></svg>경기형식</span></span>
             <div class="format-options">
-              <label><input type="checkbox" name="formats" value="singles" /> <span>개인전</span></label>
-              <label><input type="checkbox" name="formats" value="doubles" /> <span>복식</span></label>
-              <label><input type="checkbox" name="formats" value="team" /> <span>단체전</span></label>
+              <label><span>개인전</span><input type="checkbox" name="formats" value="singles" /></label>
+              <label><span>복식</span><input type="checkbox" name="formats" value="doubles" /></label>
+              <label><span>단체전</span><input type="checkbox" name="formats" value="team" /></label>
             </div>
           </div>
 
@@ -795,7 +795,7 @@
             <div class="field">
               <span class="field-label">경기형식</span>
               <div class="format-options">
-                ${['singles', 'doubles', 'team'].map((format) => `<label><input type="checkbox" name="formats" value="${format}" ${getGameFormats(game).includes(format) ? 'checked' : ''} /> <span>${FORMAT_LABELS[format]}</span></label>`).join('')}
+                ${['singles', 'doubles', 'team'].map((format) => `<label><span>${FORMAT_LABELS[format]}</span><input type="checkbox" name="formats" value="${format}" ${getGameFormats(game).includes(format) ? 'checked' : ''} /></label>`).join('')}
               </div>
               <span class="subtle-note">개인전·복식·단체전을 여러 개 선택할 수 있습니다.</span>
             </div>
