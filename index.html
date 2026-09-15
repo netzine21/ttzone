@@ -15,6 +15,9 @@
   <body>
     <div class="page-shell">
       <header class="topbar">
+        <button class="mobile-menu-toggle" type="button" aria-label="메뉴 열기" aria-controls="mobileMenu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
         <a class="brand" href="#" data-home aria-label="탁구장게임관리시스템 초기화면">
           <div class="brand-mark" aria-hidden="true">
             <svg class="brand-mark__icon" viewBox="0 0 52 52" role="img" aria-label="탁구 라켓과 공">
@@ -37,6 +40,15 @@
           <div class="auth-actions" id="topActions"></div>
         </div>
       </header>
+
+      <div class="mobile-menu-backdrop" data-mobile-menu-close></div>
+      <aside class="mobile-menu" id="mobileMenu" aria-label="회원 메뉴" aria-hidden="true">
+        <div class="mobile-menu__header">
+          <strong>회원 메뉴</strong>
+          <button class="mobile-menu__close" type="button" aria-label="메뉴 닫기" data-mobile-menu-close>×</button>
+        </div>
+        <div class="mobile-menu__actions" id="mobileMenuActions"></div>
+      </aside>
 
       <main id="app" class="app" aria-live="polite"></main>
       <footer class="site-footer">© 2026 TTGMS. All rights reserved. Created by Lee Gyoung Sang.</footer>

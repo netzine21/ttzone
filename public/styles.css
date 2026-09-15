@@ -126,6 +126,12 @@ button {
   flex-wrap: wrap;
 }
 
+.mobile-menu-toggle,
+.mobile-menu,
+.mobile-menu-backdrop {
+  display: none;
+}
+
 .auth-actions {
   display: flex;
   gap: 8px;
@@ -2911,6 +2917,94 @@ button {
   .topbar {
     gap: 8px;
     padding-bottom: 16px;
+  }
+
+  .mobile-menu-toggle {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 28px;
+    gap: 4px;
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+    border: 0;
+    border-radius: 0;
+    color: var(--text);
+    background: transparent;
+  }
+
+  .mobile-menu-toggle span {
+    display: block;
+    width: 19px;
+    height: 2px;
+    border-radius: 99px;
+    background: currentColor;
+  }
+
+  .mobile-menu-backdrop {
+    position: fixed;
+    z-index: 20;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.58);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+  }
+
+  .mobile-menu {
+    position: fixed;
+    z-index: 21;
+    inset: 0 auto 0 0;
+    display: block;
+    width: min(82vw, 320px);
+    padding: 22px 18px;
+    border-right: 1px solid var(--border);
+    background: var(--surface-strong);
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.35);
+    transform: translateX(-105%);
+    transition: transform 180ms ease;
+  }
+
+  .mobile-menu__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mobile-menu__close {
+    border: 0;
+    color: var(--muted);
+    background: transparent;
+    font-size: 1.8rem;
+    line-height: 1;
+  }
+
+  .mobile-menu__actions {
+    display: grid;
+    gap: 4px;
+    padding-top: 14px;
+  }
+
+  .mobile-menu__actions .top-action {
+    justify-content: flex-start;
+    width: 100%;
+    padding: 13px 4px;
+    font-size: 1rem;
+  }
+
+  body.mobile-menu-open {
+    overflow: hidden;
+  }
+
+  body.mobile-menu-open .mobile-menu {
+    transform: translateX(0);
+  }
+
+  body.mobile-menu-open .mobile-menu-backdrop {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .brand {

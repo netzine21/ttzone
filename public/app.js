@@ -43,6 +43,9 @@
 
   const app = document.getElementById('app');
   const topActions = document.getElementById('topActions');
+  const mobileMenuActions = document.getElementById('mobileMenuActions');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
   const brand = document.querySelector('.brand');
 
   function readJson(key, fallback) {
@@ -1580,10 +1583,21 @@
   }
 
   function updateTopActions(currentUser) {
-    if (!topActions) return;
-    topActions.innerHTML = currentUser
+    const actions = currentUser
       ? `<button type="button" class="btn top-action" data-logout>${renderLockIcon(false)}<span>로그아웃(${escapeHtml(currentUser.nickname)})</span></button><button type="button" class="btn top-action" data-open-mypage>Mypage</button>`
       : `<button type="button" class="btn top-action" data-open-auth="signup"><span>회원가입</span></button><button type="button" class="btn top-action" data-open-auth="login">${renderLockIcon(true)}<span>로그인</span></button>`;
+    if (topActions) topActions.innerHTML = actions;
+    if (mobileMenuActions) mobileMenuActions.innerHTML = actions;
+  }
+
+  function setMobileMenuOpen(isOpen) {
+    document.body.classList.toggle('mobile-menu-open', isOpen);
+    mobileMenu?.setAttribute('aria-hidden', String(!isOpen));
+    mobileMenuToggle?.setAttribute('aria-expanded', String(isOpen));
+  }
+
+  function closeMobileMenu() {
+    setMobileMenuOpen(false);
   }
 
   function render() {
@@ -2435,6 +2449,12 @@
     brand?.addEventListener('click', goToHome);
     app.addEventListener('click', handleAppClick);
     topActions?.addEventListener('click', handleAppClick);
+    mobileMenuActions?.addEventListener('click', async (event) => {
+      await handleAppClick(event);
+      closeMobileMenu();
+    });
+    mobileMenuToggle?.addEventListener('click', () => setMobileMenuOpen(true));
+    document.querySelectorAll('[data-mobile-menu-close]').forEach((element) => element.addEventListener('click', closeMobileMenu));
     app.addEventListener('submit', handleAppSubmit);
     app.addEventListener('change', handleAppChange);
     window.addEventListener('storage', handleStorageChange);
