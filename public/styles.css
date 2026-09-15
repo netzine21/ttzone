@@ -521,6 +521,10 @@ button {
   text-align: center;
 }
 
+.create-game-heading > div {
+  width: 100%;
+}
+
 .create-game-close {
   position: absolute;
   right: 0;
