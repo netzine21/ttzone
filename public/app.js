@@ -765,7 +765,7 @@
 
           <div class="field">
             <label for="gameNote"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /></svg>게임안내(선택)</span></label>
-            <div class="bullet-textarea"><span aria-hidden="true">•</span><textarea id="gameNote" name="note"></textarea></div>
+            <textarea id="gameNote" name="note"></textarea>
           </div>
 
           <div class="button-row">
@@ -814,7 +814,7 @@
           </div>
           <div class="field">
             <label for="editGameNote"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /></svg>게임안내(선택)</span></label>
-            <div class="bullet-textarea"><span aria-hidden="true">•</span><textarea id="editGameNote" name="note">${escapeHtml(game.note || '')}</textarea></div>
+            <textarea id="editGameNote" name="note">${escapeHtml(game.note || '')}</textarea>
           </div>
           <div class="button-row">
             <button class="btn btn-primary" type="submit">수정 내용 저장</button>
