@@ -721,11 +721,9 @@
       <section class="panel section-card">
         <div class="section-heading">
           <div>
-            <p class="section-kicker">게임 운영</p>
             <h2>새 게임 생성</h2>
-            <p>운영자가 먼저 게임을 만들면, 이후 참가자 관리와 결과관리 화면으로 확장할 수 있습니다.</p>
           </div>
-          <span class="status-chip">생성 즉시 운영자 등록</span>
+          <button type="button" class="btn btn-ghost" data-cancel-create-game>닫기</button>
         </div>
 
         <form class="form-stack" data-form="game">
@@ -747,7 +745,6 @@
                 <label><input type="checkbox" name="formats" value="doubles" /> <span>복식</span></label>
                 <label><input type="checkbox" name="formats" value="team" /> <span>단체전</span></label>
               </div>
-              <span class="subtle-note">필요한 경기형식을 하나 이상 선택하세요.</span>
             </div>
             <div class="field">
               <label for="gameMaxParticipants">최대참가인원</label>
@@ -763,11 +760,6 @@
           <div class="field">
             <label for="gameNote">게임 안내(선택)</label>
             <textarea id="gameNote" name="note" placeholder="예: 남자/여자 구분 없이 진행, 참가비 1만원, 지각 시 자동 패널티 등"></textarea>
-          </div>
-
-          <div class="helper-row">
-            <span>필수: 게임명, 장소, 경기형식(1개 이상), 게임일시, 최대참가인원</span>
-            <span>선택: 안내문</span>
           </div>
 
           <div class="button-row">
@@ -1508,15 +1500,7 @@
   }
 
   function renderDashboard(currentUser) {
-    const createPanel = state.showCreateGame ? `
-      <section class="panel create-game-panel">
-        <div class="section-heading">
-          <div><p class="section-kicker">운영 시작</p><h2>새 게임 생성</h2><p>게임을 만든 회원이 해당 게임의 운영자가 됩니다.</p></div>
-          <button type="button" class="btn btn-ghost" data-cancel-create-game>닫기</button>
-        </div>
-        ${renderCreateGameForm()}
-      </section>
-    ` : '';
+    const createPanel = state.showCreateGame ? renderCreateGameForm() : '';
     const selectedGame = state.games.find((game) => game.id === state.selectedGameId);
     const editingGame = state.games.find((game) => game.id === state.editingGameId);
 
