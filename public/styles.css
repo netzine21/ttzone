@@ -229,7 +229,7 @@ button {
 }
 
 .brand-mark__paddle--two {
-  fill: #76f0c4;
+  fill: #ef5350;
 }
 
 .brand-mark__handle {
@@ -237,6 +237,14 @@ button {
   stroke: #04101a;
   stroke-linecap: round;
   stroke-width: 4;
+}
+
+.brand-mark__word {
+  fill: #04101a;
+  font-family: "Malgun Gothic", sans-serif;
+  font-size: 5px;
+  font-weight: 800;
+  letter-spacing: 0.35px;
 }
 
 .brand-name {
