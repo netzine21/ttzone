@@ -202,6 +202,29 @@
     return game.format && FORMAT_LABELS[game.format] ? [game.format] : [];
   }
 
+  function getGameStatus(game) {
+    const explicitStatus = String(game.status || '').toLowerCase();
+    if (explicitStatus === 'completed' || game.completedAt) return { key: 'done', label: '종료' };
+
+    const preliminaryMatches = Object.values(game.preliminaryMatches || {})
+      .flatMap((schedule) => Array.isArray(schedule?.matches) ? schedule.matches : []);
+    const tournamentMatches = Object.values(game.tournaments || {})
+      .flatMap((tournament) => ['upper', 'lower'].flatMap((league) => tournament?.[league]?.rounds?.flat() || []));
+    const allMatches = [...preliminaryMatches, ...tournamentMatches];
+    if (allMatches.length && allMatches.every((match) => match.result?.winner && match.result?.score)) {
+      return { key: 'done', label: '종료' };
+    }
+
+    if (explicitStatus === 'in_progress') return { key: 'progress', label: '진행중' };
+
+    const formats = getGameFormats(game);
+    const isFull = formats.length > 0 && formats.every((format) => getGameRegistrations(game, format).length >= Number(game.maxParticipants || 0));
+    const scheduledAt = new Date(game.scheduledAt).getTime();
+    if (Number.isFinite(scheduledAt) && scheduledAt <= Date.now()) return { key: 'progress', label: '진행중' };
+    if (isFull) return { key: 'closed', label: '접수마감' };
+    return { key: 'open', label: '참가접수중' };
+  }
+
   function hasJoined(game, userId) {
     return getGameRegistrations(game).some((participant) => participant.userId === userId);
   }
@@ -452,13 +475,14 @@
     const isOwner = currentUser && game.operatorId === currentUser.id;
     const formats = getGameFormats(game);
     const ownerBadge = isOwner ? '<span class="pill pill-owner">내가 운영</span>' : '';
+    const gameStatus = getGameStatus(game);
     return `
       <article class="game-card game-list-item" data-game-open="${escapeHtml(game.id)}">
         <div class="game-card__top">
           <span class="format-pills">${formats.map((format) => `<span class="pill pill-format ${escapeHtml(format)}">${escapeHtml(FORMAT_LABELS[format])}</span>`).join('')}</span>
           ${ownerBadge}
         </div>
-        <div class="game-list-item__body"><h3 class="game-title-link" data-game-open="${escapeHtml(game.id)}">${escapeHtml(game.title)}</h3></div>
+        <div class="game-list-item__body"><h3 class="game-title-link" data-game-open="${escapeHtml(game.id)}">${escapeHtml(game.title)}</h3><div class="game-list-item__meta"><time datetime="${escapeHtml(game.scheduledAt)}">${escapeHtml(formatDateTime(game.scheduledAt))}</time><span class="game-status game-status--${gameStatus.key}">${gameStatus.label}</span></div></div>
       </article>
     `;
   }

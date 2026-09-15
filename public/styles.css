@@ -1098,12 +1098,12 @@ button {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 14px;
+  gap: 8px;
   margin-top: 18px;
 }
 
 .game-card {
-  padding: 18px;
+  padding: 12px 14px;
   border-radius: 22px;
   border: 1px solid rgba(165, 190, 214, 0.12);
   background: linear-gradient(180deg, rgba(6, 13, 24, 0.74), rgba(6, 13, 24, 0.56));
@@ -1272,10 +1272,10 @@ button {
 
 .game-list-item__body {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 .game-list-item__body h3 {
@@ -1290,6 +1290,44 @@ button {
 
 .game-title-link:hover {
   color: var(--primary);
+}
+
+.game-list-item__meta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+  color: var(--muted-2);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.game-status {
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.game-status--open {
+  color: var(--primary);
+  background: rgba(118, 240, 196, 0.1);
+}
+
+.game-status--closed {
+  color: var(--accent);
+  background: rgba(255, 180, 91, 0.1);
+}
+
+.game-status--progress {
+  color: #8bc8ff;
+  background: rgba(139, 200, 255, 0.1);
+}
+
+.game-status--done {
+  color: var(--muted);
+  background: rgba(165, 190, 214, 0.1);
 }
 
 .detail-tabs {
@@ -2843,6 +2881,15 @@ button {
   .helper-row {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .game-list-item__body {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .game-list-item__meta {
+    justify-content: flex-start;
   }
 }
 
