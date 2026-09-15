@@ -512,6 +512,80 @@ button {
   width: 100%;
 }
 
+.create-game-heading {
+  position: relative;
+  justify-content: center;
+}
+
+.create-game-heading h2 {
+  text-align: center;
+}
+
+.create-game-close {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 6px;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  transform: translateY(-50%);
+}
+
+.create-game-close:hover {
+  color: var(--text);
+}
+
+.create-game-close svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+
+.form-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.form-field-icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.create-game-date-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bullet-textarea {
+  position: relative;
+}
+
+.bullet-textarea > span {
+  position: absolute;
+  top: 13px;
+  left: 15px;
+  color: var(--primary);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.bullet-textarea textarea {
+  padding-left: 30px;
+}
+
 .auth-simple__back {
   width: 100%;
   margin-top: 18px;
@@ -2847,6 +2921,11 @@ button {
     transform: none;
     margin-top: 4px;
     font-size: 0.82rem;
+  }
+
+  .create-game-heading {
+    flex-direction: row;
+    align-items: center;
   }
 
   .feature-grid,

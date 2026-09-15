@@ -719,47 +719,47 @@
   function renderCreateGameForm() {
     return `
       <section class="panel section-card">
-        <div class="section-heading">
+        <div class="section-heading create-game-heading">
           <div>
             <h2>새 게임 생성</h2>
           </div>
-          <button type="button" class="btn btn-ghost" data-cancel-create-game>닫기</button>
+          <button type="button" class="create-game-close" aria-label="게임 생성 닫기" data-cancel-create-game><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg></button>
         </div>
 
         <form class="form-stack" data-form="game">
           <div class="field">
-            <label for="gameTitle">게임명</label>
+            <label for="gameTitle"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10l4 4v12H5zM14 4v5h5" /></svg>게임명</span></label>
             <input id="gameTitle" name="title" type="text" required />
           </div>
 
           <div class="field">
-            <label for="gameLocation">게임장소</label>
+            <label for="gameLocation"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>게임장소</span></label>
             <input id="gameLocation" name="location" type="text" required />
           </div>
 
-          <div class="field-grid">
-            <div class="field">
-              <span class="field-label">경기형식</span>
-              <div class="format-options">
-                <label><input type="checkbox" name="formats" value="singles" /> <span>개인전</span></label>
-                <label><input type="checkbox" name="formats" value="doubles" /> <span>복식</span></label>
-                <label><input type="checkbox" name="formats" value="team" /> <span>단체전</span></label>
-              </div>
+          <div class="field">
+            <span class="field-label"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c3 0 5 2 5 5v4M17 20c-3 0-5-2-5-5V9" /><ellipse cx="7" cy="4" rx="3" ry="2" /><ellipse cx="17" cy="20" rx="3" ry="2" /></svg>경기형식</span></span>
+            <div class="format-options">
+              <label><input type="checkbox" name="formats" value="singles" /> <span>개인전</span></label>
+              <label><input type="checkbox" name="formats" value="doubles" /> <span>복식</span></label>
+              <label><input type="checkbox" name="formats" value="team" /> <span>단체전</span></label>
             </div>
+          </div>
+
+          <div class="field-grid create-game-date-row">
             <div class="field">
-              <label for="gameMaxParticipants">최대참가인원</label>
+              <label for="gameMaxParticipants"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3" /><path d="M5 20c.8-3.3 3.2-5 7-5s6.2 1.7 7 5" /></svg>최대참가인원</span></label>
               <input id="gameMaxParticipants" name="maxParticipants" type="number" min="1" step="1" required />
             </div>
+            <div class="field">
+              <label for="gameScheduledAt"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M8 3v4M16 3v4M4 10h16" /></svg>게임일시</span></label>
+              <input id="gameScheduledAt" name="scheduledAt" type="datetime-local" required />
+            </div>
           </div>
 
           <div class="field">
-            <label for="gameScheduledAt">게임일시</label>
-            <input id="gameScheduledAt" name="scheduledAt" type="datetime-local" required />
-          </div>
-
-          <div class="field">
-            <label for="gameNote">게임 안내(선택)</label>
-            <textarea id="gameNote" name="note"></textarea>
+            <label for="gameNote"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /></svg>게임안내(선택)</span></label>
+            <div class="bullet-textarea"><span aria-hidden="true">•</span><textarea id="gameNote" name="note"></textarea></div>
           </div>
 
           <div class="button-row">
