@@ -2915,7 +2915,9 @@ button {
   }
 
   .topbar {
+    position: relative;
     gap: 8px;
+    justify-content: center;
     padding-bottom: 16px;
   }
 
@@ -2924,6 +2926,8 @@ button {
   }
 
   .mobile-menu-toggle {
+    position: absolute;
+    left: 0;
     display: inline-grid;
     place-items: center;
     flex: 0 0 28px;
