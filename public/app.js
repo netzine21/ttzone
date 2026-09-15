@@ -2,6 +2,7 @@
   const STORAGE_KEYS = {
     users: 'ttgms:v1:users',
     games: 'ttgms:v1:games',
+    registrationClosures: 'ttgms:v1:registration-closures',
     session: 'ttgms:v1:session',
   };
 
@@ -127,7 +128,8 @@
       ]);
       const currentUser = session.user || null;
       state.users = currentUser ? [currentUser] : [];
-      state.games = Array.isArray(games.games) ? games.games : [];
+      const registrationClosures = readJson(STORAGE_KEYS.registrationClosures, {});
+      state.games = (Array.isArray(games.games) ? games.games : []).map((game) => registrationClosures[game.id] ? { ...game, registrationClosed: true } : game);
       state.sessionUserId = currentUser?.id || null;
       return;
     } catch {
@@ -511,7 +513,7 @@
     const formats = getGameFormats(game);
     const isOwner = currentUser?.id === game.operatorId;
     const hasAppliedAllFormats = currentUser && formats.length > 0 && formats.every((format) => getGameRegistrations(game, format).some((registration) => registration.userId === currentUser.id));
-    const applyAction = isOwner || hasAppliedAllFormats ? '' : `<div class="public-apply-action"><button type="button" class="btn btn-primary" data-game-apply="${escapeHtml(game.id)}">참가신청</button></div>`;
+    const applyAction = isOwner || game.registrationClosed || hasAppliedAllFormats ? '' : `<div class="public-apply-action"><button type="button" class="btn btn-primary" data-game-apply="${escapeHtml(game.id)}">참가신청</button></div>`;
     const editAction = currentUser?.id === game.operatorId ? `<div class="game-edit-bottom-action"><button type="button" class="game-list-action" data-edit-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h4L19 9l-4-4L5 15v4zM13 7l4 4" /></svg><span>게임수정</span></button></div>` : '';
     return `<dl class="meta-grid public-detail-meta"><div><dt>게임장소</dt><dd>${escapeHtml(game.location)}</dd></div><div><dt>게임일시</dt><dd>${escapeHtml(formatDateTime(game.scheduledAt))}</dd></div><div><dt>운영자</dt><dd>${escapeHtml(game.operatorNickname)}</dd></div><div><dt>운영자 휴대폰</dt><dd>${escapeHtml(operator?.phone || '미입력')}</dd></div><div><dt>경기방식</dt><dd>${formats.map((format) => escapeHtml(FORMAT_LABELS[format])).join(' · ')}</dd></div><div><dt>최대참가인원</dt><dd>${escapeHtml(String(game.maxParticipants))}명</dd></div></dl><div class="public-detail-note"><p class="section-kicker">게임안내</p><p>${game.note ? escapeHtml(game.note) : '<span class="muted">추가 안내가 없습니다.</span>'}</p></div>${applyAction}${editAction}`;
   }
@@ -917,7 +919,7 @@
           <div><p class="section-kicker">운영자 전용</p><h2>참가선수 일괄등록</h2><p>선택한 경기종목의 명부를 CSV 또는 TSV 파일로 업로드하세요. 기존 참가자는 중복 등록되지 않습니다.</p></div>
           <div class="roster-schema"><strong>${escapeHtml(FORMAT_LABELS[format])} 명부 열</strong><span>${format === 'singles' ? '닉네임 또는 선수명, 아이디(선택), 부수' : '팀명, 닉네임 또는 선수명, 아이디(선택), 부수'}</span></div>
           <div class="button-row"><label class="btn btn-primary file-button" for="operationRosterFile">명부 파일 선택</label><input id="operationRosterFile" class="file-input" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" data-roster-upload="${escapeHtml(game.id)}" /><button type="button" class="btn btn-ghost" data-download-roster-template>양식 다운로드</button></div>
-          <p class="subtle-note">현재 ${escapeHtml(String(registrations.length))}명(팀) 등록 · 참가형식별로 한 번씩 업로드하세요.</p>
+          <div class="roster-registration-status"><p class="subtle-note">현재 ${escapeHtml(String(registrations.length))}명(팀) 등록 · 참가형식별로 한 번씩 업로드하세요.</p>${game.registrationClosed ? '<span class="status-chip">선수등록 마감</span>' : `<button type="button" class="btn btn-secondary" data-close-registration="${escapeHtml(game.id)}">선수등록 마감</button>`}</div>
         </div>
       </div>
     `;
@@ -1281,7 +1283,14 @@
     `;
   }
 
-  function openOperations(gameId = null, menu = 'groups') {
+  function getOperationStartMenu(game, format) {
+    if (!game.registrationClosed) return 'roster';
+    if (!game.qualifyingGroups?.[format]?.groups?.length) return 'groups';
+    if (!game.preliminaryMatches?.[format]?.matches?.length) return 'print';
+    return 'results';
+  }
+
+  function openOperations(gameId = null, menu = null) {
     const currentUser = getCurrentUser();
     if (!currentUser) return;
     const games = state.games.filter((game) => game.operatorId === currentUser.id);
@@ -1296,7 +1305,8 @@
     state.operationGameId = game.id;
     state.operationFormat = getGameFormats(game)[0] || null;
     state.selectedScheduleGroup = null;
-    state.operationMenu = ['groups', 'roster', 'print', 'results'].includes(menu) ? menu : 'groups';
+    const initialMenu = ['groups', 'roster', 'print', 'results'].includes(menu) ? menu : getOperationStartMenu(game, state.operationFormat);
+    state.operationMenu = initialMenu;
     state.operationSubmenu = 'qualifying';
     render();
   }
@@ -2107,7 +2117,7 @@
 
     const operationsButton = event.target.closest('[data-open-operations]');
     if (operationsButton) {
-      openOperations(operationsButton.dataset.openOperations || null, operationsButton.dataset.operationMenu || 'groups');
+      openOperations(operationsButton.dataset.openOperations || null, operationsButton.dataset.operationMenu || null);
       return;
     }
 
@@ -2140,6 +2150,21 @@
     if (operationMenuButton) {
       state.operationMenu = ['groups', 'roster', 'print', 'results'].includes(operationMenuButton.dataset.operationMenu) ? operationMenuButton.dataset.operationMenu : 'groups';
       state.operationSubmenu = 'qualifying';
+      render();
+      return;
+    }
+
+    const closeRegistrationButton = event.target.closest('[data-close-registration]');
+    if (closeRegistrationButton) {
+      const currentUser = getCurrentUser();
+      const game = state.games.find((item) => item.id === closeRegistrationButton.dataset.closeRegistration);
+      if (!currentUser || !game || game.operatorId !== currentUser.id) return;
+      game.registrationClosed = true;
+      const closures = readJson(STORAGE_KEYS.registrationClosures, {});
+      closures[game.id] = true;
+      writeJson(STORAGE_KEYS.registrationClosures, closures);
+      state.operationMenu = 'groups';
+      setFlash('선수등록이 마감되었습니다. 이제 조편성을 진행해 주세요.', 'success');
       render();
       return;
     }

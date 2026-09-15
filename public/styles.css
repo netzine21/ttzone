@@ -1899,6 +1899,18 @@ button {
   margin-top: 18px;
 }
 
+.roster-registration-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.roster-registration-status .subtle-note {
+  margin: 0;
+}
+
 .roster-schema {
   display: grid;
   gap: 5px;
