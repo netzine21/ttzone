@@ -298,6 +298,72 @@ async function handleApi(req, res, requestPath) {
       }
     }
 
+    const bulkRegistrationMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations\/bulk$/);
+    if (bulkRegistrationMatch && req.method === 'POST') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      const body = await readBody(req);
+      const gameId = bulkRegistrationMatch[1];
+      const format = String(body.format || '');
+      const rows = Array.isArray(body.registrations) ? body.registrations : [];
+      if (!['singles', 'doubles', 'team'].includes(format) || !rows.length) {
+        return sendJson(res, 400, { error: '일괄등록 정보를 확인해 주세요.' });
+      }
+      const gameResult = await pool.query(
+        `select g.id, g.max_participants
+           from public.games g
+          where g.id = $1 and g.operator_id = $2`,
+        [gameId, user.id]
+      );
+      if (!gameResult.rows[0]) return sendJson(res, 404, { error: '등록할 게임을 찾을 수 없거나 운영자 권한이 없습니다.' });
+      const formatResult = await pool.query('select 1 from public.game_formats where game_id = $1 and format = $2', [gameId, format]);
+      if (!formatResult.rows[0]) return sendJson(res, 400, { error: '해당 게임에 등록되지 않은 경기형식입니다.' });
+      const client = await pool.connect();
+      let added = 0;
+      let skipped = 0;
+      try {
+        await client.query('begin');
+        const currentCountResult = await client.query('select count(*)::int as count from public.registrations where game_id = $1 and format = $2', [gameId, format]);
+        let currentCount = currentCountResult.rows[0].count;
+        for (const row of rows) {
+          const nickname = String(row.nickname || '').trim();
+          const rank = String(row.rank || '').trim();
+          const teamName = String(row.teamName || '').trim();
+          const memberId = String(row.memberId || '').trim() || null;
+          if (!nickname || !rank || (format !== 'singles' && !teamName) || currentCount >= gameResult.rows[0].max_participants) {
+            skipped += 1;
+            continue;
+          }
+          const duplicate = await client.query(
+            `select id from public.registrations
+              where game_id = $1 and format = $2
+                and ((user_id is null and lower(nickname) = lower($3)) or (user_id is not null and member_id is not null and lower(member_id) = lower($4)))
+              limit 1`,
+            [gameId, format, nickname, memberId || '']
+          );
+          if (duplicate.rows[0]) {
+            skipped += 1;
+            continue;
+          }
+          await client.query(
+            `insert into public.registrations (game_id, format, user_id, nickname, member_id, rank, team_name, registered_by)
+             values ($1, $2, null, $3, $4, $5, $6, $7)`,
+            [gameId, format, nickname, memberId, rank, teamName || null, user.id]
+          );
+          currentCount += 1;
+          added += 1;
+        }
+        await client.query('commit');
+      } catch (error) {
+        await client.query('rollback');
+        throw error;
+      } finally {
+        client.release();
+      }
+      const games = await getGames();
+      return sendJson(res, 201, { added, skipped, game: games.find((item) => item.id === gameId) });
+    }
+
     const registrationMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations$/);
     if (registrationMatch && req.method === 'POST') {
       const user = await findSession(req);

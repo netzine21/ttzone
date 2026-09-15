@@ -1787,6 +1787,7 @@
     const registrations = getGameRegistrations(game);
     const formatRegistrations = getGameRegistrations(game, format);
     const existingKeys = new Set(formatRegistrations.map((participant) => participant.userId || `name:${normalizeParticipantName(participant.nickname)}`));
+    const pendingRegistrations = [];
     let added = 0;
     let skipped = 0;
     for (const row of rows) {
@@ -1801,7 +1802,7 @@
         skipped += 1;
         continue;
       }
-      registrations.push({
+      const registration = {
         userId: matchedUser?.id || null,
         nickname: matchedUser?.nickname || row.nickname,
         memberId: row.memberId,
@@ -1811,13 +1812,33 @@
         appliedAt: new Date().toISOString(),
         registeredBy: currentUser.id,
         registrationSource: 'bulk',
-      });
+      };
+      registrations.push(registration);
+      pendingRegistrations.push(registration);
       existingKeys.add(participantKey);
       added += 1;
     }
+    if (pendingRegistrations.length) {
+      try {
+        await apiRequest(`/api/games/${encodeURIComponent(game.id)}/registrations/bulk`, {
+          method: 'POST',
+          body: JSON.stringify({ format, registrations: pendingRegistrations }),
+        });
+        await loadState();
+        setFlash(`${added}명이 서버에 등록되었습니다. ${skipped}명은 중복, 빈 행 또는 정원 초과로 제외되었습니다.`, 'success');
+        render();
+        return;
+      } catch (error) {
+        if (!error.message.includes('Failed to fetch') && !error.message.includes('서버 요청')) {
+          setFlash(error.message, 'error');
+          render();
+          return;
+        }
+      }
+    }
     game.registrations = registrations;
     persistGames();
-    setFlash(`${added}명이 참가 등록되었습니다. ${skipped}명은 중복, 빈 행 또는 정원 초과로 제외되었습니다.`, added ? 'success' : 'info');
+    setFlash(`${added}명이 이 브라우저에 임시 등록되었습니다. ${skipped}명은 중복, 빈 행 또는 정원 초과로 제외되었습니다.`, added ? 'info' : 'info');
     render();
   }
 
