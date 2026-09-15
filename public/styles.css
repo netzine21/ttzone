@@ -1059,6 +1059,22 @@ button {
   gap: 18px;
 }
 
+.public-game-list-heading {
+  justify-content: center;
+  text-align: center;
+}
+
+.public-game-list-heading h2 {
+  margin-top: 4px;
+}
+
+.public-game-list-count {
+  color: var(--muted-2);
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
 .game-list-action {
   border: 0;
   border-bottom: 2px solid transparent;

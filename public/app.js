@@ -484,12 +484,10 @@
 
     return `
       <section class="panel section-card">
-        <div class="section-heading">
+        <div class="section-heading public-game-list-heading">
           <div>
-            <p class="section-kicker">공개 게임목록</p>
-            <h2>현재 생성된 게임</h2>
+            <h2>공개 게임목록 <span class="public-game-list-count">· ${formatCount(games.length)}개 게임</span></h2>
           </div>
-          <span class="status-chip">${formatCount(games.length)}개 게임</span>
         </div>
         <div class="game-list">${gameList}</div>
       </section>
