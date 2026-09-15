@@ -473,15 +473,12 @@
   function renderGameCard(game, currentUser, isPublic = false) {
     const participants = getGameRegistrations(game);
     const isOwner = currentUser && game.operatorId === currentUser.id;
-    const formats = getGameFormats(game);
     const ownerBadge = isOwner ? '<span class="pill pill-owner">내가 운영</span>' : '';
     const gameStatus = getGameStatus(game);
+    const topBadges = ownerBadge ? `<div class="game-card__top">${ownerBadge}</div>` : '';
     return `
       <article class="game-card game-list-item" data-game-open="${escapeHtml(game.id)}">
-        <div class="game-card__top">
-          <span class="format-pills">${formats.map((format) => `<span class="pill pill-format ${escapeHtml(format)}">${escapeHtml(FORMAT_LABELS[format])}</span>`).join('')}</span>
-          ${ownerBadge}
-        </div>
+        ${topBadges}
         <div class="game-list-item__body"><h3 class="game-title-link" data-game-open="${escapeHtml(game.id)}">${escapeHtml(game.title)}</h3><div class="game-list-item__meta"><time datetime="${escapeHtml(game.scheduledAt)}">${escapeHtml(formatDateTime(game.scheduledAt))}</time><span class="game-status game-status--${gameStatus.key}">${gameStatus.label}</span></div></div>
       </article>
     `;
