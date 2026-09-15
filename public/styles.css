@@ -200,7 +200,7 @@ button {
   width: 52px;
   height: 52px;
   border: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 16px;
+  border-radius: 50%;
   background: #fff;
   color: #04101a;
   font-weight: 900;
@@ -213,25 +213,6 @@ button {
   width: 38px;
   height: 38px;
   overflow: visible;
-}
-
-.brand-mark__ball {
-  fill: #37d69a;
-}
-
-.brand-mark__tabletop {
-  fill: #76f0c4;
-  stroke: #04101a;
-  stroke-linejoin: round;
-  stroke-width: 1.5;
-}
-
-.brand-mark__net,
-.brand-mark__table-leg {
-  fill: none;
-  stroke: #04101a;
-  stroke-linecap: round;
-  stroke-width: 1.7;
 }
 
 .brand-mark__paddle {
@@ -3112,7 +3093,7 @@ button {
     width: 46px;
     height: 46px;
     aspect-ratio: 1;
-    border-radius: 14px;
+    border-radius: 50%;
   }
 
   .tabs {
