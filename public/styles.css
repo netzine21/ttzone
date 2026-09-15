@@ -2843,7 +2843,9 @@ button {
 
   .dashboard-game-list-heading .game-list-actions {
     position: static;
+    width: 100%;
     align-self: flex-end;
+    justify-content: flex-end;
     transform: none;
     margin-top: 4px;
     font-size: 0.82rem;
