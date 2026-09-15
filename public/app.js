@@ -2076,7 +2076,7 @@
     render();
   }
 
-  function handleGameUpdate(form) {
+  async function handleGameUpdate(form) {
     const currentUser = getCurrentUser();
     const game = state.games.find((item) => item.id === form.dataset.gameId);
     if (!currentUser || !game || game.operatorId !== currentUser.id) {
@@ -2104,6 +2104,25 @@
       setFlash('경기형식을 개인전, 복식, 단체전 중에서 선택해 주세요.', 'error');
       render();
       return;
+    }
+
+    try {
+      await apiRequest(`/api/games/${encodeURIComponent(game.id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ title, location, formats, scheduledAt, maxParticipants, note }),
+      });
+      await loadState();
+      state.editingGameId = null;
+      state.selectedGameId = game.id;
+      setFlash('게임 정보가 수정되었습니다.', 'success');
+      render();
+      return;
+    } catch (error) {
+      if (!error.message.includes('Failed to fetch') && !error.message.includes('서버 요청')) {
+        setFlash(error.message, 'error');
+        render();
+        return;
+      }
     }
 
     Object.assign(game, { title, location, formats, format: formats[0], scheduledAt, maxParticipants, note });
@@ -2426,7 +2445,7 @@
     }
 
     if (form.dataset.form === 'game-edit') {
-      handleGameUpdate(form);
+      await handleGameUpdate(form);
     }
   }
 

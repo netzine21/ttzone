@@ -254,6 +254,50 @@ async function handleApi(req, res, requestPath) {
       }
     }
 
+    const gameUpdateMatch = requestPath.match(/^\/api\/games\/([^/]+)$/);
+    if (gameUpdateMatch && ['PATCH', 'PUT'].includes(req.method)) {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      const body = await readBody(req);
+      const gameId = gameUpdateMatch[1];
+      const title = String(body.title || '').trim();
+      const location = String(body.location || '').trim();
+      const formats = Array.isArray(body.formats) ? [...new Set(body.formats)] : [];
+      const maxParticipants = Number(body.maxParticipants);
+      if (!title || !location || !formats.length || !body.scheduledAt || !Number.isInteger(maxParticipants) || maxParticipants < 1 || formats.some((format) => !['singles', 'doubles', 'team'].includes(format))) {
+        return sendJson(res, 400, { error: '게임 필수정보를 확인해 주세요.' });
+      }
+      const participantCount = await pool.query('select count(*)::int as count from public.registrations where game_id = $1', [gameId]);
+      if (maxParticipants < participantCount.rows[0].count) {
+        return sendJson(res, 400, { error: `최대참가인원은 현재 참가자 수(${participantCount.rows[0].count}명) 이상이어야 합니다.` });
+      }
+      const client = await pool.connect();
+      try {
+        await client.query('begin');
+        const gameResult = await client.query(
+          `update public.games
+              set title = $1, location = $2, scheduled_at = $3, max_participants = $4, note = $5, updated_at = now()
+            where id = $6 and operator_id = $7
+            returning id`,
+          [title, location, body.scheduledAt, maxParticipants, String(body.note || '').trim() || null, gameId, user.id]
+        );
+        if (!gameResult.rows[0]) {
+          await client.query('rollback');
+          return sendJson(res, 404, { error: '수정할 게임을 찾을 수 없거나 운영자 권한이 없습니다.' });
+        }
+        await client.query('delete from public.game_formats where game_id = $1', [gameId]);
+        for (const format of formats) await client.query('insert into public.game_formats (game_id, format) values ($1, $2)', [gameId, format]);
+        await client.query('commit');
+        const games = await getGames();
+        return sendJson(res, 200, { game: games.find((item) => item.id === gameId) });
+      } catch (error) {
+        await client.query('rollback');
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
+
     const registrationMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations$/);
     if (registrationMatch && req.method === 'POST') {
       const user = await findSession(req);
