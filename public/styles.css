@@ -2951,6 +2951,22 @@ button {
     font-size: 0.82rem;
   }
 
+  .game-detail-actions {
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .game-detail-actions .game-list-action {
+    gap: 3px;
+    padding: 2px 0;
+    font-size: 0.76rem;
+  }
+
+  .game-detail-actions .game-list-action__icon {
+    width: 13px;
+    height: 13px;
+  }
+
   .create-game-heading {
     flex-direction: row;
     align-items: center;
