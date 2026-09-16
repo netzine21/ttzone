@@ -1604,6 +1604,26 @@ button {
   margin-top: 24px;
 }
 
+.competition-content-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.competition-content-heading h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.competition-content-heading span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
 .competition-progress {
   margin-top: 18px;
   padding-top: 16px;
@@ -1749,6 +1769,11 @@ button {
   color: var(--muted);
   background: rgba(6, 13, 24, 0.72);
   font-size: 0.8rem;
+}
+
+.public-participant-table th {
+  color: var(--text);
+  font-size: 0.86rem;
 }
 
 .public-data-table td {
@@ -3340,7 +3365,7 @@ button {
   }
 
   .public-participant-table th {
-    font-size: 0.7rem;
+    font-size: 0.78rem;
   }
 
   .roster-list-table {
