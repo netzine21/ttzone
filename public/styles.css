@@ -1605,9 +1605,10 @@ button {
 }
 
 .competition-content-heading {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 12px;
   margin-bottom: 10px;
 }
@@ -1619,6 +1620,8 @@ button {
 }
 
 .competition-content-heading span {
+  position: absolute;
+  right: 0;
   color: var(--muted);
   font-size: 0.82rem;
   white-space: nowrap;
@@ -1794,6 +1797,8 @@ button {
 .public-participant-table th {
   color: var(--text);
   font-size: 0.86rem;
+  border-top: 1px solid rgba(118, 240, 196, 0.42);
+  border-bottom: 1px solid rgba(118, 240, 196, 0.42);
 }
 
 .public-data-table td {
