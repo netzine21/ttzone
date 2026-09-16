@@ -1814,16 +1814,27 @@ button {
 
 .public-league-summary {
   width: 100%;
-  min-width: 720px;
+  min-width: 0;
+  table-layout: fixed;
   border-collapse: collapse;
 }
 
 .public-league-summary th,
 .public-league-summary td {
-  padding: 12px;
+  padding: 7px 6px;
   border-bottom: 1px solid rgba(165, 190, 214, 0.1);
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
+}
+
+.public-league-summary tbody tr:first-child th,
+.public-league-summary tbody tr:first-child td {
+  border-top: 1px solid rgba(118, 240, 196, 0.38);
+}
+
+.public-league-summary tbody tr:last-child th,
+.public-league-summary tbody tr:last-child td {
+  border-bottom: 1px solid rgba(118, 240, 196, 0.38);
 }
 
 .public-league-summary thead th {
@@ -1833,9 +1844,11 @@ button {
 }
 
 .public-league-summary__group {
-  width: 76px;
+  width: 56px;
   color: var(--accent);
   font-size: 1rem;
+  text-align: center !important;
+  vertical-align: middle !important;
   white-space: nowrap;
 }
 
@@ -1847,7 +1860,7 @@ button {
 }
 
 .public-league-participant {
-  min-width: 190px;
+  min-width: 0;
 }
 
 .public-league-participant--empty {
@@ -1865,9 +1878,9 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  min-height: 42px;
-  padding: 7px 10px;
+  gap: 7px;
+  min-height: 36px;
+  padding: 5px 6px;
   border-left: 3px solid transparent;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.025);
@@ -1875,14 +1888,18 @@ button {
 
 .public-league-entry strong {
   color: var(--text);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .public-league-entry small {
   display: block;
-  margin-top: 3px;
+  margin-top: 2px;
   color: var(--muted);
-  font-size: 0.74rem;
+  font-size: 0.68rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .public-league-entry.rank-row--1 {
@@ -3502,6 +3519,29 @@ button {
 
   .public-participant-table th {
     font-size: 0.78rem;
+  }
+
+  .public-league-summary__group {
+    width: 42px;
+    font-size: 0.82rem;
+  }
+
+  .public-league-summary th,
+  .public-league-summary td {
+    padding: 5px 3px;
+  }
+
+  .public-league-entry {
+    gap: 3px;
+    padding: 4px 3px;
+  }
+
+  .public-league-entry strong {
+    font-size: 0.74rem;
+  }
+
+  .public-league-entry small {
+    font-size: 0.62rem;
   }
 
   .roster-list-table {
