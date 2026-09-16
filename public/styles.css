@@ -1617,26 +1617,49 @@ button {
 .format-selector,
 .competition-subtabs {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: nowrap;
   margin-bottom: 14px;
 }
 
 .format-selector__item,
 .competition-subtabs .detail-tab {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 9px 14px;
+  appearance: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 4px 0;
   color: var(--muted);
-  background: rgba(255, 255, 255, 0.04);
+  background: transparent;
+  font: inherit;
   font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .format-selector__item.is-active,
 .competition-subtabs .detail-tab.is-active {
-  border-color: rgba(118, 240, 196, 0.46);
-  color: #04101a;
-  background: var(--primary);
+  border-bottom-color: var(--primary);
+  color: var(--primary);
+  background: transparent;
+}
+
+.progress-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+
+.progress-tab__icon {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
 .public-group-grid {
@@ -1674,6 +1697,39 @@ button {
   width: 100%;
   min-width: 560px;
   border-collapse: collapse;
+}
+
+.public-participant-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.public-participant-table th,
+.public-participant-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.public-participant-table th:nth-child(1),
+.public-participant-table td:nth-child(1) {
+  width: 30%;
+}
+
+.public-participant-table th:nth-child(2),
+.public-participant-table td:nth-child(2) {
+  width: 48%;
+}
+
+.public-participant-table th:nth-child(3),
+.public-participant-table td:nth-child(3) {
+  width: 22%;
+  text-align: center;
+}
+
+.public-participant-table th,
+.public-participant-table td {
+  padding: 7px 8px;
 }
 
 .public-data-table th,
@@ -3250,6 +3306,29 @@ button {
 
   .operation-controls {
     grid-template-columns: 1fr;
+  }
+
+  .format-selector,
+  .competition-subtabs {
+    gap: 12px;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-bottom: 2px;
+  }
+
+  .format-selector__item,
+  .progress-tab {
+    font-size: 0.8rem;
+  }
+
+  .public-participant-table th,
+  .public-participant-table td {
+    padding: 6px 5px;
+    font-size: 0.78rem;
+  }
+
+  .public-participant-table th {
+    font-size: 0.7rem;
   }
 
   .roster-list-table {
