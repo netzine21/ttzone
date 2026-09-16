@@ -3064,6 +3064,28 @@ button {
   margin: 0;
 }
 
+.qualifying-result-heading {
+  position: relative;
+  justify-content: center;
+  text-align: center;
+}
+
+.qualifying-result-heading > div {
+  width: 100%;
+}
+
+.qualifying-result-heading > .subtle-note {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
+
+.qualifying-result-guide {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
 .group-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));

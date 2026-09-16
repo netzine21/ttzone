@@ -1307,7 +1307,7 @@
           <div class="field"><label for="groupCount">조 수</label><input id="groupCount" type="number" min="1" max="${Math.max(1, participantCount)}" value="${escapeHtml(String(defaultGroupCount))}" data-group-count /></div></div>
           <button type="button" class="game-list-action game-list-action--primary qualifying-generate-action" data-generate-groups><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"></path><circle cx="12" cy="12" r="8"></circle></svg><span>조편성 생성</span></button>
         </div>
-        <div class="group-result-heading"><div><p class="section-kicker">조편성 결과</p><h2>${escapeHtml(FORMAT_LABELS[format])} 예선리그</h2></div>${saved ? '<span class="subtle-note">생성 후 선수별 조 이동 가능</span>' : ''}</div>
+        <div class="group-result-heading qualifying-result-heading"><div><p class="section-kicker">조편성 결과</p><h2>${escapeHtml(FORMAT_LABELS[format])} 예선리그</h2><p class="qualifying-result-guide">등록된 참가자를 기준으로 조를 자동 배정합니다. 현재 계산 결과: ${escapeHtml(calculatedSizeText)}</p></div>${saved ? '<span class="subtle-note">생성 후 선수별 조 이동 가능</span>' : ''}</div>
         ${renderOperationGroups(game, format)}
         ${saved ? '<div class="button-row group-save-row"><button type="button" class="btn btn-secondary" data-save-groups>수정한 조편성 저장</button></div>' : ''}`}
       </section>
