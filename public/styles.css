@@ -1990,11 +1990,23 @@ button {
 }
 
 .operation-submenu {
+  position: relative;
   display: flex;
   justify-content: center;
   gap: 18px;
   margin-top: 14px;
+  padding-top: 14px;
   overflow-x: auto;
+}
+
+.operation-submenu::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(118, 240, 196, 0.25) 20%, rgba(118, 240, 196, 0.92) 50%, rgba(118, 240, 196, 0.25) 80%, transparent);
+  content: '';
 }
 
 .operation-submenu__item {
@@ -3439,6 +3451,7 @@ button {
   .operation-submenu {
     justify-content: center;
     gap: 12px;
+    padding-top: 10px;
   }
 
   .operation-submenu__item {
