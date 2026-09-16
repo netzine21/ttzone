@@ -601,7 +601,7 @@
     return `<div class="tournament-bracket public-tournament-bracket tournament-bracket--size-${bracket.size} tournament-bracket--split"><div class="tournament-side-bracket tournament-side-bracket--left">${leftRounds.map((round, index) => renderPublicTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div><div class="tournament-center-bracket">${renderPublicTournamentRound(finalRound, true, tournamentRoundTitle(bracket, bracket.rounds.length - 1, true), bracket.size, bracket.rounds.length - 1)}</div><div class="tournament-side-bracket tournament-side-bracket--right">${rightRounds.map((round, index) => renderPublicTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div></div>${renderTournamentPodium(bracket)}`;
   }
 
-  function renderCompetitionView(game, format) {
+  function renderCompetitionView(game, currentUser, format) {
     const progressSubtab = ['participants', 'league', 'tournament'].includes(state.progressSubtab) ? state.progressSubtab : 'participants';
     const config = getTournamentConfig(game, format);
     const formatIcons = {
@@ -615,7 +615,10 @@
       ['tournament', '토너먼트', '<path d="M5 4v16M19 4v16M5 8h6a3 3 0 0 1 3 3v2a3 3 0 0 0 3 3h2M5 16h6a3 3 0 0 0 3-3v-2a3 3 0 0 1 3-3h2"></path>']
     ];
     const participantCount = getGameRegistrations(game, format).length;
-    const progressContent = progressSubtab === 'participants' ? `<div class="competition-content-heading"><h3>${escapeHtml(FORMAT_LABELS[format])} 참가자 목록</h3><span>총 ${participantCount}명/팀</span></div>${renderPublicParticipantList(game, format)}` : progressSubtab === 'league' ? `<h3>${escapeHtml(FORMAT_LABELS[format])} 리그전</h3>${renderPublicLeagueStandings(game, format)}` : `<h3>${escapeHtml(FORMAT_LABELS[format])} 토너먼트</h3>${config?.upper ? `<h4>상위리그</h4>${renderPublicTournamentBracket(config.upper)}` : ''}${config?.lower ? `<h4>하위리그</h4>${renderPublicTournamentBracket(config.lower)}` : (!config ? '<div class="empty-state">아직 본선 토너먼트가 생성되지 않았습니다.</div>' : '')}`;
+    const isOwner = currentUser?.id === game.operatorId;
+    const groupSetup = game.qualifyingGroups?.[format];
+    const canViewGroups = isOwner || groupSetup?.isPublic === true;
+    const progressContent = progressSubtab === 'participants' ? `<div class="competition-content-heading"><h3>${escapeHtml(FORMAT_LABELS[format])} 참가자 목록</h3><span>총 ${participantCount}명/팀</span></div>${renderPublicParticipantList(game, format)}` : progressSubtab === 'league' ? `<h3>${escapeHtml(FORMAT_LABELS[format])} 리그전</h3>${canViewGroups ? renderPublicLeagueStandings(game, format) : '<div class="empty-state">운영자가 조편성을 준비 중입니다.</div>'}` : `<h3>${escapeHtml(FORMAT_LABELS[format])} 토너먼트</h3>${canViewGroups && config?.upper ? `<h4>상위리그</h4>${renderPublicTournamentBracket(config.upper)}` : ''}${canViewGroups && config?.lower ? `<h4>하위리그</h4>${renderPublicTournamentBracket(config.lower)}` : (!config ? '<div class="empty-state">아직 본선 토너먼트가 생성되지 않았습니다.</div>' : !canViewGroups ? '<div class="empty-state">운영자가 경기 진행을 준비 중입니다.</div>' : '')}`;
     return `<div class="competition-view"><div class="format-selector" role="tablist" aria-label="경기종목">${getGameFormats(game).map((item) => `<button type="button" class="format-selector__item ${item === format ? 'is-active' : ''}" data-status-format="${escapeHtml(item)}"><svg class="progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${formatIcons[item] || formatIcons.singles}</svg><span>${escapeHtml(FORMAT_LABELS[item])}</span></button>`).join('')}</div><div class="competition-subtabs competition-progress__tabs" role="tablist" aria-label="경기진행 메뉴">${progressTabs.map(([value, label, icon]) => `<button type="button" class="game-list-action progress-tab ${progressSubtab === value ? 'is-active' : ''}" data-status-progress="${value}"><svg class="game-list-action__icon progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${icon}</svg><span>${label}</span></button>`).join('')}</div>${progressContent}</div>`;
   }
   function renderApplicationsView(game, currentUser) {
@@ -632,7 +635,7 @@
     const formats = getGameFormats(game);
     const format = getPublicFormat(game);
     const isOwner = currentUser && game.operatorId === currentUser.id;
-    return `<section class="panel section-card public-game-detail"><div class="game-detail-header"><h1 class="game-detail-title">${escapeHtml(game.title)}</h1>${renderGameDetailMenu(game, isOwner)}</div>${state.detailTab === 'status' ? renderGameRules(game, currentUser) : ''}${state.detailTab === 'progress' ? renderCompetitionView(game, format) : ''}${state.detailTab === 'applications' ? renderApplicationsView(game, currentUser) : ''}</section>`;
+    return `<section class="panel section-card public-game-detail"><div class="game-detail-header"><h1 class="game-detail-title">${escapeHtml(game.title)}</h1>${renderGameDetailMenu(game, isOwner)}</div>${state.detailTab === 'status' ? renderGameRules(game, currentUser) : ''}${state.detailTab === 'progress' ? renderCompetitionView(game, currentUser, format) : ''}${state.detailTab === 'applications' ? renderApplicationsView(game, currentUser) : ''}</section>`;
   }
 
   function renderPublicGameDetail(game) {
@@ -1309,7 +1312,7 @@
         </div>
         <div class="group-result-heading qualifying-result-heading"><div><p class="section-kicker">조편성 결과</p><h2>${escapeHtml(FORMAT_LABELS[format])} 예선리그</h2><p class="qualifying-result-guide">등록된 참가자를 기준으로 조를 자동 배정합니다. 현재 계산 결과: ${escapeHtml(calculatedSizeText)}</p></div>${saved ? '<span class="subtle-note">생성 후 선수별 조 이동 가능</span>' : ''}</div>
         ${renderOperationGroups(game, format)}
-        ${saved ? '<div class="button-row group-save-row"><button type="button" class="btn btn-secondary" data-save-groups>수정한 조편성 저장</button></div>' : ''}`}
+        ${saved ? `<div class="button-row group-save-row"><button type="button" class="game-list-action" data-save-groups><span>수정한 조편성 저장</span></button><button type="button" class="game-list-action game-list-action--primary" data-toggle-group-visibility="${escapeHtml(game.id)}"><span>${saved.isPublic ? '회원 공개 취소' : '회원 공개'}</span></button></div>` : ''}`}
       </section>
     `;
   }
@@ -1546,6 +1549,26 @@
     } catch (error) {
       persistGames();
       setFlash(error.message || '조편성 저장에 실패했습니다.', 'error');
+    }
+    render();
+  }
+
+  async function handleToggleGroupVisibility() {
+    const currentUser = getCurrentUser();
+    const game = state.games.find((item) => item.id === state.operationGameId);
+    const format = state.operationFormat;
+    const setup = game?.qualifyingGroups?.[format];
+    if (!currentUser || !game || game.operatorId !== currentUser.id || !setup) return;
+    const isPublic = setup.isPublic !== true;
+    try {
+      await apiRequest(`/api/games/${encodeURIComponent(game.id)}/qualifying-groups/visibility`, {
+        method: 'PATCH',
+        body: JSON.stringify({ format, isPublic }),
+      });
+      await loadState();
+      setFlash(isPublic ? '조편성이 회원에게 공개되었습니다.' : '조편성이 비공개로 전환되었습니다.', 'success');
+    } catch (error) {
+      setFlash(error.message || '조편성 공개 상태 변경에 실패했습니다.', 'error');
     }
     render();
   }
@@ -2306,6 +2329,12 @@
     const saveGroupsButton = event.target.closest('[data-save-groups]');
     if (saveGroupsButton) {
       handleSaveGroups();
+      return;
+    }
+
+    const toggleGroupVisibilityButton = event.target.closest('[data-toggle-group-visibility]');
+    if (toggleGroupVisibilityButton) {
+      handleToggleGroupVisibility();
       return;
     }
 

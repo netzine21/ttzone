@@ -78,7 +78,13 @@ function publicUser(row) {
   };
 }
 
-function publicGame(row, formats = [], registrations = []) {
+function publicGame(row, formats = [], registrations = [], viewerId = null) {
+  const isOwner = viewerId && String(row.operator_id) === String(viewerId);
+  const qualifyingGroups = row.qualifying_groups || {};
+  const visibleQualifyingGroups = Object.fromEntries(Object.entries(qualifyingGroups).map(([format, setup]) => [
+    format,
+    isOwner || setup?.isPublic ? setup : { isPublic: false },
+  ]));
   return {
     id: row.id,
     title: row.title,
@@ -92,7 +98,7 @@ function publicGame(row, formats = [], registrations = []) {
     operatorNickname: row.operator_nickname,
     registrations,
     participants: [],
-    qualifyingGroups: row.qualifying_groups || {},
+    qualifyingGroups: visibleQualifyingGroups,
     preliminaryMatches: row.preliminary_matches || {},
     tournaments: row.tournaments || {},
     createdAt: row.created_at,
@@ -152,7 +158,7 @@ function requirePool() {
   return pool;
 }
 
-async function getGames() {
+async function getGames(viewerId = null) {
   const pool = requirePool();
   await ensureGameStateColumns();
   const games = await pool.query(
@@ -182,7 +188,8 @@ async function getGames() {
       registeredBy: item.registered_by,
       appliedAt: item.applied_at,
       updatedAt: item.updated_at,
-    }))
+    })),
+    viewerId
   ));
 }
 
@@ -237,7 +244,8 @@ async function handleApi(req, res, requestPath) {
     }
 
     if (requestPath === '/api/games' && req.method === 'GET') {
-      return sendJson(res, 200, { games: await getGames() });
+      const viewer = await findSession(req);
+      return sendJson(res, 200, { games: await getGames(viewer?.id || null) });
     }
 
     if (requestPath === '/api/games' && req.method === 'POST') {
@@ -338,6 +346,45 @@ async function handleApi(req, res, requestPath) {
       if (!gameResult.rows[0]) return sendJson(res, 404, { error: '저장할 게임을 찾을 수 없거나 운영자 권한이 없습니다.' });
       const games = await getGames();
       return sendJson(res, 200, { game: games.find((item) => item.id === gameId) });
+    }
+
+    const qualifyingVisibilityMatch = requestPath.match(/^\/api\/games\/([^/]+)\/qualifying-groups\/visibility$/);
+    if (qualifyingVisibilityMatch && req.method === 'PATCH') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      const body = await readBody(req);
+      const gameId = qualifyingVisibilityMatch[1];
+      const format = String(body.format || '');
+      const isPublic = body.isPublic === true;
+      if (!['singles', 'doubles', 'team'].includes(format)) {
+        return sendJson(res, 400, { error: '공개할 경기종목을 확인해 주세요.' });
+      }
+      const gameResult = await pool.query(
+        `update public.games
+            set qualifying_groups = jsonb_set(
+              coalesce(qualifying_groups, '{}'::jsonb),
+              $1::text[],
+              jsonb_set(
+                jsonb_set(
+                  coalesce(qualifying_groups -> $2, '{}'::jsonb),
+                  '{isPublic}',
+                  $3::jsonb,
+                  true
+                ),
+                '{publishedAt}',
+                case when $3::boolean then to_jsonb(now()) else 'null'::jsonb end,
+                true
+              ),
+              true
+            ),
+                updated_at = now()
+          where id = $4 and operator_id = $5
+          returning id`,
+        [`{${format}}`, format, JSON.stringify(isPublic), gameId, user.id]
+      );
+      if (!gameResult.rows[0]) return sendJson(res, 404, { error: '공개 상태를 변경할 게임을 찾을 수 없습니다.' });
+      const games = await getGames(user.id);
+      return sendJson(res, 200, { game: games.find((item) => item.id === gameId), isPublic });
     }
 
     const bulkRegistrationMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations\/bulk$/);
