@@ -1312,7 +1312,7 @@
         </div>
         <div class="group-result-heading qualifying-result-heading"><div><p class="section-kicker">조편성 결과</p><h2>${escapeHtml(FORMAT_LABELS[format])} 예선리그</h2><p class="qualifying-result-guide">등록된 참가자를 기준으로 조를 자동 배정합니다. 현재 계산 결과: ${escapeHtml(calculatedSizeText)}</p></div>${saved ? '<span class="subtle-note">생성 후 선수별 조 이동 가능</span>' : ''}</div>
         ${renderOperationGroups(game, format)}
-        ${saved ? `<div class="button-row group-save-row"><button type="button" class="game-list-action" data-save-groups><span>수정한 조편성 저장</span></button><button type="button" class="game-list-action game-list-action--primary" data-toggle-group-visibility="${escapeHtml(game.id)}"><span>${saved.isPublic ? '회원 공개 취소' : '회원 공개'}</span></button></div>` : ''}`}
+        ${saved ? `<div class="button-row group-save-row"><span class="group-visibility-status ${saved.isPublic ? 'is-public' : ''}">${saved.isPublic ? '회원 공개 중' : '현재 비공개'}</span><button type="button" class="game-list-action" data-save-groups><span>수정한 조편성 저장</span></button><button type="button" class="game-list-action game-list-action--primary" data-toggle-group-visibility="${escapeHtml(game.id)}"><span>${saved.isPublic ? '회원 공개 취소' : '회원 공개'}</span></button></div>` : ''}`}
       </section>
     `;
   }

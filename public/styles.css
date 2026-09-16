@@ -3150,8 +3150,19 @@ button {
 }
 
 .group-save-row {
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
   margin-top: 18px;
+}
+
+.group-visibility-status {
+  color: var(--muted-2);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.group-visibility-status.is-public {
+  color: var(--primary);
 }
 
 .format-pills {
