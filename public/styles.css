@@ -1644,8 +1644,19 @@ button {
 }
 
 .format-selector {
+  position: relative;
   padding-bottom: 12px;
-  border-bottom: 1px solid rgba(165, 190, 214, 0.14);
+  border-bottom: 0;
+}
+
+.format-selector::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(118, 240, 196, 0.25) 20%, rgba(118, 240, 196, 0.92) 50%, rgba(118, 240, 196, 0.25) 80%, transparent);
+  content: '';
 }
 
 .competition-subtabs {
@@ -3356,6 +3367,7 @@ button {
 
   .format-selector {
     justify-content: center;
+    padding-bottom: 10px;
   }
 
   .competition-subtabs {
