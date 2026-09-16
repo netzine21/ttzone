@@ -2346,6 +2346,22 @@ button {
   margin-top: 22px;
 }
 
+.qualifying-controls {
+  grid-template-columns: 1.4fr minmax(0, 1fr) auto;
+}
+
+.qualifying-settings {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0.7fr;
+  gap: 12px;
+}
+
+.qualifying-generate-action {
+  align-self: end;
+  justify-self: center;
+  white-space: nowrap;
+}
+
 .operation-controls .btn {
   white-space: nowrap;
 }
@@ -3056,7 +3072,7 @@ button {
 }
 
 .qualifying-group {
-  padding: 16px;
+  padding: 13px;
   border: 1px solid rgba(165, 190, 214, 0.14);
   border-radius: 18px;
   background: rgba(6, 13, 24, 0.48);
@@ -3066,7 +3082,7 @@ button {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .qualifying-group__heading h3 {
@@ -3080,7 +3096,7 @@ button {
 
 .group-player-list {
   display: grid;
-  gap: 8px;
+  gap: 4px;
 }
 
 .group-player-row {
@@ -3088,11 +3104,11 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 9px 10px;
+  padding: 6px 8px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.035);
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.84rem;
 }
 
 .group-player-row select {
@@ -3361,6 +3377,21 @@ button {
 
   .operation-controls {
     grid-template-columns: 1fr;
+  }
+
+  .qualifying-controls {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .qualifying-controls > .field:first-child,
+  .qualifying-controls > .qualifying-settings,
+  .qualifying-controls > .qualifying-generate-action {
+    grid-column: 1 / -1;
+  }
+
+  .qualifying-settings {
+    grid-template-columns: minmax(0, 1fr) 0.7fr;
+    gap: 8px;
   }
 
   .format-selector,
