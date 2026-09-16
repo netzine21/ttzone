@@ -1909,16 +1909,42 @@ button {
   margin-top: 18px;
 }
 
-.roster-registration-status {
+.roster-import-heading {
+  text-align: center;
+}
+
+.roster-import-heading h2 {
+  margin: 0;
+  font-size: 1.12rem;
+}
+
+.roster-upload-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: nowrap;
+}
+
+.roster-upload-actions .game-list-action {
+  flex: 0 1 auto;
+  white-space: nowrap;
+}
+
+.roster-registration-status {
+  display: grid;
+  justify-items: center;
   gap: 12px;
-  flex-wrap: wrap;
+  text-align: center;
 }
 
 .roster-registration-status .subtle-note {
   margin: 0;
+}
+
+.roster-registration-close {
+  display: flex;
+  justify-content: center;
 }
 
 .roster-schema {
@@ -3189,6 +3215,23 @@ button {
 
   .operation-controls {
     grid-template-columns: 1fr;
+  }
+
+  .roster-upload-actions {
+    gap: 10px;
+  }
+
+  .roster-upload-actions .game-list-action {
+    min-width: 0;
+    flex: 1 1 0;
+    justify-content: center;
+    gap: 3px;
+    font-size: 0.76rem;
+  }
+
+  .roster-upload-actions .game-list-action__icon {
+    width: 14px;
+    height: 14px;
   }
 
   .tournament-panel .operation-controls {
