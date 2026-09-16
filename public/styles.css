@@ -2020,17 +2020,52 @@ button {
 
 .roster-list-table {
   width: 100%;
-  min-width: 620px;
+  table-layout: fixed;
   border-collapse: collapse;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
 }
 
 .roster-list-table th,
 .roster-list-table td {
-  padding: 11px 12px;
+  overflow: hidden;
+  padding: 7px 8px;
   border-bottom: 1px solid rgba(165, 190, 214, 0.1);
   text-align: left;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.roster-list-table th:nth-child(1),
+.roster-list-table td:nth-child(1) {
+  width: 8%;
+  text-align: center;
+}
+
+.roster-list-table th:nth-child(2),
+.roster-list-table td:nth-child(2) {
+  width: 24%;
+}
+
+.roster-list-table th:nth-child(3),
+.roster-list-table td:nth-child(3) {
+  width: 20%;
+}
+
+.roster-list-table th:nth-child(4),
+.roster-list-table td:nth-child(4) {
+  width: 11%;
+  text-align: center;
+}
+
+.roster-list-table th:nth-child(5),
+.roster-list-table td:nth-child(5) {
+  width: 19%;
+}
+
+.roster-list-table th:nth-child(6),
+.roster-list-table td:nth-child(6) {
+  width: 18%;
+  text-align: center;
 }
 
 .roster-list-table th {
@@ -3215,6 +3250,24 @@ button {
 
   .operation-controls {
     grid-template-columns: 1fr;
+  }
+
+  .roster-list-table {
+    font-size: 0.74rem;
+  }
+
+  .roster-list-table th,
+  .roster-list-table td {
+    padding: 6px 4px;
+  }
+
+  .roster-list-table th {
+    font-size: 0.68rem;
+  }
+
+  .roster-list-table .registration-source {
+    padding: 3px 4px;
+    font-size: 0.66rem;
   }
 
   .roster-upload-actions {
