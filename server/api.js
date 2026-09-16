@@ -3,6 +3,19 @@ const { getPool } = require('./db');
 
 const SESSION_COOKIE = 'ttgms_session';
 const SESSION_DAYS = 30;
+let gameStateColumnsPromise = null;
+
+async function ensureGameStateColumns() {
+  if (!gameStateColumnsPromise) {
+    gameStateColumnsPromise = getPool().query(
+      `alter table public.games
+         add column if not exists qualifying_groups jsonb not null default '{}'::jsonb,
+         add column if not exists preliminary_matches jsonb not null default '{}'::jsonb,
+         add column if not exists tournaments jsonb not null default '{}'::jsonb`
+    );
+  }
+  return gameStateColumnsPromise;
+}
 
 function sendJson(res, statusCode, payload, headers = {}) {
   res.writeHead(statusCode, {
@@ -79,6 +92,9 @@ function publicGame(row, formats = [], registrations = []) {
     operatorNickname: row.operator_nickname,
     registrations,
     participants: [],
+    qualifyingGroups: row.qualifying_groups || {},
+    preliminaryMatches: row.preliminary_matches || {},
+    tournaments: row.tournaments || {},
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -138,6 +154,7 @@ function requirePool() {
 
 async function getGames() {
   const pool = requirePool();
+  await ensureGameStateColumns();
   const games = await pool.query(
     `select g.*, u.nickname as operator_nickname
        from public.games g
@@ -296,6 +313,31 @@ async function handleApi(req, res, requestPath) {
       } finally {
         client.release();
       }
+    }
+
+    const qualifyingGroupsMatch = requestPath.match(/^\/api\/games\/([^/]+)\/qualifying-groups$/);
+    if (qualifyingGroupsMatch && req.method === 'PATCH') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      const body = await readBody(req);
+      const gameId = qualifyingGroupsMatch[1];
+      const format = String(body.format || '');
+      const setup = body.setup;
+      if (!['singles', 'doubles', 'team'].includes(format) || !setup || !Array.isArray(setup.groups)) {
+        return sendJson(res, 400, { error: '조편성 정보를 확인해 주세요.' });
+      }
+      const gameResult = await pool.query(
+        `update public.games
+            set qualifying_groups = jsonb_set(coalesce(qualifying_groups, '{}'::jsonb), $1::text[], $2::jsonb, true),
+                preliminary_matches = coalesce(preliminary_matches, '{}'::jsonb) - $3,
+                updated_at = now()
+          where id = $4 and operator_id = $5
+          returning id`,
+        [`{${format}}`, JSON.stringify(setup), format, gameId, user.id]
+      );
+      if (!gameResult.rows[0]) return sendJson(res, 404, { error: '저장할 게임을 찾을 수 없거나 운영자 권한이 없습니다.' });
+      const games = await getGames();
+      return sendJson(res, 200, { game: games.find((item) => item.id === gameId) });
     }
 
     const bulkRegistrationMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations\/bulk$/);

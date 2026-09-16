@@ -1522,7 +1522,7 @@
     window.print();
   }
 
-  function handleSaveGroups() {
+  async function handleSaveGroups() {
     const currentUser = getCurrentUser();
     const game = state.games.find((item) => item.id === state.operationGameId);
     const format = state.operationFormat;
@@ -1536,8 +1536,17 @@
     }));
     game.qualifyingGroups[format] = { ...setup, groups, updatedAt: new Date().toISOString() };
     if (game.preliminaryMatches) delete game.preliminaryMatches[format];
-    persistGames();
-    setFlash('수정한 조편성이 저장되었습니다. 예선 대진표를 다시 생성해 주세요.', 'success');
+    try {
+      await apiRequest(`/api/games/${encodeURIComponent(game.id)}/qualifying-groups`, {
+        method: 'PATCH',
+        body: JSON.stringify({ format, setup: game.qualifyingGroups[format] }),
+      });
+      await loadState();
+      setFlash('수정한 조편성이 서버에 저장되었습니다. 예선 대진표를 다시 생성해 주세요.', 'success');
+    } catch (error) {
+      persistGames();
+      setFlash(error.message || '조편성 저장에 실패했습니다.', 'error');
+    }
     render();
   }
 

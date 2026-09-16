@@ -29,6 +29,11 @@ create table if not exists public.games (
   updated_at timestamptz not null default now()
 );
 
+alter table public.games
+  add column if not exists qualifying_groups jsonb not null default '{}'::jsonb,
+  add column if not exists preliminary_matches jsonb not null default '{}'::jsonb,
+  add column if not exists tournaments jsonb not null default '{}'::jsonb;
+
 create table if not exists public.game_formats (
   game_id uuid not null references public.games(id) on delete cascade,
   format text not null check (format in ('singles', 'doubles', 'team')),
