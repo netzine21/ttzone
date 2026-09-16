@@ -507,9 +507,12 @@ button {
   background: rgba(5, 11, 20, 0.48);
 }
 
-.auth-login-form .button-row,
-.auth-login-form .button-row .btn {
-  width: 100%;
+.auth-login-form .button-row {
+  justify-content: center;
+}
+
+.auth-login-form .game-list-action {
+  margin: 6px auto 0;
 }
 
 .create-game-heading {
@@ -519,6 +522,13 @@ button {
 
 .create-game-heading h2 {
   text-align: center;
+}
+
+.auth-heading h1 {
+  margin: 0;
+  text-align: center;
+  font-size: clamp(1.25rem, 3vw, 1.7rem);
+  letter-spacing: -0.05em;
 }
 
 .create-game-heading > div {

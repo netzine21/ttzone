@@ -369,7 +369,7 @@
           </div>
           <label class="check-line login-remember"><input type="checkbox" name="remember" /> 로그인 상태 유지</label>
           <div class="button-row">
-            <button class="btn btn-primary" type="submit">로그인</button>
+            <button class="game-list-action game-list-action--primary" type="submit"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z" /><circle cx="12" cy="15" r="1.2" /></svg><span>로그인</span></button>
           </div>
         </form>
       `;
@@ -428,9 +428,11 @@
     return `
       <section class="auth-simple">
         <div class="panel auth-simple__card">
-          <h1>${isLogin ? '로그인' : '회원가입'}</h1>
+          <div class="section-heading create-game-heading auth-heading">
+            <div><h1>${isLogin ? '로그인' : '회원가입'}</h1></div>
+            <button type="button" class="create-game-close" aria-label="${isLogin ? '로그인' : '회원가입'} 화면 닫기" data-open-public><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg></button>
+          </div>
           ${renderAuthTab()}
-          <button type="button" class="btn btn-ghost auth-simple__back" data-open-public>게임목록으로 돌아가기</button>
         </div>
       </section>
     `;
