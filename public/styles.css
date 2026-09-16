@@ -1643,6 +1643,15 @@ button {
   margin-bottom: 14px;
 }
 
+.format-selector {
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(165, 190, 214, 0.14);
+}
+
+.competition-subtabs {
+  padding-top: 2px;
+}
+
 .format-selector__item,
 .competition-subtabs .detail-tab {
   appearance: none;

@@ -604,6 +604,11 @@
   function renderCompetitionView(game, format) {
     const progressSubtab = ['participants', 'league', 'tournament'].includes(state.progressSubtab) ? state.progressSubtab : 'participants';
     const config = getTournamentConfig(game, format);
+    const formatIcons = {
+      singles: '<circle cx="12" cy="7" r="3"></circle><path d="M6 20c.7-4 2.7-6 6-6s5.3 2 6 6"></path>',
+      doubles: '<circle cx="8" cy="7" r="2.5"></circle><circle cx="16" cy="7" r="2.5"></circle><path d="M3 20c.5-3.6 2.2-5.5 5-5.5s4.5 1.9 5 5.5M11 20c.5-3.6 2.2-5.5 5-5.5s4.5 1.9 5 5.5"></path>',
+      team: '<circle cx="6" cy="7" r="2.2"></circle><circle cx="12" cy="6" r="2.2"></circle><circle cx="18" cy="7" r="2.2"></circle><path d="M2 20c.4-3.4 1.7-5 4-5s3.6 1.6 4 5M8 20c.4-3.4 1.7-5 4-5s3.6 1.6 4 5M14 20c.4-3.4 1.7-5 4-5s3.6 1.6 4 5"></path>'
+    };
     const progressTabs = [
       ['participants', '참가선수', '<circle cx="9" cy="8" r="3"></circle><path d="M3 20c.7-3.3 2.7-5 6-5s5.3 1.7 6 5M16 6h5M18.5 3.5v5"></path>'],
       ['league', '리그전', '<circle cx="7" cy="7" r="2"></circle><circle cx="17" cy="7" r="2"></circle><circle cx="12" cy="17" r="2"></circle><path d="M8.5 8.5 11 15M15.5 8.5 13 15"></path>'],
@@ -611,7 +616,7 @@
     ];
     const participantCount = getGameRegistrations(game, format).length;
     const progressContent = progressSubtab === 'participants' ? `<div class="competition-content-heading"><h3>${escapeHtml(FORMAT_LABELS[format])} 참가자 목록</h3><span>총 ${participantCount}명/팀</span></div>${renderPublicParticipantList(game, format)}` : progressSubtab === 'league' ? `<h3>${escapeHtml(FORMAT_LABELS[format])} 리그전</h3>${renderPublicLeagueStandings(game, format)}` : `<h3>${escapeHtml(FORMAT_LABELS[format])} 토너먼트</h3>${config?.upper ? `<h4>상위리그</h4>${renderPublicTournamentBracket(config.upper)}` : ''}${config?.lower ? `<h4>하위리그</h4>${renderPublicTournamentBracket(config.lower)}` : (!config ? '<div class="empty-state">아직 본선 토너먼트가 생성되지 않았습니다.</div>' : '')}`;
-    return `<div class="competition-view"><div class="format-selector" role="tablist" aria-label="경기종목">${getGameFormats(game).map((item) => `<button type="button" class="format-selector__item ${item === format ? 'is-active' : ''}" data-status-format="${escapeHtml(item)}"><svg class="progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"></circle><path d="M8 16c2-3 6-5 8-8"></path></svg><span>${escapeHtml(FORMAT_LABELS[item])}</span></button>`).join('')}</div><div class="competition-subtabs competition-progress__tabs" role="tablist" aria-label="경기진행 메뉴">${progressTabs.map(([value, label, icon]) => `<button type="button" class="game-list-action progress-tab ${progressSubtab === value ? 'is-active' : ''}" data-status-progress="${value}"><svg class="game-list-action__icon progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${icon}</svg><span>${label}</span></button>`).join('')}</div>${progressContent}</div>`;
+    return `<div class="competition-view"><div class="format-selector" role="tablist" aria-label="경기종목">${getGameFormats(game).map((item) => `<button type="button" class="format-selector__item ${item === format ? 'is-active' : ''}" data-status-format="${escapeHtml(item)}"><svg class="progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${formatIcons[item] || formatIcons.singles}</svg><span>${escapeHtml(FORMAT_LABELS[item])}</span></button>`).join('')}</div><div class="competition-subtabs competition-progress__tabs" role="tablist" aria-label="경기진행 메뉴">${progressTabs.map(([value, label, icon]) => `<button type="button" class="game-list-action progress-tab ${progressSubtab === value ? 'is-active' : ''}" data-status-progress="${value}"><svg class="game-list-action__icon progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${icon}</svg><span>${label}</span></button>`).join('')}</div>${progressContent}</div>`;
   }
   function renderApplicationsView(game, currentUser) {
     if (!currentUser) return `<div class="public-apply-cta"><p>신청조회·수정 및 참가신청은 로그인 후 이용할 수 있습니다.</p><button type="button" class="btn btn-primary" data-game-apply="${escapeHtml(game.id)}">로그인하고 참가신청</button></div>`;
