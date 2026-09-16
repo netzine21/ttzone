@@ -3325,7 +3325,7 @@ button {
   }
 
   .competition-subtabs {
-    justify-content: flex-start;
+    justify-content: center;
   }
 
   .format-selector__item,
