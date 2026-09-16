@@ -1645,6 +1645,11 @@ button {
   background: transparent;
 }
 
+.format-selector__item.is-active,
+.competition-subtabs .progress-tab.is-active {
+  border-bottom-color: transparent;
+}
+
 .progress-tab {
   display: inline-flex;
   align-items: center;
@@ -3312,8 +3317,15 @@ button {
   .competition-subtabs {
     gap: 12px;
     overflow-x: auto;
-    justify-content: flex-start;
     padding-bottom: 2px;
+  }
+
+  .format-selector {
+    justify-content: center;
+  }
+
+  .competition-subtabs {
+    justify-content: flex-start;
   }
 
   .format-selector__item,
