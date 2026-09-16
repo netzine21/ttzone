@@ -1991,25 +1991,30 @@ button {
 
 .operation-submenu {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  justify-content: center;
+  gap: 18px;
   margin-top: 14px;
+  overflow-x: auto;
 }
 
 .operation-submenu__item {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 8px 13px;
+  appearance: none;
+  flex: 0 0 auto;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 4px 0;
   color: var(--muted);
-  background: var(--bg-2);
+  background: transparent;
+  font: inherit;
   font-size: 0.86rem;
   font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .operation-submenu__item.is-active {
-  border-color: var(--primary);
+  border-bottom-color: transparent;
   color: var(--primary);
-  background: rgba(118, 240, 196, 0.1);
 }
 
 .roster-operation-panel {
@@ -2368,6 +2373,10 @@ button {
 
 .schedule-panel .operation-controls {
   grid-template-columns: 1.3fr 1fr 0.8fr auto auto;
+}
+
+.schedule-panel .schedule-generation-controls {
+  grid-template-columns: minmax(0, 1.5fr) minmax(150px, 1fr) minmax(110px, 0.8fr) auto auto;
 }
 
 .qualifying-standings-overview {
@@ -3410,6 +3419,30 @@ button {
 
   .operation-controls {
     grid-template-columns: 1fr;
+  }
+
+  .schedule-panel .schedule-generation-controls {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .schedule-generation-controls > .field:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .schedule-generation-controls > .btn,
+  .schedule-generation-controls > .game-list-action {
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
+
+  .operation-submenu {
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .operation-submenu__item {
+    font-size: 0.78rem;
   }
 
   .qualifying-controls {
