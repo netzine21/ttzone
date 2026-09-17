@@ -1627,6 +1627,13 @@ button {
   white-space: nowrap;
 }
 
+.competition-tournament-heading {
+  margin: 0 0 10px;
+  color: var(--text);
+  font-size: 1rem;
+  text-align: center;
+}
+
 .competition-progress {
   margin-top: 18px;
   padding-top: 16px;
