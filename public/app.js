@@ -1686,7 +1686,7 @@
     app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : showPublicHome ? renderPublicGamesPage() : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : state.page === 'auth' ? renderAuthPage() : publicGame ? renderPublicGameDetail(publicGame) : renderPublicGamesPage()}`;
   }
 
-  function goToHome(event) {
+  async function goToHome(event) {
     event?.preventDefault();
     state.page = getCurrentUser() ? 'dashboard' : 'public';
     state.selectedPublicGameId = null;
@@ -1701,6 +1701,7 @@
     state.statusSubtab = 'info';
     state.progressSubtab = 'participants';
     clearFlash();
+    await loadState();
     render();
   }
 
@@ -2608,7 +2609,7 @@
   }
 
   function wireEvents() {
-    brand?.addEventListener('click', goToHome);
+    brand?.addEventListener('click', (event) => { void goToHome(event); });
     app.addEventListener('click', handleAppClick);
     topActions?.addEventListener('click', handleAppClick);
     mobileMenuActions?.addEventListener('click', async (event) => {
