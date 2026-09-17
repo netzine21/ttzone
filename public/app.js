@@ -1308,7 +1308,9 @@
     const saved = game.qualifyingGroups?.[format];
     const participantCount = getGroupingUnits(game, format).length;
     const defaultGroupCount = saved?.groupCount || Math.max(1, Math.ceil(participantCount / 4));
-    const operationTitle = state.operationMenu === 'groups' ? `[${FORMAT_LABELS[format]} 예선리그 조편성]` : { roster: '선수등록', print: '대진표 출력', results: '경기결과 입력' }[state.operationMenu] || '예선리그 조편성';
+    const calculatedSizes = saved?.groups?.map((group) => group.players.length) || [];
+    const calculatedSizeText = calculatedSizes.length ? calculatedSizes.join('명, ') + '명' : '조 수를 정하면 자동 계산';
+    const operationTitle = { roster: '선수등록', groups: '예선리그 조편성', print: '대진표 출력', results: '경기결과 입력' }[state.operationMenu] || '예선리그 조편성';
     return `
       <section class="panel section-card operations-page">
         <div class="section-heading operations-heading">
@@ -1324,6 +1326,7 @@
           <div class="field"><label for="groupCount">조 수</label><input id="groupCount" type="number" min="1" max="${Math.max(1, participantCount)}" value="${escapeHtml(String(defaultGroupCount))}" data-group-count /></div></div>
           <button type="button" class="game-list-action game-list-action--primary qualifying-generate-action" data-generate-groups><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"></path><circle cx="12" cy="12" r="8"></circle></svg><span>조편성 생성</span></button>
         </div>
+        <div class="group-result-heading qualifying-result-heading"><div><p class="section-kicker">조편성 결과</p><h2>${escapeHtml(FORMAT_LABELS[format])} 예선리그</h2><p class="qualifying-result-guide">등록된 참가자를 기준으로 조를 자동 배정합니다. 현재 계산 결과: ${escapeHtml(calculatedSizeText)}</p></div>${saved ? '<span class="subtle-note">생성 후 선수별 조 이동 가능</span>' : ''}</div>
         ${renderOperationGroups(game, format)}
         ${saved ? `<div class="button-row group-save-row"><span class="group-visibility-status ${saved.isPublic ? 'is-public' : ''}">${saved.isPublic ? '회원 공개 중' : '현재 비공개'}</span><button type="button" class="game-list-action" data-save-groups><span>수정한 조편성 저장</span></button><button type="button" class="game-list-action game-list-action--primary" data-toggle-group-visibility="${escapeHtml(game.id)}"><span>${saved.isPublic ? '회원 공개 취소' : '회원 공개'}</span></button></div>` : ''}`}
       </section>
