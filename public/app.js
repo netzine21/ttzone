@@ -12,6 +12,15 @@
     team: '단체전',
   };
 
+  function getFormatIconSvg(format) {
+    const icons = {
+      singles: '<circle cx="12" cy="7" r="3"></circle><path d="M6 20c.7-4 2.7-6 6-6s5.3 2 6 6"></path>',
+      doubles: '<circle cx="8" cy="7" r="2.5"></circle><circle cx="16" cy="7" r="2.5"></circle><path d="M3 20c.5-3.6 2.2-5.5 5-5.5s4.5 1.9 5 5.5M11 20c.5-3.6 2.2-5.5 5-5.5s4.5 1.9 5 5.5"></path>',
+      team: '<circle cx="6" cy="7" r="2.2"></circle><circle cx="12" cy="6" r="2.2"></circle><circle cx="18" cy="7" r="2.2"></circle><path d="M2 20c.4-3.4 1.7-5 4-5s3.6 1.6 4 5M8 20c.4-3.4 1.7-5 4-5s3.6 1.6 4 5M14 20c.4-3.4 1.7-5 4-5s3.6 1.6 4 5"></path>'
+    };
+    return icons[format] || icons.singles;
+  }
+
   const state = {
     users: [],
     games: [],
@@ -614,11 +623,6 @@
   function renderCompetitionView(game, currentUser, format) {
     const progressSubtab = ['participants', 'league', 'tournament'].includes(state.progressSubtab) ? state.progressSubtab : 'participants';
     const config = getTournamentConfig(game, format);
-    const formatIcons = {
-      singles: '<circle cx="12" cy="7" r="3"></circle><path d="M6 20c.7-4 2.7-6 6-6s5.3 2 6 6"></path>',
-      doubles: '<circle cx="8" cy="7" r="2.5"></circle><circle cx="16" cy="7" r="2.5"></circle><path d="M3 20c.5-3.6 2.2-5.5 5-5.5s4.5 1.9 5 5.5M11 20c.5-3.6 2.2-5.5 5-5.5s4.5 1.9 5 5.5"></path>',
-      team: '<circle cx="6" cy="7" r="2.2"></circle><circle cx="12" cy="6" r="2.2"></circle><circle cx="18" cy="7" r="2.2"></circle><path d="M2 20c.4-3.4 1.7-5 4-5s3.6 1.6 4 5M8 20c.4-3.4 1.7-5 4-5s3.6 1.6 4 5M14 20c.4-3.4 1.7-5 4-5s3.6 1.6 4 5"></path>'
-    };
     const progressTabs = [
       ['participants', '참가선수', '<circle cx="9" cy="8" r="3"></circle><path d="M3 20c.7-3.3 2.7-5 6-5s5.3 1.7 6 5M16 6h5M18.5 3.5v5"></path>'],
       ['league', '리그전', '<circle cx="7" cy="7" r="2"></circle><circle cx="17" cy="7" r="2"></circle><circle cx="12" cy="17" r="2"></circle><path d="M8.5 8.5 11 15M15.5 8.5 13 15"></path>'],
@@ -630,7 +634,7 @@
     const canViewGroups = isOwner || groupSetup?.isPublic === true;
     const groupCount = groupSetup?.groups?.length || 0;
     const progressContent = progressSubtab === 'participants' ? `<div class="competition-content-heading"><h3>${escapeHtml(FORMAT_LABELS[format])} 참가자 목록</h3><span>총 ${participantCount}명/팀</span></div>${renderPublicParticipantList(game, format)}` : progressSubtab === 'league' ? `<div class="competition-content-heading"><h3>${escapeHtml(FORMAT_LABELS[format])} 리그전</h3><span>총 ${groupCount}개 조</span></div>${canViewGroups ? renderPublicLeagueStandings(game, format) : '<div class="empty-state">운영자가 조편성을 준비 중입니다.</div>'}` : `<h3>${escapeHtml(FORMAT_LABELS[format])} 토너먼트</h3>${canViewGroups && config?.upper ? `<h4>상위리그</h4>${renderPublicTournamentBracket(config.upper)}` : ''}${canViewGroups && config?.lower ? `<h4>하위리그</h4>${renderPublicTournamentBracket(config.lower)}` : (!config ? '<div class="empty-state">아직 본선 토너먼트가 생성되지 않았습니다.</div>' : !canViewGroups ? '<div class="empty-state">운영자가 경기 진행을 준비 중입니다.</div>' : '')}`;
-    return `<div class="competition-view"><div class="format-selector" role="tablist" aria-label="경기종목">${getGameFormats(game).map((item) => `<button type="button" class="format-selector__item ${item === format ? 'is-active' : ''}" data-status-format="${escapeHtml(item)}"><svg class="progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${formatIcons[item] || formatIcons.singles}</svg><span>${escapeHtml(FORMAT_LABELS[item])}</span></button>`).join('')}</div><div class="competition-subtabs competition-progress__tabs" role="tablist" aria-label="경기진행 메뉴">${progressTabs.map(([value, label, icon]) => `<button type="button" class="game-list-action progress-tab ${progressSubtab === value ? 'is-active' : ''}" data-status-progress="${value}"><svg class="game-list-action__icon progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${icon}</svg><span>${label}</span></button>`).join('')}</div>${progressContent}</div>`;
+    return `<div class="competition-view"><div class="format-selector" role="tablist" aria-label="경기종목">${getGameFormats(game).map((item) => `<button type="button" class="format-selector__item ${item === format ? 'is-active' : ''}" data-status-format="${escapeHtml(item)}"><svg class="progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${getFormatIconSvg(item)}</svg><span>${escapeHtml(FORMAT_LABELS[item])}</span></button>`).join('')}</div><div class="competition-subtabs competition-progress__tabs" role="tablist" aria-label="경기진행 메뉴">${progressTabs.map(([value, label, icon]) => `<button type="button" class="game-list-action progress-tab ${progressSubtab === value ? 'is-active' : ''}" data-status-progress="${value}"><svg class="game-list-action__icon progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${icon}</svg><span>${label}</span></button>`).join('')}</div>${progressContent}</div>`;
   }
   function renderApplicationsView(game, currentUser) {
     if (!currentUser) return `<div class="public-apply-cta"><p>신청조회·수정 및 참가신청은 로그인 후 이용할 수 있습니다.</p><button type="button" class="btn btn-primary" data-game-apply="${escapeHtml(game.id)}">로그인하고 참가신청</button></div>`;
@@ -962,10 +966,9 @@
           <div class="field"><label for="operationRosterFormat">경기종목</label><select id="operationRosterFormat" data-operation-format data-roster-format="${escapeHtml(game.id)}">${formats.map((item) => `<option value="${escapeHtml(item)}" ${item === format ? 'selected' : ''}>${escapeHtml(FORMAT_LABELS[item])}</option>`).join('')}</select></div>
         </div>
         <div class="roster-import roster-import--standalone">
-          <div class="roster-import-heading"><h2><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"></circle><path d="M3 20c.7-3.3 2.7-5 6-5s5.3 1.7 6 5M16 6h5M18.5 3.5v5"></path></svg>참가선수 일괄등록</span></h2></div>
-          <div class="roster-schema"><strong>${escapeHtml(FORMAT_LABELS[format])} 명부 열</strong><span>${format === 'singles' ? '닉네임 또는 선수명, 아이디(선택), 부수' : '팀명, 닉네임 또는 선수명, 아이디(선택), 부수'}</span></div>
+          <div class="roster-import-heading"><h2><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true">${getFormatIconSvg(format)}</svg>${escapeHtml(FORMAT_LABELS[format])} 참가선수 일괄등록</span></h2></div>
           <div class="roster-upload-actions"><label class="game-list-action game-list-action--primary file-button" for="operationRosterFile"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M8 8l4-4 4 4M5 14v5h14v-5"></path></svg><span>명부 파일 선택</span></label><input id="operationRosterFile" class="file-input" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" data-roster-upload="${escapeHtml(game.id)}" data-roster-format="${escapeHtml(format)}" /><button type="button" class="game-list-action" data-download-roster-template><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 11l4 4 4-4M5 20h14"></path></svg><span>양식 다운로드</span></button></div>
-          <div class="roster-registration-status"><p class="subtle-note">현재 ${escapeHtml(String(registrations.length))}명(팀) 등록 · 참가형식별로 한 번씩 업로드하세요.</p><div class="roster-registration-close">${registrationClosed ? '<span class="status-chip">선수등록 마감</span>' : `<button type="button" class="game-list-action" data-close-registration="${escapeHtml(game.id)}" data-close-registration-format="${escapeHtml(format)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"></path></svg><span>선수등록 마감</span></button>`}</div></div>
+          <div class="roster-registration-status"><div class="roster-registration-close">${registrationClosed ? '<span class="status-chip">선수등록 마감</span>' : `<button type="button" class="game-list-action" data-close-registration="${escapeHtml(game.id)}" data-close-registration-format="${escapeHtml(format)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"></path></svg><span>선수등록 마감</span></button>`}</div></div>
         </div>
         <section class="roster-list-panel"><div class="roster-list-heading"><div><p class="section-kicker">등록 현황</p><h2>${escapeHtml(FORMAT_LABELS[format])} 참가선수 명부</h2></div><span>${registrations.length}명(팀)</span></div><div class="roster-list-summary"><span class="registration-source registration-source--bulk">일괄등록 ${bulkCount}</span><span class="registration-source registration-source--online">온라인등록 ${onlineCount}</span></div>${registrationList}</section>
       </div>
