@@ -84,7 +84,7 @@ function publicGame(row, formats = [], registrations = [], viewerId = null) {
   const qualifyingGroups = row.qualifying_groups || {};
   const visibleQualifyingGroups = Object.fromEntries(Object.entries(qualifyingGroups).map(([format, setup]) => [
     format,
-    isOwner || setup?.isPublic ? setup : { isPublic: false },
+    isOwner || setup?.isPublic === true || setup?.isPublic === 'true' ? setup : { isPublic: false },
   ]));
   return {
     id: row.id,
@@ -364,25 +364,20 @@ async function handleApi(req, res, requestPath) {
       const gameResult = await pool.query(
         `update public.games
             set qualifying_groups = jsonb_set(
-              coalesce(qualifying_groups, '{}'::jsonb),
-              $1::text[],
               jsonb_set(
-                jsonb_set(
-                  coalesce(qualifying_groups -> $2, '{}'::jsonb),
-                  '{isPublic}',
-                  $3::jsonb,
-                  true
-                ),
-                '{publishedAt}',
-                case when $3::boolean then to_jsonb(now()) else 'null'::jsonb end,
+                coalesce(qualifying_groups, '{}'::jsonb),
+                ARRAY[$1, 'isPublic']::text[],
+                to_jsonb($2::boolean),
                 true
               ),
+              ARRAY[$1, 'publishedAt']::text[],
+              case when $2::boolean then to_jsonb(now()) else 'null'::jsonb end,
               true
             ),
                 updated_at = now()
-          where id = $4 and operator_id = $5
+          where id = $3 and operator_id = $4
           returning id`,
-        [`{${format}}`, format, JSON.stringify(isPublic), gameId, user.id]
+        [format, isPublic, gameId, user.id]
       );
       if (!gameResult.rows[0]) return sendJson(res, 404, { error: '공개 상태를 변경할 게임을 찾을 수 없습니다.' });
       const games = await getGames(user.id);
