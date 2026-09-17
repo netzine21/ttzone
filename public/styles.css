@@ -3821,6 +3821,10 @@ button {
   .game-list-item__body h3 {
     font-size: 0.96rem;
   }
+
+  .operation-note {
+    display: none;
+  }
 }
 
 .schedule-print-root {
