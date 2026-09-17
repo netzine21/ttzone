@@ -57,6 +57,7 @@
   const mobileMenu = document.getElementById('mobileMenu');
   const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
   const brand = document.querySelector('.brand');
+  const brandName = document.querySelector('.brand-name');
 
   function readJson(key, fallback) {
     try {
@@ -2610,6 +2611,11 @@
 
   function wireEvents() {
     brand?.addEventListener('click', (event) => { void goToHome(event); });
+    brandName?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      void goToHome(event);
+    });
     app.addEventListener('click', handleAppClick);
     topActions?.addEventListener('click', handleAppClick);
     mobileMenuActions?.addEventListener('click', async (event) => {
