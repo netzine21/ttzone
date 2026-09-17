@@ -137,7 +137,11 @@
       const currentUser = session?.user || null;
       state.users = currentUser ? [currentUser] : [];
       const registrationClosures = readJson(STORAGE_KEYS.registrationClosures, {});
-      state.games = (Array.isArray(games.games) ? games.games : []).map((game) => registrationClosures[game.id] ? { ...game, registrationClosed: true } : game);
+      state.games = (Array.isArray(games.games) ? games.games : []).map((game) => {
+        if (game.registrationClosed && typeof game.registrationClosed === 'object') return game;
+        const legacyClosed = registrationClosures[game.id] === true || game.registrationClosed === true;
+        return legacyClosed ? { ...game, registrationClosed: { [getGameFormats(game)[0]]: true } } : { ...game, registrationClosed: {} };
+      });
       state.sessionUserId = currentUser?.id || null;
       return;
     }
@@ -219,6 +223,11 @@
   function getGameFormats(game) {
     if (Array.isArray(game.formats) && game.formats.length) return game.formats;
     return game.format && FORMAT_LABELS[game.format] ? [game.format] : [];
+  }
+
+  function isRegistrationClosed(game, format) {
+    if (game?.registrationClosed === true) return true;
+    return game?.registrationClosed?.[format] === true;
   }
 
   function getGameStatus(game) {
@@ -529,7 +538,8 @@
     const formats = getGameFormats(game);
     const isOwner = currentUser?.id === game.operatorId;
     const hasAppliedAllFormats = currentUser && formats.length > 0 && formats.every((format) => getGameRegistrations(game, format).some((registration) => registration.userId === currentUser.id));
-    const applyAction = isOwner || game.registrationClosed || hasAppliedAllFormats ? '' : `<div class="public-apply-action"><button type="button" class="btn btn-primary" data-game-apply="${escapeHtml(game.id)}">참가신청</button></div>`;
+    const allFormatsClosed = formats.length > 0 && formats.every((format) => isRegistrationClosed(game, format));
+    const applyAction = isOwner || allFormatsClosed || hasAppliedAllFormats ? '' : `<div class="public-apply-action"><button type="button" class="btn btn-primary" data-game-apply="${escapeHtml(game.id)}">참가신청</button></div>`;
     const editAction = currentUser?.id === game.operatorId ? `<div class="game-edit-bottom-action"><button type="button" class="game-list-action" data-edit-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h4L19 9l-4-4L5 15v4zM13 7l4 4" /></svg><span>게임수정</span></button></div>` : '';
     return `<dl class="meta-grid public-detail-meta"><div><dt>게임장소</dt><dd>${escapeHtml(game.location)}</dd></div><div><dt>게임일시</dt><dd>${escapeHtml(formatDateTime(game.scheduledAt))}</dd></div><div><dt>운영자</dt><dd>${escapeHtml(game.operatorNickname)}</dd></div><div><dt>운영자 휴대폰</dt><dd>${escapeHtml(operator?.phone || '미입력')}</dd></div><div><dt>경기방식</dt><dd>${formats.map((format) => escapeHtml(FORMAT_LABELS[format])).join(' · ')}</dd></div><div><dt>최대참가인원</dt><dd>${escapeHtml(String(game.maxParticipants))}명</dd></div></dl><div class="public-detail-note"><p class="section-kicker">게임안내</p><p>${game.note ? escapeHtml(game.note) : '<span class="muted">추가 안내가 없습니다.</span>'}</p></div>${applyAction}${editAction}`;
   }
@@ -939,6 +949,7 @@
 
   function renderRosterOperationPanel(games, game, formats, format) {
     const registrations = getGameRegistrations(game, format);
+    const registrationClosed = isRegistrationClosed(game, format);
     const bulkCount = registrations.filter((registration) => getRegistrationSource(registration).key === 'bulk').length;
     const onlineCount = registrations.length - bulkCount;
     const registrationList = registrations.length
@@ -953,8 +964,8 @@
         <div class="roster-import roster-import--standalone">
           <div class="roster-import-heading"><h2><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"></circle><path d="M3 20c.7-3.3 2.7-5 6-5s5.3 1.7 6 5M16 6h5M18.5 3.5v5"></path></svg>참가선수 일괄등록</span></h2></div>
           <div class="roster-schema"><strong>${escapeHtml(FORMAT_LABELS[format])} 명부 열</strong><span>${format === 'singles' ? '닉네임 또는 선수명, 아이디(선택), 부수' : '팀명, 닉네임 또는 선수명, 아이디(선택), 부수'}</span></div>
-          <div class="roster-upload-actions"><label class="game-list-action game-list-action--primary file-button" for="operationRosterFile"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M8 8l4-4 4 4M5 14v5h14v-5"></path></svg><span>명부 파일 선택</span></label><input id="operationRosterFile" class="file-input" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" data-roster-upload="${escapeHtml(game.id)}" /><button type="button" class="game-list-action" data-download-roster-template><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 11l4 4 4-4M5 20h14"></path></svg><span>양식 다운로드</span></button></div>
-          <div class="roster-registration-status"><p class="subtle-note">현재 ${escapeHtml(String(registrations.length))}명(팀) 등록 · 참가형식별로 한 번씩 업로드하세요.</p><div class="roster-registration-close">${game.registrationClosed ? '<span class="status-chip">선수등록 마감</span>' : `<button type="button" class="game-list-action" data-close-registration="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"></path></svg><span>선수등록 마감</span></button>`}</div></div>
+          <div class="roster-upload-actions"><label class="game-list-action game-list-action--primary file-button" for="operationRosterFile"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M8 8l4-4 4 4M5 14v5h14v-5"></path></svg><span>명부 파일 선택</span></label><input id="operationRosterFile" class="file-input" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" data-roster-upload="${escapeHtml(game.id)}" data-roster-format="${escapeHtml(format)}" /><button type="button" class="game-list-action" data-download-roster-template><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 11l4 4 4-4M5 20h14"></path></svg><span>양식 다운로드</span></button></div>
+          <div class="roster-registration-status"><p class="subtle-note">현재 ${escapeHtml(String(registrations.length))}명(팀) 등록 · 참가형식별로 한 번씩 업로드하세요.</p><div class="roster-registration-close">${registrationClosed ? '<span class="status-chip">선수등록 마감</span>' : `<button type="button" class="game-list-action" data-close-registration="${escapeHtml(game.id)}" data-close-registration-format="${escapeHtml(format)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"></path></svg><span>선수등록 마감</span></button>`}</div></div>
         </div>
         <section class="roster-list-panel"><div class="roster-list-heading"><div><p class="section-kicker">등록 현황</p><h2>${escapeHtml(FORMAT_LABELS[format])} 참가선수 명부</h2></div><span>${registrations.length}명(팀)</span></div><div class="roster-list-summary"><span class="registration-source registration-source--bulk">일괄등록 ${bulkCount}</span><span class="registration-source registration-source--online">온라인등록 ${onlineCount}</span></div>${registrationList}</section>
       </div>
@@ -1319,7 +1330,7 @@
   }
 
   function getOperationStartMenu(game, format) {
-    if (!game.registrationClosed) return 'roster';
+    if (getGameFormats(game).some((item) => !isRegistrationClosed(game, item))) return 'roster';
     if (!game.qualifyingGroups?.[format]?.groups?.length) return 'groups';
     if (!game.preliminaryMatches?.[format]?.matches?.length) return 'print';
     return 'results';
@@ -1762,6 +1773,11 @@
     const game = state.games.find((item) => item.id === form.dataset.gameId);
     const format = form.dataset.format;
     if (!currentUser || !game || !getGameFormats(game).includes(format)) return;
+    if (isRegistrationClosed(game, format)) {
+      setFlash(`${FORMAT_LABELS[format]} 선수등록이 마감되었습니다.`, 'error');
+      render();
+      return;
+    }
 
     const formData = Object.fromEntries(new FormData(form).entries());
     const nickname = trimValue(formData.nickname);
@@ -1816,6 +1832,12 @@
       render();
       return;
     }
+    const rosterFormat = input.dataset.rosterFormat || state.operationFormat;
+    if (isRegistrationClosed(game, rosterFormat)) {
+      setFlash(`${FORMAT_LABELS[rosterFormat]} 선수등록이 마감되었습니다.`, 'error');
+      render();
+      return;
+    }
     const file = input.files?.[0];
     if (!file) return;
     const extension = file.name.toLowerCase().split('.').pop();
@@ -1826,7 +1848,7 @@
     }
 
     const formatSelect = document.querySelector(`[data-roster-format="${CSS.escape(game.id)}"]`);
-    const format = formatSelect?.value;
+    const format = formatSelect?.value || rosterFormat;
     const rows = parseRosterText(await file.text());
     const registrations = getGameRegistrations(game);
     const formatRegistrations = getGameRegistrations(game, format);
@@ -2267,13 +2289,24 @@
     if (closeRegistrationButton) {
       const currentUser = getCurrentUser();
       const game = state.games.find((item) => item.id === closeRegistrationButton.dataset.closeRegistration);
-      if (!currentUser || !game || game.operatorId !== currentUser.id) return;
-      game.registrationClosed = true;
-      const closures = readJson(STORAGE_KEYS.registrationClosures, {});
-      closures[game.id] = true;
-      writeJson(STORAGE_KEYS.registrationClosures, closures);
-      state.operationMenu = 'groups';
-      setFlash('선수등록이 마감되었습니다. 이제 조편성을 진행해 주세요.', 'success');
+      const format = closeRegistrationButton.dataset.closeRegistrationFormat;
+      if (!currentUser || !game || game.operatorId !== currentUser.id || !format) return;
+      const registrationClosed = { ...(game.registrationClosed || {}), [format]: true };
+      try {
+        await apiRequest(`/api/games/${encodeURIComponent(game.id)}/registrations/close`, {
+          method: 'PATCH',
+          body: JSON.stringify({ format, closed: true }),
+        });
+        await loadState();
+        const updatedGame = state.games.find((item) => item.id === game.id);
+        const allFormatsClosed = getGameFormats(updatedGame).every((item) => isRegistrationClosed(updatedGame, item));
+        state.operationMenu = allFormatsClosed ? 'groups' : 'roster';
+        setFlash(`${FORMAT_LABELS[format]} 선수등록이 마감되었습니다.${allFormatsClosed ? ' 이제 조편성을 진행해 주세요.' : ''}`, 'success');
+      } catch (error) {
+        game.registrationClosed = registrationClosed;
+        persistGames();
+        setFlash(error.message || '선수등록 마감에 실패했습니다.', 'error');
+      }
       render();
       return;
     }

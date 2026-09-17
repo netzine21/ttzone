@@ -11,7 +11,8 @@ async function ensureGameStateColumns() {
       `alter table public.games
          add column if not exists qualifying_groups jsonb not null default '{}'::jsonb,
          add column if not exists preliminary_matches jsonb not null default '{}'::jsonb,
-         add column if not exists tournaments jsonb not null default '{}'::jsonb`
+         add column if not exists tournaments jsonb not null default '{}'::jsonb,
+         add column if not exists registration_closed jsonb not null default '{}'::jsonb`
     );
   }
   return gameStateColumnsPromise;
@@ -101,6 +102,7 @@ function publicGame(row, formats = [], registrations = [], viewerId = null) {
     qualifyingGroups: visibleQualifyingGroups,
     preliminaryMatches: row.preliminary_matches || {},
     tournaments: row.tournaments || {},
+    registrationClosed: row.registration_closed || {},
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -387,6 +389,30 @@ async function handleApi(req, res, requestPath) {
       return sendJson(res, 200, { game: games.find((item) => item.id === gameId), isPublic });
     }
 
+    const registrationCloseMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations\/close$/);
+    if (registrationCloseMatch && req.method === 'PATCH') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      const body = await readBody(req);
+      const gameId = registrationCloseMatch[1];
+      const format = String(body.format || '');
+      const closed = body.closed === true;
+      if (!['singles', 'doubles', 'team'].includes(format)) {
+        return sendJson(res, 400, { error: '마감할 경기종목을 확인해 주세요.' });
+      }
+      const gameResult = await pool.query(
+        `update public.games
+            set registration_closed = jsonb_set(coalesce(registration_closed, '{}'::jsonb), $1::text[], $2::jsonb, true),
+                updated_at = now()
+          where id = $3 and operator_id = $4
+          returning id`,
+        [`{${format}}`, JSON.stringify(closed), gameId, user.id]
+      );
+      if (!gameResult.rows[0]) return sendJson(res, 404, { error: '마감할 게임을 찾을 수 없거나 운영자 권한이 없습니다.' });
+      const games = await getGames(user.id);
+      return sendJson(res, 200, { game: games.find((item) => item.id === gameId), format, closed });
+    }
+
     const bulkRegistrationMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations\/bulk$/);
     if (bulkRegistrationMatch && req.method === 'POST') {
       const user = await findSession(req);
@@ -399,12 +425,13 @@ async function handleApi(req, res, requestPath) {
         return sendJson(res, 400, { error: '일괄등록 정보를 확인해 주세요.' });
       }
       const gameResult = await pool.query(
-        `select g.id, g.max_participants
+        `select g.id, g.max_participants, g.registration_closed
            from public.games g
           where g.id = $1 and g.operator_id = $2`,
         [gameId, user.id]
       );
       if (!gameResult.rows[0]) return sendJson(res, 404, { error: '등록할 게임을 찾을 수 없거나 운영자 권한이 없습니다.' });
+      if (gameResult.rows[0].registration_closed?.[format] === true) return sendJson(res, 400, { error: '해당 경기종목의 선수등록이 마감되었습니다.' });
       const formatResult = await pool.query('select 1 from public.game_formats where game_id = $1 and format = $2', [gameId, format]);
       if (!formatResult.rows[0]) return sendJson(res, 400, { error: '해당 게임에 등록되지 않은 경기형식입니다.' });
       const client = await pool.connect();
@@ -463,6 +490,8 @@ async function handleApi(req, res, requestPath) {
       if (!['singles', 'doubles', 'team'].includes(format) || !String(body.nickname || '').trim() || !String(body.rank || '').trim() || (format !== 'singles' && !String(body.teamName || '').trim())) {
         return sendJson(res, 400, { error: '참가신청 정보를 확인해 주세요.' });
       }
+      const gameStatus = await pool.query('select registration_closed from public.games where id = $1', [gameId]);
+      if (gameStatus.rows[0]?.registration_closed?.[format] === true) return sendJson(res, 400, { error: '해당 경기종목의 선수등록이 마감되었습니다.' });
       const existing = await pool.query('select id from public.registrations where game_id = $1 and format = $2 and user_id = $3', [gameId, format, user.id]);
       let result;
       if (existing.rows[0]) {
