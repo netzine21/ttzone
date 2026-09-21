@@ -1841,7 +1841,7 @@ button {
 
 .public-league-summary tbody tr + tr th,
 .public-league-summary tbody tr + tr td {
-  border-top: 1px solid rgba(165, 190, 214, 0.24);
+  border-top: 1px solid rgba(118, 240, 196, 0.48);
 }
 
 .public-league-summary tbody tr:last-child th,
@@ -3602,7 +3602,7 @@ button {
   }
 
   .public-league-entry__skill {
-    display: none;
+    display: inline;
   }
 
   .public-league-entry .rank-badge {
