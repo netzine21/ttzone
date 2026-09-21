@@ -2247,6 +2247,37 @@ button {
   background: rgba(118, 240, 196, 0.13);
 }
 
+.registration-source--manual {
+  color: #cdb7ff;
+  background: rgba(164, 125, 255, 0.13);
+}
+
+.roster-manual-registration {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(6, 13, 24, 0.28);
+}
+
+.roster-manual-registration .roster-list-heading {
+  align-items: center;
+}
+
+.roster-manual-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.roster-manual-form .game-list-action {
+  min-height: 40px;
+  white-space: nowrap;
+}
+
 .roster-list-table-wrap {
   overflow-x: auto;
   border: 1px solid var(--border);
@@ -2348,6 +2379,10 @@ button {
 
 .roster-edit-button--muted {
   color: var(--muted);
+}
+
+.roster-edit-button--danger {
+  color: #ff9b9b;
 }
 
 .schedule-panel {
@@ -3575,6 +3610,15 @@ button {
 
   .operation-controls {
     grid-template-columns: 1fr;
+  }
+
+  .roster-manual-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .roster-manual-form .game-list-action {
+    grid-column: 1 / -1;
+    justify-self: center;
   }
 
   .schedule-panel .schedule-generation-controls {

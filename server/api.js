@@ -12,7 +12,12 @@ async function ensureGameStateColumns() {
          add column if not exists qualifying_groups jsonb not null default '{}'::jsonb,
          add column if not exists preliminary_matches jsonb not null default '{}'::jsonb,
          add column if not exists tournaments jsonb not null default '{}'::jsonb,
-         add column if not exists registration_closed jsonb not null default '{}'::jsonb`
+         add column if not exists registration_closed jsonb not null default '{}'::jsonb;
+       alter table public.registrations
+         add column if not exists registration_source text not null default 'bulk';
+       update public.registrations
+          set registration_source = 'online'
+        where user_id is not null and registration_source = 'bulk'`
     );
   }
   return gameStateColumnsPromise;
@@ -172,7 +177,7 @@ async function getGames(viewerId = null) {
   const formats = await pool.query('select game_id, format from public.game_formats');
   const registrations = await pool.query(
     `select id, game_id, format, user_id, nickname, member_id, rank, team_name,
-            registered_by, applied_at, updated_at
+            registered_by, registration_source, applied_at, updated_at
        from public.registrations
       order by applied_at`
   );
@@ -188,6 +193,7 @@ async function getGames(viewerId = null) {
       teamName: item.team_name || '',
       format: item.format,
       registeredBy: item.registered_by,
+      registrationSource: item.registration_source || (item.user_id ? 'online' : 'bulk'),
       appliedAt: item.applied_at,
       updatedAt: item.updated_at,
     })),
@@ -505,8 +511,8 @@ async function handleApi(req, res, requestPath) {
             continue;
           }
           await client.query(
-            `insert into public.registrations (game_id, format, user_id, nickname, member_id, rank, team_name, registered_by)
-             values ($1, $2, null, $3, $4, $5, $6, $7)`,
+            `insert into public.registrations (game_id, format, user_id, nickname, member_id, rank, team_name, registered_by, registration_source)
+             values ($1, $2, null, $3, $4, $5, $6, $7, 'bulk')`,
             [gameId, format, nickname, memberId, rank, teamName || null, user.id]
           );
           currentCount += 1;
@@ -525,6 +531,45 @@ async function handleApi(req, res, requestPath) {
 
     const registrationMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations$/);
     const registrationUpdateMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations\/([^/]+)$/);
+    const manualRegistrationMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations\/manual$/);
+    if (manualRegistrationMatch && req.method === 'POST') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      const body = await readBody(req);
+      const gameId = manualRegistrationMatch[1];
+      const format = String(body.format || '');
+      const nickname = String(body.nickname || '').trim();
+      const memberId = String(body.memberId || '').trim();
+      const rank = String(body.rank || '').trim();
+      const teamName = String(body.teamName || '').trim();
+      if (!['singles', 'doubles', 'team'].includes(format) || !nickname || !rank || (format !== 'singles' && !teamName)) {
+        return sendJson(res, 400, { error: '개별등록 정보를 확인해 주세요.' });
+      }
+      const gameResult = await pool.query(
+        `select id, max_participants, registration_closed, qualifying_groups, preliminary_matches, tournaments
+           from public.games where id = $1 and operator_id = $2`,
+        [gameId, user.id]
+      );
+      const game = gameResult.rows[0];
+      if (!game) return sendJson(res, 404, { error: '등록할 게임을 찾을 수 없거나 운영자 권한이 없습니다.' });
+      if (game.registration_closed?.[format] === true) return sendJson(res, 400, { error: '해당 경기종목의 선수등록이 마감되었습니다.' });
+      if (game.qualifying_groups?.[format]?.groups?.length || game.preliminary_matches?.[format]?.matches?.length || game.tournaments?.[format]) {
+        return sendJson(res, 400, { error: '조편성 또는 경기진행이 시작되어 선수를 추가할 수 없습니다.' });
+      }
+      const countResult = await pool.query('select count(*)::int as count from public.registrations where game_id = $1 and format = $2', [gameId, format]);
+      if (Number(countResult.rows[0]?.count || 0) >= Number(game.max_participants)) return sendJson(res, 400, { error: '해당 경기종목의 정원이 마감되었습니다.' });
+      const duplicate = await pool.query(
+        `select id from public.registrations where game_id = $1 and format = $2 and (lower(nickname) = lower($3) or ($4 <> '' and lower(coalesce(member_id, '')) = lower($4))) limit 1`,
+        [gameId, format, nickname, memberId]
+      );
+      if (duplicate.rows[0]) return sendJson(res, 409, { error: '같은 선수명 또는 아이디가 이미 등록되어 있습니다.' });
+      const result = await pool.query(
+        `insert into public.registrations (game_id, format, user_id, nickname, member_id, rank, team_name, registered_by, registration_source)
+         values ($1, $2, null, $3, $4, $5, $6, $7, 'manual') returning *`,
+        [gameId, format, nickname, memberId || null, rank, teamName || null, user.id]
+      );
+      return sendJson(res, 201, { registration: result.rows[0] });
+    }
     if (registrationUpdateMatch && req.method === 'PATCH') {
       const user = await findSession(req);
       if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
@@ -555,6 +600,25 @@ async function handleApi(req, res, requestPath) {
       );
       return sendJson(res, 200, { registration: updated.rows[0] });
     }
+    if (registrationUpdateMatch && req.method === 'DELETE') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      const gameId = registrationUpdateMatch[1];
+      const registrationId = registrationUpdateMatch[2];
+      const registration = await pool.query(
+        `select r.format, g.registration_closed, g.qualifying_groups, g.preliminary_matches, g.tournaments
+           from public.registrations r join public.games g on g.id = r.game_id
+          where r.id = $1 and r.game_id = $2 and g.operator_id = $3`,
+        [registrationId, gameId, user.id]
+      );
+      const row = registration.rows[0];
+      if (!row) return sendJson(res, 404, { error: '삭제할 참가선수를 찾을 수 없습니다.' });
+      if (row.registration_closed?.[row.format] === true || row.qualifying_groups?.[row.format]?.groups?.length || row.preliminary_matches?.[row.format]?.matches?.length || row.tournaments?.[row.format]) {
+        return sendJson(res, 400, { error: '선수등록 마감 또는 경기진행이 시작되어 삭제할 수 없습니다.' });
+      }
+      await pool.query('delete from public.registrations where id = $1 and game_id = $2', [registrationId, gameId]);
+      return sendJson(res, 200, { ok: true, registrationId });
+    }
     if (registrationMatch && req.method === 'POST') {
       const user = await findSession(req);
       if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
@@ -570,14 +634,14 @@ async function handleApi(req, res, requestPath) {
       let result;
       if (existing.rows[0]) {
         result = await pool.query(
-          `update public.registrations set nickname = $1, member_id = $2, rank = $3, team_name = $4, updated_at = now()
+          `update public.registrations set nickname = $1, member_id = $2, rank = $3, team_name = $4, registration_source = 'online', updated_at = now()
             where id = $5 returning *`,
           [String(body.nickname).trim(), String(body.memberId || '').trim() || null, String(body.rank).trim(), String(body.teamName || '').trim() || null, existing.rows[0].id]
         );
       } else {
         result = await pool.query(
-          `insert into public.registrations (game_id, format, user_id, nickname, member_id, rank, team_name, registered_by)
-           values ($1, $2, $3, $4, $5, $6, $7, $3) returning *`,
+          `insert into public.registrations (game_id, format, user_id, nickname, member_id, rank, team_name, registered_by, registration_source)
+           values ($1, $2, $3, $4, $5, $6, $7, $3, 'online') returning *`,
           [gameId, format, user.id, String(body.nickname).trim(), String(body.memberId || '').trim() || null, String(body.rank).trim(), String(body.teamName || '').trim() || null]
         );
       }

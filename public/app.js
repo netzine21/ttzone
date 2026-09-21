@@ -226,6 +226,7 @@
   }
 
   function getRegistrationSource(registration) {
+    if (registration.registrationSource === 'manual') return { key: 'manual', label: '개별등록' };
     if (registration.registrationSource === 'bulk') return { key: 'bulk', label: '일괄등록' };
     if (registration.registrationSource === 'online') return { key: 'online', label: '온라인등록' };
     return registration.registeredBy && registration.userId && registration.registeredBy === registration.userId
@@ -964,9 +965,10 @@
     const registrations = getGameRegistrations(game, format);
     const registrationClosed = isRegistrationClosed(game, format);
     const bulkCount = registrations.filter((registration) => getRegistrationSource(registration).key === 'bulk').length;
-    const onlineCount = registrations.length - bulkCount;
+    const manualCount = registrations.filter((registration) => getRegistrationSource(registration).key === 'manual').length;
+    const onlineCount = registrations.length - bulkCount - manualCount;
     const registrationList = registrations.length
-      ? `<div class="roster-list-table-wrap"><table class="roster-list-table"><thead><tr><th>번호</th><th>선수명</th><th>아이디</th><th>부수</th><th>팀명</th><th>등록방법</th><th>관리</th></tr></thead><tbody>${registrations.map((registration, index) => { const source = getRegistrationSource(registration); const editing = state.editingRegistrationId === registration.id; const canEdit = !registrationClosed && registration.id; const value = (field) => escapeHtml(registration[field] || ''); return `<tr>${editing ? `<td>${index + 1}</td><td><input class="roster-edit-input" data-registration-field="nickname" data-registration-id="${escapeHtml(registration.id)}" value="${value('nickname')}" /></td><td><input class="roster-edit-input" data-registration-field="memberId" data-registration-id="${escapeHtml(registration.id)}" value="${value('memberId')}" /></td><td><input class="roster-edit-input" data-registration-field="rank" data-registration-id="${escapeHtml(registration.id)}" value="${value('rank')}" /></td><td><input class="roster-edit-input" data-registration-field="teamName" data-registration-id="${escapeHtml(registration.id)}" value="${value('teamName')}" /></td><td><span class="registration-source registration-source--${source.key}">${source.label}</span></td><td><span class="roster-edit-actions"><button type="button" class="roster-edit-button" data-save-registration="${escapeHtml(registration.id)}">저장</button><button type="button" class="roster-edit-button roster-edit-button--muted" data-cancel-registration>취소</button></span></td>` : `<td>${index + 1}</td><td>${escapeHtml(registration.nickname || '-')}</td><td>${escapeHtml(registration.memberId || '-')}</td><td>${escapeHtml(registration.rank || '-')}</td><td>${escapeHtml(registration.teamName || '-')}</td><td><span class="registration-source registration-source--${source.key}">${source.label}</span></td><td>${canEdit ? `<button type="button" class="roster-edit-button" data-edit-registration="${escapeHtml(registration.id)}">수정</button>` : '-'}</td>`}</tr>`; }).join('')}</tbody></table></div>`
+      ? `<div class="roster-list-table-wrap"><table class="roster-list-table"><thead><tr><th>번호</th><th>선수명</th><th>아이디</th><th>부수</th><th>팀명</th><th>등록방법</th><th>관리</th></tr></thead><tbody>${registrations.map((registration, index) => { const source = getRegistrationSource(registration); const editing = state.editingRegistrationId === registration.id; const canEdit = !registrationClosed && registration.id; const value = (field) => escapeHtml(registration[field] || ''); return `<tr>${editing ? `<td>${index + 1}</td><td><input class="roster-edit-input" data-registration-field="nickname" data-registration-id="${escapeHtml(registration.id)}" value="${value('nickname')}" /></td><td><input class="roster-edit-input" data-registration-field="memberId" data-registration-id="${escapeHtml(registration.id)}" value="${value('memberId')}" /></td><td><input class="roster-edit-input" data-registration-field="rank" data-registration-id="${escapeHtml(registration.id)}" value="${value('rank')}" /></td><td><input class="roster-edit-input" data-registration-field="teamName" data-registration-id="${escapeHtml(registration.id)}" value="${value('teamName')}" /></td><td><span class="registration-source registration-source--${source.key}">${source.label}</span></td><td><span class="roster-edit-actions"><button type="button" class="roster-edit-button" data-save-registration="${escapeHtml(registration.id)}">저장</button><button type="button" class="roster-edit-button roster-edit-button--muted" data-cancel-registration>취소</button></span></td>` : `<td>${index + 1}</td><td>${escapeHtml(registration.nickname || '-')}</td><td>${escapeHtml(registration.memberId || '-')}</td><td>${escapeHtml(registration.rank || '-')}</td><td>${escapeHtml(registration.teamName || '-')}</td><td><span class="registration-source registration-source--${source.key}">${source.label}</span></td><td>${canEdit ? `<span class="roster-edit-actions"><button type="button" class="roster-edit-button" data-edit-registration="${escapeHtml(registration.id)}">수정</button><button type="button" class="roster-edit-button roster-edit-button--danger" data-delete-registration="${escapeHtml(registration.id)}">삭제</button></span>` : '-'}</td>`}</tr>`; }).join('')}</tbody></table></div>`
       : '<div class="empty-state">아직 등록된 선수가 없습니다.</div>';
     return `
       <div class="roster-operation-panel">
@@ -974,12 +976,13 @@
           <div class="field"><label for="operationRosterGame">게임</label><select id="operationRosterGame" data-operation-game>${games.map((item) => `<option value="${escapeHtml(item.id)}" ${item.id === game.id ? 'selected' : ''}>${escapeHtml(item.title)}</option>`).join('')}</select></div>
           <div class="field"><label for="operationRosterFormat">경기종목</label><select id="operationRosterFormat" data-operation-format data-roster-format="${escapeHtml(game.id)}">${formats.map((item) => `<option value="${escapeHtml(item)}" ${item === format ? 'selected' : ''}>${escapeHtml(FORMAT_LABELS[item])}</option>`).join('')}</select></div>
         </div>
+        <section class="roster-manual-registration"><div class="roster-list-heading"><div><p class="section-kicker">개별 등록</p><h2>${escapeHtml(FORMAT_LABELS[format])} 선수 직접등록</h2></div></div><form class="roster-manual-form" data-form="operator-registration" data-game-id="${escapeHtml(game.id)}" data-format="${escapeHtml(format)}"><div class="field"><label for="manualNickname">선수명</label><input id="manualNickname" name="nickname" type="text" required /></div><div class="field"><label for="manualMemberId">아이디 <span class="optional-label">(선택)</span></label><input id="manualMemberId" name="memberId" type="text" /></div><div class="field"><label for="manualRank">부수</label><input id="manualRank" name="rank" type="text" required /></div>${format !== 'singles' ? '<div class="field"><label for="manualTeamName">팀명</label><input id="manualTeamName" name="teamName" type="text" required /></div>' : ''}<button type="submit" class="game-list-action game-list-action--primary" ${registrationClosed ? 'disabled' : ''}><span>개별 선수등록</span></button></form></section>
         <div class="roster-import roster-import--standalone">
           <div class="roster-import-heading"><h2><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true">${getFormatIconSvg(format)}</svg>${escapeHtml(FORMAT_LABELS[format])} 참가선수 일괄등록</span></h2></div>
           <div class="roster-upload-actions"><label class="game-list-action game-list-action--primary file-button" for="operationRosterFile"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M8 8l4-4 4 4M5 14v5h14v-5"></path></svg><span>명부 파일 선택</span></label><input id="operationRosterFile" class="file-input" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" data-roster-upload="${escapeHtml(game.id)}" data-roster-format="${escapeHtml(format)}" /><button type="button" class="game-list-action" data-download-roster-template><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 11l4 4 4-4M5 20h14"></path></svg><span>양식 다운로드</span></button></div>
           <div class="roster-registration-status"><div class="roster-registration-close">${registrationClosed ? '<span class="status-chip">선수등록 마감</span>' : `<button type="button" class="game-list-action" data-close-registration="${escapeHtml(game.id)}" data-close-registration-format="${escapeHtml(format)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"></path></svg><span>선수등록 마감</span></button>`}</div></div>
         </div>
-        <section class="roster-list-panel"><div class="roster-list-heading"><div><p class="section-kicker">등록 현황</p><h2>${escapeHtml(FORMAT_LABELS[format])} 참가선수 명부</h2></div><span>${registrations.length}명(팀)</span></div><div class="roster-list-summary"><span class="registration-source registration-source--bulk">일괄등록 ${bulkCount}</span><span class="registration-source registration-source--online">온라인등록 ${onlineCount}</span></div>${registrationList}</section>
+        <section class="roster-list-panel"><div class="roster-list-heading"><div><p class="section-kicker">등록 현황</p><h2>${escapeHtml(FORMAT_LABELS[format])} 참가선수 명부</h2></div><span>${registrations.length}명(팀)</span></div><div class="roster-list-summary"><span class="registration-source registration-source--bulk">일괄등록 ${bulkCount}</span><span class="registration-source registration-source--online">온라인등록 ${onlineCount}</span><span class="registration-source registration-source--manual">개별등록 ${manualCount}</span></div>${registrationList}</section>
       </div>
     `;
   }
@@ -1632,6 +1635,22 @@
     render();
   }
 
+  async function handleDeleteRegistration(registrationId) {
+    const currentUser = getCurrentUser();
+    const game = state.games.find((item) => item.id === state.operationGameId);
+    if (!currentUser || !game || game.operatorId !== currentUser.id || !registrationId) return;
+    if (!window.confirm('이 참가선수를 삭제할까요?')) return;
+    try {
+      await apiRequest(`/api/games/${encodeURIComponent(game.id)}/registrations/${encodeURIComponent(registrationId)}`, { method: 'DELETE' });
+      await loadState();
+      state.editingRegistrationId = null;
+      setFlash('참가선수가 삭제되었습니다.', 'success');
+    } catch (error) {
+      setFlash(error.message || '참가선수 삭제에 실패했습니다.', 'error');
+    }
+    render();
+  }
+
   async function handleToggleGroupVisibility() {
     const currentUser = getCurrentUser();
     const game = state.games.find((item) => item.id === state.operationGameId);
@@ -1922,6 +1941,26 @@
     }
     persistGames();
     setFlash(`${FORMAT_LABELS[format]} 참가신청 내용이 ${existingRegistration ? '수정' : '등록'}되었습니다.`, 'success');
+    render();
+  }
+
+  async function handleOperatorRegistrationSubmit(form) {
+    const currentUser = getCurrentUser();
+    const game = state.games.find((item) => item.id === form.dataset.gameId);
+    const format = form.dataset.format;
+    if (!currentUser || !game || game.operatorId !== currentUser.id || !format) return;
+    const values = Object.fromEntries(new FormData(form).entries());
+    try {
+      await apiRequest(`/api/games/${encodeURIComponent(game.id)}/registrations/manual`, {
+        method: 'POST',
+        body: JSON.stringify({ format, ...values }),
+      });
+      await loadState();
+      form.reset();
+      setFlash(`${FORMAT_LABELS[format]} 개별 선수등록이 완료되었습니다.`, 'success');
+    } catch (error) {
+      setFlash(error.message || '개별 선수등록에 실패했습니다.', 'error');
+    }
     render();
   }
 
@@ -2496,6 +2535,12 @@
       return;
     }
 
+    const deleteRegistrationButton = event.target.closest('[data-delete-registration]');
+    if (deleteRegistrationButton) {
+      handleDeleteRegistration(deleteRegistrationButton.dataset.deleteRegistration);
+      return;
+    }
+
     const authTabButton = event.target.closest('[data-auth-tab]');
     if (authTabButton) {
       openAuthTab(authTabButton.dataset.authTab);
@@ -2683,6 +2728,11 @@
 
     if (form.dataset.form === 'game-apply') {
       await handleRegistrationSubmit(form);
+      return;
+    }
+
+    if (form.dataset.form === 'operator-registration') {
+      await handleOperatorRegistrationSubmit(form);
       return;
     }
 

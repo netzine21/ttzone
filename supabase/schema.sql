@@ -51,6 +51,7 @@ create table if not exists public.registrations (
   rank text not null,
   team_name text,
   registered_by uuid references public.users(id) on delete set null,
+  registration_source text not null default 'bulk' check (registration_source in ('online', 'bulk', 'manual')),
   applied_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check (format = 'singles' or nullif(trim(team_name), '') is not null)
