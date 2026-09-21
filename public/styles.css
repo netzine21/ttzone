@@ -2323,23 +2323,23 @@ button {
 
 .roster-list-table th:nth-child(2),
 .roster-list-table td:nth-child(2) {
-  width: 24%;
+  width: 19%;
 }
 
 .roster-list-table th:nth-child(3),
 .roster-list-table td:nth-child(3) {
-  width: 20%;
+  width: 24%;
 }
 
 .roster-list-table th:nth-child(4),
 .roster-list-table td:nth-child(4) {
-  width: 11%;
-  text-align: center;
+  width: 20%;
 }
 
 .roster-list-table th:nth-child(5),
 .roster-list-table td:nth-child(5) {
-  width: 19%;
+  width: 11%;
+  text-align: center;
 }
 
 .roster-list-table th:nth-child(6),
