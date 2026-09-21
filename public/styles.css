@@ -1922,6 +1922,15 @@ button {
   line-height: 1;
 }
 
+.public-league-entry__team {
+  display: block;
+}
+
+.public-league-entry__members {
+  display: block;
+  margin-top: 3px;
+}
+
 .public-league-entry.rank-row--1 .public-league-entry__rank {
   background: #ffd166;
 }
@@ -3626,6 +3635,16 @@ button {
 
   .public-league-entry strong {
     font-size: 0.74rem;
+  }
+
+  .public-league-summary--team .public-league-entry strong,
+  .public-league-summary--team .public-league-entry small {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .public-league-summary--team .public-league-entry {
+    min-width: 0;
   }
 
   .public-league-entry small {
