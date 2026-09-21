@@ -1980,6 +1980,19 @@ button {
   width: 100%;
 }
 
+.operations-page--embedded {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.operations-page--embedded > .operations-heading {
+  display: none;
+}
+
 .operations-page > .section-heading {
   position: relative;
   justify-content: center;

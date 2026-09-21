@@ -537,7 +537,7 @@
   }
 
   function renderGameDetailMenu(game, isOwner) {
-    return `<div class="game-detail-actions" aria-label="게임 메뉴"><button type="button" class="game-list-action" ${getCurrentUser() ? 'data-back-games' : 'data-public-back'}><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg><span>전체게임목록</span></button><button type="button" class="game-list-action ${state.detailTab === 'status' ? 'is-active' : ''}" data-detail-tab="status"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6M9 12h6M9 16h4" /></svg><span>경기요강</span></button><button type="button" class="game-list-action ${state.detailTab === 'progress' ? 'is-active' : ''}" data-detail-tab="progress"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-7" /></svg><span>경기진행현황</span></button>${isOwner ? `<button type="button" class="game-list-action" data-open-operations="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18" /><circle cx="12" cy="12" r="8" /></svg><span>경기운영</span></button>` : ''}</div>`;
+    return `<div class="game-detail-actions" aria-label="게임 메뉴"><button type="button" class="game-list-action" ${getCurrentUser() ? 'data-back-games' : 'data-public-back'}><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg><span>전체게임목록</span></button><button type="button" class="game-list-action ${state.detailTab === 'status' && !state.operationGameId ? 'is-active' : ''}" data-detail-tab="status"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6M9 12h6M9 16h4" /></svg><span>경기요강</span></button><button type="button" class="game-list-action ${state.detailTab === 'progress' && !state.operationGameId ? 'is-active' : ''}" data-detail-tab="progress"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-7" /></svg><span>경기진행현황</span></button>${isOwner ? `<button type="button" class="game-list-action ${state.operationGameId === game.id ? 'is-active' : ''}" data-open-operations="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18" /><circle cx="12" cy="12" r="8" /></svg><span>경기운영</span></button>` : ''}</div>`;
   }
 
   function getPublicFormat(game) {
@@ -657,7 +657,8 @@
     const formats = getGameFormats(game);
     const format = getPublicFormat(game);
     const isOwner = currentUser && game.operatorId === currentUser.id;
-    return `<section class="panel section-card public-game-detail"><div class="game-detail-header"><h1 class="game-detail-title">${escapeHtml(game.title)}</h1>${renderGameDetailMenu(game, isOwner)}</div>${state.detailTab === 'status' ? renderGameRules(game, currentUser) : ''}${state.detailTab === 'progress' ? renderCompetitionView(game, currentUser, format) : ''}${state.detailTab === 'applications' ? renderApplicationsView(game, currentUser) : ''}</section>`;
+    const isOperating = isOwner && state.operationGameId === game.id;
+    return `<section class="panel section-card public-game-detail"><div class="game-detail-header"><h1 class="game-detail-title">${escapeHtml(game.title)}</h1>${renderGameDetailMenu(game, isOwner)}</div>${isOperating ? renderOperationsPage(currentUser, true) : ''}${!isOperating && state.detailTab === 'status' ? renderGameRules(game, currentUser) : ''}${!isOperating && state.detailTab === 'progress' ? renderCompetitionView(game, currentUser, format) : ''}${!isOperating && state.detailTab === 'applications' ? renderApplicationsView(game, currentUser) : ''}</section>`;
   }
 
   function renderPublicGameDetail(game) {
@@ -1305,7 +1306,7 @@
     return `<div class="tournament-panel"><div class="operation-controls tournament-controls"><div class="field"><label for="operationTournamentGame">게임</label><select id="operationTournamentGame" data-operation-game>${games.map((item) => `<option value="${escapeHtml(item.id)}" ${item.id === game.id ? 'selected' : ''}>${escapeHtml(item.title)}</option>`).join('')}</select></div><div class="field"><label for="operationTournamentFormat">경기종목</label><select id="operationTournamentFormat" data-operation-format>${formats.map((item) => `<option value="${escapeHtml(item)}" ${item === format ? 'selected' : ''}>${escapeHtml(FORMAT_LABELS[item])}</option>`).join('')}</select></div><div class="field"><label for="tournamentAdvanceCount">조별 진출 등수</label><select id="tournamentAdvanceCount" data-tournament-advance>${advanceOptions}</select></div><label class="check-line"><input type="checkbox" data-tournament-upper ${config?.upperEnabled !== false ? 'checked' : ''} /> 상위리그</label><label class="check-line"><input type="checkbox" data-tournament-lower ${config ? (config.lowerEnabled ? 'checked' : '') : 'checked'} /> 하위리그</label><button type="button" class="btn btn-primary" data-generate-tournament>토너먼트 구성</button></div><div class="operation-note operation-note--tournament">예선리그 조별 순위 기준으로 진출자를 자동 선발합니다. 상위리그와 하위리그를 선택해 토너먼트를 구성합니다.</div>${!standings.length ? '<div class="empty-state">먼저 조편성과 예선리그 경기결과를 완료해 주세요.</div>' : ''}${standings.length && !config ? '<div class="empty-state">예선 순위가 확정되었습니다. 상위리그와 하위리그가 기본 선택되어 있습니다. 토너먼트 구성 버튼을 눌러 대진표를 생성해 주세요.</div>' : ''}${upper ? `<section class="tournament-league"><div class="group-result-heading"><div><p class="section-kicker">상위리그 토너먼트 대진표 및 경기결과</p><h2>${escapeHtml(String(upper.entries.length))}명/팀</h2></div><span class="subtle-note">${escapeHtml(String(upper.size))}강</span></div>${renderTournamentBracket(upper)}<div class="button-row group-save-row"><button type="button" class="btn btn-secondary" data-save-tournament="upper">상위리그 경기결과 저장</button></div></section>` : ''}${lower ? `<section class="tournament-league"><div class="group-result-heading"><div><p class="section-kicker">하위리그 토너먼트 대진표 및 경기결과</p><h2>${escapeHtml(String(lower.entries.length))}명/팀</h2></div><span class="subtle-note">${escapeHtml(String(lower.size))}강</span></div>${renderTournamentBracket(lower)}<div class="button-row group-save-row"><button type="button" class="btn btn-secondary" data-save-tournament="lower">하위리그 경기결과 저장</button></div></section>` : ''}</div>`;
   }
 
-  function renderOperationsPage(currentUser) {
+  function renderOperationsPage(currentUser, embedded = false) {
     const games = state.games.filter((game) => game.operatorId === currentUser.id);
     const game = games.find((item) => item.id === state.operationGameId) || games[0];
     if (!game) return `<section class="panel section-card"><div class="empty-state">운영 중인 게임이 없습니다. 먼저 게임을 생성해 주세요.</div></section>`;
@@ -1318,7 +1319,7 @@
     const calculatedSizeText = calculatedSizes.length ? calculatedSizes.join('명, ') + '명' : '조 수를 정하면 자동 계산';
     const operationTitle = { roster: '선수등록', groups: '예선리그 조편성', print: '대진표 출력', results: '경기결과 입력' }[state.operationMenu] || '예선리그 조편성';
     return `
-      <section class="panel section-card operations-page">
+      <section class="panel section-card operations-page${embedded ? ' operations-page--embedded' : ''}">
         <div class="section-heading operations-heading">
           <h1>${operationTitle}</h1>
           <button type="button" class="create-game-close" aria-label="경기운영 닫기" data-back-dashboard><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg></button>
@@ -1356,7 +1357,7 @@
       render();
       return;
     }
-    state.selectedGameId = null;
+    state.selectedGameId = game.id;
     state.editingGameId = null;
     state.operationGameId = game.id;
     state.operationFormat = getGameFormats(game)[0] || null;
@@ -1636,7 +1637,10 @@
 
     if (state.operationGameId) {
       const operationGame = state.games.find((game) => game.id === state.operationGameId);
-      if (operationGame?.operatorId === currentUser.id) return renderOperationsPage(currentUser);
+      if (operationGame?.operatorId === currentUser.id) {
+        state.selectedGameId = operationGame.id;
+        return renderGameDetailView(operationGame, currentUser);
+      }
       state.operationGameId = null;
     }
     if (editingGame && editingGame.operatorId === currentUser.id) return `${renderEditGameForm(editingGame)}`;
@@ -1999,6 +2003,9 @@
   function setDetailTab(tabName) {
     const allowedTabs = ['status', 'progress', 'applications'];
     state.detailTab = allowedTabs.includes(tabName) ? tabName : 'status';
+    state.operationGameId = null;
+    state.operationFormat = null;
+    state.selectedScheduleGroup = null;
     state.statusSubtab = state.detailTab === 'progress' ? 'progress' : 'info';
     render();
   }
@@ -2561,6 +2568,8 @@
     const backGamesButton = event.target.closest('[data-back-games]');
     if (backGamesButton) {
       state.selectedGameId = null;
+      state.operationGameId = null;
+      state.operationFormat = null;
       state.detailTab = 'status';
       state.statusSubtab = 'info';
       render();
@@ -2570,6 +2579,8 @@
     const publicBackButton = event.target.closest('[data-public-back]');
     if (publicBackButton) {
       state.selectedPublicGameId = null;
+      state.operationGameId = null;
+      state.operationFormat = null;
       state.detailTab = 'status';
       state.statusSubtab = 'info';
       render();
