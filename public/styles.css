@@ -1948,6 +1948,23 @@ button {
   background: #8fd3c7;
 }
 
+.public-league-entry.rank-row--5 .public-league-entry__rank { background: #b8a7ff; }
+.public-league-entry.rank-row--6 .public-league-entry__rank { background: #ff9f9f; }
+.public-league-entry.rank-row--7 .public-league-entry__rank { background: #8ed8ff; }
+.public-league-entry.rank-row--8 .public-league-entry__rank { background: #f5b7e5; }
+.public-league-entry.rank-row--9 .public-league-entry__rank { background: #a8e6cf; }
+.public-league-entry.rank-row--10 .public-league-entry__rank { background: #ffd1a9; }
+.public-league-entry.rank-row--11 .public-league-entry__rank { background: #c5c6ff; }
+.public-league-entry.rank-row--12 .public-league-entry__rank { background: #ffb6c1; }
+.public-league-entry.rank-row--13 .public-league-entry__rank { background: #9fe2bf; }
+.public-league-entry.rank-row--14 .public-league-entry__rank { background: #f7d794; }
+.public-league-entry.rank-row--15 .public-league-entry__rank { background: #b5d8ff; }
+.public-league-entry.rank-row--16 .public-league-entry__rank { background: #e6b3ff; }
+.public-league-entry.rank-row--17 .public-league-entry__rank { background: #ffcab1; }
+.public-league-entry.rank-row--18 .public-league-entry__rank { background: #b7f0d1; }
+.public-league-entry.rank-row--19 .public-league-entry__rank { background: #ffe29a; }
+.public-league-entry.rank-row--20 .public-league-entry__rank { background: #a9d6e5; }
+
 .public-league-entry small {
   display: block;
   margin-top: 2px;
