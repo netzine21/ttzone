@@ -1934,6 +1934,10 @@ button {
   background: #d99058;
 }
 
+.public-league-entry.rank-row--4 .public-league-entry__rank {
+  background: #8fd3c7;
+}
+
 .public-league-entry small {
   display: block;
   margin-top: 2px;
