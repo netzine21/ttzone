@@ -1893,7 +1893,7 @@ button {
   gap: 7px;
   min-height: 36px;
   padding: 5px 6px;
-  border-left: 3px solid transparent;
+  border-left: 0;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.025);
 }
@@ -1953,17 +1953,14 @@ button {
 }
 
 .public-league-entry.rank-row--1 {
-  border-left-color: #ffd166;
   background: rgba(255, 209, 102, 0.12);
 }
 
 .public-league-entry.rank-row--2 {
-  border-left-color: #c8d1dc;
   background: rgba(200, 209, 220, 0.1);
 }
 
 .public-league-entry.rank-row--3 {
-  border-left-color: #d99058;
   background: rgba(217, 144, 88, 0.12);
 }
 
