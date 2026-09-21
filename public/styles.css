@@ -1909,6 +1909,31 @@ button {
   white-space: nowrap;
 }
 
+.public-league-entry__record {
+  color: var(--accent) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.public-league-results {
+  margin-top: 16px;
+}
+
+.public-league-results h4 {
+  margin: 0 0 8px;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.public-league-results-table {
+  min-width: 0;
+}
+
+.public-league-results-table th,
+.public-league-results-table td {
+  padding: 7px 6px;
+  white-space: nowrap;
+}
+
 .public-league-entry.rank-row--1 {
   border-left-color: #ffd166;
   background: rgba(255, 209, 102, 0.12);
