@@ -1461,6 +1461,7 @@
       setFlash(`${FORMAT_LABELS[format]} 본선 토너먼트가 구성되었습니다.`, 'success');
     } catch (error) {
       setFlash(error.message || '토너먼트 저장에 실패했습니다.', 'error');
+      await loadState();
     }
     render();
   }
@@ -1517,6 +1518,7 @@
       setFlash('예선리그 경기결과가 저장되었습니다.', 'success');
     } catch (error) {
       setFlash(error.message || '예선리그 경기결과 저장에 실패했습니다.', 'error');
+      await loadState();
     }
     render();
   }
