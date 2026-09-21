@@ -50,6 +50,8 @@
   };
 
   let flashTimer = null;
+  let liveRefreshTimer = null;
+  let liveRefreshInFlight = false;
 
   const app = document.getElementById('app');
   const topActions = document.getElementById('topActions');
@@ -1387,7 +1389,7 @@
     render();
   }
 
-  function handleGenerateSchedule() {
+  async function handleGenerateSchedule() {
     const currentUser = getCurrentUser();
     const game = state.games.find((item) => item.id === state.operationGameId);
     const format = state.operationFormat;
@@ -1403,12 +1405,20 @@
       .map((match, index) => ({ ...match, order: index + 1 }));
     game.preliminaryMatches = game.preliminaryMatches || {};
     game.preliminaryMatches[format] = { format, pointsToWin: 11, bestOf: 5, groups: groups.map((group) => group.name), matches, generatedAt: new Date().toISOString() };
-    persistGames();
-    setFlash(`${FORMAT_LABELS[format]} 예선 대진표가 생성되었습니다.`, 'success');
+    try {
+      await apiRequest(`/api/games/${encodeURIComponent(game.id)}/preliminary-matches`, {
+        method: 'PATCH',
+        body: JSON.stringify({ format, schedule: game.preliminaryMatches[format] }),
+      });
+      await loadState();
+      setFlash(`${FORMAT_LABELS[format]} 예선 대진표가 생성되었습니다.`, 'success');
+    } catch (error) {
+      setFlash(error.message || '예선 대진표 저장에 실패했습니다.', 'error');
+    }
     render();
   }
 
-  function handleGenerateTournament() {
+  async function handleGenerateTournament() {
     const currentUser = getCurrentUser();
     const game = state.games.find((item) => item.id === state.operationGameId);
     const format = state.operationFormat;
@@ -1442,12 +1452,20 @@
     if (lowerEnabled && lowerEntries.length) tournaments.lower = buildTournamentBracket(lowerEntries, 'lower', format);
     game.tournaments = game.tournaments || {};
     game.tournaments[format] = { format, advancePerGroup, upperEnabled, lowerEnabled, upper: tournaments.upper || null, lower: tournaments.lower || null, generatedAt: new Date().toISOString() };
-    persistGames();
-    setFlash(`${FORMAT_LABELS[format]} 본선 토너먼트가 구성되었습니다.`, 'success');
+    try {
+      await apiRequest(`/api/games/${encodeURIComponent(game.id)}/tournaments`, {
+        method: 'PATCH',
+        body: JSON.stringify({ format, tournament: game.tournaments[format] }),
+      });
+      await loadState();
+      setFlash(`${FORMAT_LABELS[format]} 본선 토너먼트가 구성되었습니다.`, 'success');
+    } catch (error) {
+      setFlash(error.message || '토너먼트 저장에 실패했습니다.', 'error');
+    }
     render();
   }
 
-  function handleSaveTournamentResults(leagueToSave = null) {
+  async function handleSaveTournamentResults(leagueToSave = null) {
     const currentUser = getCurrentUser();
     const game = state.games.find((item) => item.id === state.operationGameId);
     const format = state.operationFormat;
@@ -1465,12 +1483,20 @@
       syncTournamentBracket(bracket);
     });
     tournaments.updatedAt = new Date().toISOString();
-    persistGames();
-    setFlash(`${leagueToSave === 'lower' ? '하위리그' : leagueToSave === 'upper' ? '상위리그' : '상·하위리그'} 본선 토너먼트 경기결과가 저장되었습니다.`, 'success');
+    try {
+      await apiRequest(`/api/games/${encodeURIComponent(game.id)}/tournaments`, {
+        method: 'PATCH',
+        body: JSON.stringify({ format, tournament: game.tournaments[format] }),
+      });
+      await loadState();
+      setFlash(`${leagueToSave === 'lower' ? '하위리그' : leagueToSave === 'upper' ? '상위리그' : '상·하위리그'} 본선 토너먼트 경기결과가 저장되었습니다.`, 'success');
+    } catch (error) {
+      setFlash(error.message || '토너먼트 경기결과 저장에 실패했습니다.', 'error');
+    }
     render();
   }
 
-  function handleSaveScheduleResults() {
+  async function handleSaveScheduleResults() {
     const currentUser = getCurrentUser();
     const game = state.games.find((item) => item.id === state.operationGameId);
     const format = state.operationFormat;
@@ -1482,8 +1508,16 @@
       if (scoreInput || winnerInput) match.result = { score: trimValue(scoreInput?.value), winner: winnerInput?.value || '' };
     });
     schedule.updatedAt = new Date().toISOString();
-    persistGames();
-    setFlash('예선리그 경기결과가 저장되었습니다.', 'success');
+    try {
+      await apiRequest(`/api/games/${encodeURIComponent(game.id)}/preliminary-matches`, {
+        method: 'PATCH',
+        body: JSON.stringify({ format, schedule }),
+      });
+      await loadState();
+      setFlash('예선리그 경기결과가 저장되었습니다.', 'success');
+    } catch (error) {
+      setFlash(error.message || '예선리그 경기결과 저장에 실패했습니다.', 'error');
+    }
     render();
   }
 
@@ -1675,6 +1709,35 @@
     setMobileMenuOpen(false);
   }
 
+  function shouldLiveRefresh() {
+    return state.detailTab === 'progress'
+      && !state.operationGameId
+      && Boolean(state.selectedPublicGameId || state.selectedGameId);
+  }
+
+  async function refreshLiveResults() {
+    if (liveRefreshInFlight || !shouldLiveRefresh()) return;
+    liveRefreshInFlight = true;
+    const selectedGameId = state.selectedPublicGameId || state.selectedGameId;
+    try {
+      await loadState();
+      if ((state.selectedPublicGameId || state.selectedGameId) === selectedGameId && shouldLiveRefresh()) render();
+    } catch {
+      // Keep the current result view when a periodic refresh temporarily fails.
+    } finally {
+      liveRefreshInFlight = false;
+    }
+  }
+
+  function syncLiveRefresh() {
+    if (!shouldLiveRefresh()) {
+      if (liveRefreshTimer) window.clearInterval(liveRefreshTimer);
+      liveRefreshTimer = null;
+      return;
+    }
+    if (!liveRefreshTimer) liveRefreshTimer = window.setInterval(refreshLiveResults, 5000);
+  }
+
   function render() {
     const currentUser = getCurrentUser();
     updateTopActions(currentUser);
@@ -1685,6 +1748,7 @@
     app.className = currentUser ? 'app app--dashboard' : state.page === 'auth' ? 'app app--auth' : 'app app--public';
     const showPublicHome = !currentUser && state.page === 'public' && !state.selectedGameId && !publicGame;
     app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : showPublicHome ? renderPublicGamesPage() : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : state.page === 'auth' ? renderAuthPage() : publicGame ? renderPublicGameDetail(publicGame) : renderPublicGamesPage()}`;
+    syncLiveRefresh();
   }
 
   async function goToHome(event) {

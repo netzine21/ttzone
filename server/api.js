@@ -325,6 +325,54 @@ async function handleApi(req, res, requestPath) {
       }
     }
 
+    const preliminaryMatchesMatch = requestPath.match(/^\/api\/games\/([^/]+)\/preliminary-matches$/);
+    if (preliminaryMatchesMatch && req.method === 'PATCH') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      const body = await readBody(req);
+      const gameId = preliminaryMatchesMatch[1];
+      const format = String(body.format || '');
+      const schedule = body.schedule;
+      if (!['singles', 'doubles', 'team'].includes(format) || !schedule || !Array.isArray(schedule.matches)) {
+        return sendJson(res, 400, { error: '예선 경기결과 정보를 확인해 주세요.' });
+      }
+      const gameResult = await pool.query(
+        `update public.games
+            set preliminary_matches = jsonb_set(coalesce(preliminary_matches, '{}'::jsonb), ARRAY[$1]::text[], $2::jsonb, true),
+                updated_at = now()
+          where id = $3 and operator_id = $4
+          returning id`,
+        [format, JSON.stringify(schedule), gameId, user.id]
+      );
+      if (!gameResult.rows[0]) return sendJson(res, 404, { error: '경기결과를 저장할 게임을 찾을 수 없거나 운영자 권한이 없습니다.' });
+      const games = await getGames(user.id);
+      return sendJson(res, 200, { game: games.find((item) => item.id === gameId) });
+    }
+
+    const tournamentResultsMatch = requestPath.match(/^\/api\/games\/([^/]+)\/tournaments$/);
+    if (tournamentResultsMatch && req.method === 'PATCH') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      const body = await readBody(req);
+      const gameId = tournamentResultsMatch[1];
+      const format = String(body.format || '');
+      const tournament = body.tournament;
+      if (!['singles', 'doubles', 'team'].includes(format) || !tournament || typeof tournament !== 'object') {
+        return sendJson(res, 400, { error: '토너먼트 경기결과 정보를 확인해 주세요.' });
+      }
+      const gameResult = await pool.query(
+        `update public.games
+            set tournaments = jsonb_set(coalesce(tournaments, '{}'::jsonb), ARRAY[$1]::text[], $2::jsonb, true),
+                updated_at = now()
+          where id = $3 and operator_id = $4
+          returning id`,
+        [format, JSON.stringify(tournament), gameId, user.id]
+      );
+      if (!gameResult.rows[0]) return sendJson(res, 404, { error: '토너먼트 결과를 저장할 게임을 찾을 수 없거나 운영자 권한이 없습니다.' });
+      const games = await getGames(user.id);
+      return sendJson(res, 200, { game: games.find((item) => item.id === gameId) });
+    }
+
     const qualifyingGroupsMatch = requestPath.match(/^\/api\/games\/([^/]+)\/qualifying-groups$/);
     if (qualifyingGroupsMatch && req.method === 'PATCH') {
       const user = await findSession(req);
