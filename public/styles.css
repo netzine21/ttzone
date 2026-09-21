@@ -2177,6 +2177,20 @@ button {
   margin: 0;
 }
 
+.roster-registration-status--upload {
+  display: none;
+}
+
+.roster-registration-status--bottom {
+  justify-items: end;
+  margin-top: 14px;
+  text-align: right;
+}
+
+.roster-registration-status--bottom .roster-registration-close {
+  justify-content: flex-end;
+}
+
 .roster-registration-close {
   display: flex;
   justify-content: center;
