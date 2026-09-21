@@ -1908,6 +1908,15 @@ button {
   white-space: nowrap;
 }
 
+.public-league-entry__rank {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .public-league-entry small {
   display: block;
   margin-top: 2px;
@@ -3605,10 +3614,6 @@ button {
     display: inline;
   }
 
-  .public-league-entry .rank-badge {
-    order: -1;
-    align-self: flex-start;
-  }
 
   .public-league-results {
     display: none;
