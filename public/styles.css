@@ -1910,11 +1910,28 @@ button {
 
 .public-league-entry__rank {
   display: block;
-  margin-bottom: 2px;
-  color: var(--accent);
+  width: fit-content;
+  min-width: 28px;
+  margin: 0 auto 3px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  color: #08111d;
   font-size: 0.72rem;
   font-weight: 700;
+  text-align: center;
   line-height: 1;
+}
+
+.public-league-entry.rank-row--1 .public-league-entry__rank {
+  background: #ffd166;
+}
+
+.public-league-entry.rank-row--2 .public-league-entry__rank {
+  background: #c8d1dc;
+}
+
+.public-league-entry.rank-row--3 .public-league-entry__rank {
+  background: #d99058;
 }
 
 .public-league-entry small {
@@ -3596,6 +3613,11 @@ button {
     padding: 4px 3px;
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .public-league-entry > div {
+    width: 100%;
+    text-align: center;
   }
 
   .public-league-entry strong {
