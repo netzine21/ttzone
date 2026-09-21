@@ -2052,12 +2052,25 @@ button {
 }
 
 .operation-menu {
+  position: relative;
   display: flex;
   gap: 4px;
   margin-top: 22px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 0;
+  padding-bottom: 12px;
   overflow-x: auto;
   scrollbar-width: none;
+}
+
+.operation-menu::after,
+.operation-submenu::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(118, 240, 196, 0.28) 20%, rgba(118, 240, 196, 0.92) 50%, rgba(118, 240, 196, 0.28) 80%, transparent);
+  content: '';
 }
 
 .operation-menu::-webkit-scrollbar {
@@ -2103,6 +2116,7 @@ button {
   gap: 18px;
   margin-top: 14px;
   padding-top: 14px;
+  padding-bottom: 12px;
   overflow-x: auto;
 }
 
@@ -3561,6 +3575,7 @@ button {
   .operation-menu {
     gap: 0;
     overflow: hidden;
+    padding-bottom: 8px;
   }
 
   .operation-menu__item {
@@ -3654,6 +3669,7 @@ button {
     justify-content: center;
     gap: 12px;
     padding-top: 10px;
+    padding-bottom: 8px;
   }
 
   .operation-submenu__item {
