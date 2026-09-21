@@ -37,6 +37,7 @@
     operationGameId: null,
     operationFormat: null,
     selectedScheduleGroup: null,
+    editingRegistrationId: null,
     operationTournamentLeague: 'upper',
     tournamentPrintPerPage: 2,
     operationMenu: 'groups',
@@ -965,7 +966,7 @@
     const bulkCount = registrations.filter((registration) => getRegistrationSource(registration).key === 'bulk').length;
     const onlineCount = registrations.length - bulkCount;
     const registrationList = registrations.length
-      ? `<div class="roster-list-table-wrap"><table class="roster-list-table"><thead><tr><th>번호</th><th>선수명</th><th>아이디</th><th>부수</th><th>팀명</th><th>등록방법</th></tr></thead><tbody>${registrations.map((registration, index) => { const source = getRegistrationSource(registration); return `<tr><td>${index + 1}</td><td>${escapeHtml(registration.nickname || '-')}</td><td>${escapeHtml(registration.memberId || '-')}</td><td>${escapeHtml(registration.rank || '-')}</td><td>${escapeHtml(registration.teamName || '-')}</td><td><span class="registration-source registration-source--${source.key}">${source.label}</span></td></tr>`; }).join('')}</tbody></table></div>`
+      ? `<div class="roster-list-table-wrap"><table class="roster-list-table"><thead><tr><th>번호</th><th>선수명</th><th>아이디</th><th>부수</th><th>팀명</th><th>등록방법</th><th>관리</th></tr></thead><tbody>${registrations.map((registration, index) => { const source = getRegistrationSource(registration); const editing = state.editingRegistrationId === registration.id; const canEdit = !registrationClosed && registration.id; const value = (field) => escapeHtml(registration[field] || ''); return `<tr>${editing ? `<td>${index + 1}</td><td><input class="roster-edit-input" data-registration-field="nickname" data-registration-id="${escapeHtml(registration.id)}" value="${value('nickname')}" /></td><td><input class="roster-edit-input" data-registration-field="memberId" data-registration-id="${escapeHtml(registration.id)}" value="${value('memberId')}" /></td><td><input class="roster-edit-input" data-registration-field="rank" data-registration-id="${escapeHtml(registration.id)}" value="${value('rank')}" /></td><td><input class="roster-edit-input" data-registration-field="teamName" data-registration-id="${escapeHtml(registration.id)}" value="${value('teamName')}" /></td><td><span class="registration-source registration-source--${source.key}">${source.label}</span></td><td><span class="roster-edit-actions"><button type="button" class="roster-edit-button" data-save-registration="${escapeHtml(registration.id)}">저장</button><button type="button" class="roster-edit-button roster-edit-button--muted" data-cancel-registration>취소</button></span></td>` : `<td>${index + 1}</td><td>${escapeHtml(registration.nickname || '-')}</td><td>${escapeHtml(registration.memberId || '-')}</td><td>${escapeHtml(registration.rank || '-')}</td><td>${escapeHtml(registration.teamName || '-')}</td><td><span class="registration-source registration-source--${source.key}">${source.label}</span></td><td>${canEdit ? `<button type="button" class="roster-edit-button" data-edit-registration="${escapeHtml(registration.id)}">수정</button>` : '-'}</td>`}</tr>`; }).join('')}</tbody></table></div>`
       : '<div class="empty-state">아직 등록된 선수가 없습니다.</div>';
     return `
       <div class="roster-operation-panel">
@@ -1607,6 +1608,26 @@
     } catch (error) {
       persistGames();
       setFlash(error.message || '조편성 저장에 실패했습니다.', 'error');
+    }
+    render();
+  }
+
+  async function handleSaveRegistration(registrationId) {
+    const currentUser = getCurrentUser();
+    const game = state.games.find((item) => item.id === state.operationGameId);
+    const registration = game && getGameRegistrations(game).find((item) => item.id === registrationId);
+    if (!currentUser || !game || game.operatorId !== currentUser.id || !registrationId || !registration) return;
+    const values = Object.fromEntries([...document.querySelectorAll(`[data-registration-id="${CSS.escape(registrationId)}"][data-registration-field]`)].map((input) => [input.dataset.registrationField, trimValue(input.value)]));
+    try {
+      await apiRequest(`/api/games/${encodeURIComponent(game.id)}/registrations/${encodeURIComponent(registrationId)}`, {
+        method: 'PATCH',
+        body: JSON.stringify(values),
+      });
+      await loadState();
+      state.editingRegistrationId = null;
+      setFlash('참가선수 정보가 수정되었습니다.', 'success');
+    } catch (error) {
+      setFlash(error.message || '참가선수 정보 수정에 실패했습니다.', 'error');
     }
     render();
   }
@@ -2452,6 +2473,26 @@
     const toggleGroupVisibilityButton = event.target.closest('[data-toggle-group-visibility]');
     if (toggleGroupVisibilityButton) {
       handleToggleGroupVisibility();
+      return;
+    }
+
+    const editRegistrationButton = event.target.closest('[data-edit-registration]');
+    if (editRegistrationButton) {
+      state.editingRegistrationId = editRegistrationButton.dataset.editRegistration;
+      render();
+      return;
+    }
+
+    const cancelRegistrationButton = event.target.closest('[data-cancel-registration]');
+    if (cancelRegistrationButton) {
+      state.editingRegistrationId = null;
+      render();
+      return;
+    }
+
+    const saveRegistrationButton = event.target.closest('[data-save-registration]');
+    if (saveRegistrationButton) {
+      handleSaveRegistration(saveRegistrationButton.dataset.saveRegistration);
       return;
     }
 

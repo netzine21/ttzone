@@ -2299,7 +2299,13 @@ button {
 
 .roster-list-table th:nth-child(6),
 .roster-list-table td:nth-child(6) {
-  width: 18%;
+  width: 15%;
+  text-align: center;
+}
+
+.roster-list-table th:nth-child(7),
+.roster-list-table td:nth-child(7) {
+  width: 12%;
   text-align: center;
 }
 
@@ -2311,6 +2317,37 @@ button {
 
 .roster-list-table tbody tr:last-child td {
   border-bottom: 0;
+}
+
+.roster-edit-input {
+  width: 100%;
+  min-width: 0;
+  padding: 5px 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: rgba(6, 13, 24, 0.75);
+  color: var(--text);
+  font: inherit;
+}
+
+.roster-edit-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.roster-edit-button {
+  border: 0;
+  padding: 4px 6px;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.roster-edit-button--muted {
+  color: var(--muted);
 }
 
 .schedule-panel {

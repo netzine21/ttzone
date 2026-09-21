@@ -524,6 +524,37 @@ async function handleApi(req, res, requestPath) {
     }
 
     const registrationMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations$/);
+    const registrationUpdateMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations\/([^/]+)$/);
+    if (registrationUpdateMatch && req.method === 'PATCH') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      const body = await readBody(req);
+      const gameId = registrationUpdateMatch[1];
+      const registrationId = registrationUpdateMatch[2];
+      const nickname = String(body.nickname || '').trim();
+      const memberId = String(body.memberId || '').trim();
+      const rank = String(body.rank || '').trim();
+      const teamName = String(body.teamName || '').trim();
+      const registration = await pool.query(
+        `select r.format, g.registration_closed
+           from public.registrations r
+           join public.games g on g.id = r.game_id
+          where r.id = $1 and r.game_id = $2 and g.operator_id = $3`,
+        [registrationId, gameId, user.id]
+      );
+      const row = registration.rows[0];
+      if (!row) return sendJson(res, 404, { error: '수정할 참가선수를 찾을 수 없습니다.' });
+      if (row.registration_closed?.[row.format] === true) return sendJson(res, 400, { error: '선수등록이 마감되어 수정할 수 없습니다.' });
+      if (!nickname || !rank || (row.format !== 'singles' && !teamName)) return sendJson(res, 400, { error: '선수명, 부수와 팀명을 확인해 주세요.' });
+      const updated = await pool.query(
+        `update public.registrations
+            set nickname = $1, member_id = $2, rank = $3, team_name = $4, updated_at = now()
+          where id = $5 and game_id = $6
+          returning *`,
+        [nickname, memberId || null, rank, teamName || null, registrationId, gameId]
+      );
+      return sendJson(res, 200, { registration: updated.rows[0] });
+    }
     if (registrationMatch && req.method === 'POST') {
       const user = await findSession(req);
       if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
