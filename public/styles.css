@@ -3573,7 +3573,11 @@ button {
   }
 
   .public-league-entry small {
-    font-size: 0.62rem;
+    display: none;
+  }
+
+  .public-league-results {
+    display: none;
   }
 
   .roster-list-table {
