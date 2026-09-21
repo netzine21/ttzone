@@ -12,7 +12,8 @@ async function ensureGameStateColumns() {
          add column if not exists qualifying_groups jsonb not null default '{}'::jsonb,
          add column if not exists preliminary_matches jsonb not null default '{}'::jsonb,
          add column if not exists tournaments jsonb not null default '{}'::jsonb,
-         add column if not exists registration_closed jsonb not null default '{}'::jsonb;
+         add column if not exists registration_closed jsonb not null default '{}'::jsonb,
+         add column if not exists format_modes jsonb not null default '{}'::jsonb;
        alter table public.registrations
          add column if not exists registration_source text not null default 'bulk';
        update public.registrations
@@ -97,6 +98,7 @@ function publicGame(row, formats = [], registrations = [], viewerId = null) {
     location: row.location,
     formats,
     format: formats[0] || null,
+    formatModes: row.format_modes || {},
     scheduledAt: row.scheduled_at,
     maxParticipants: row.max_participants,
     note: row.note || '',
@@ -111,6 +113,14 @@ function publicGame(row, formats = [], registrations = [], viewerId = null) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+function normalizeFormatModes(value, formats) {
+  const source = value && typeof value === 'object' ? value : {};
+  return Object.fromEntries(formats.map((format) => [
+    format,
+    source[format] === 'leagueOnly' ? 'leagueOnly' : 'leagueTournament',
+  ]));
 }
 
 async function readBody(req) {
@@ -263,6 +273,7 @@ async function handleApi(req, res, requestPath) {
       const title = String(body.title || '').trim();
       const location = String(body.location || '').trim();
       const formats = Array.isArray(body.formats) ? [...new Set(body.formats)] : [];
+      const formatModes = normalizeFormatModes(body.formatModes, formats);
       const maxParticipants = Number(body.maxParticipants);
       if (!title || !location || !formats.length || !body.scheduledAt || !Number.isInteger(maxParticipants) || maxParticipants < 1 || formats.some((format) => !['singles', 'doubles', 'team'].includes(format))) {
         return sendJson(res, 400, { error: '게임 필수정보를 확인해 주세요.' });
@@ -271,9 +282,9 @@ async function handleApi(req, res, requestPath) {
       try {
         await client.query('begin');
         const gameResult = await client.query(
-          `insert into public.games (operator_id, title, location, scheduled_at, max_participants, note)
-           values ($1, $2, $3, $4, $5, $6) returning *`,
-          [user.id, title, location, body.scheduledAt, maxParticipants, String(body.note || '').trim() || null]
+          `insert into public.games (operator_id, title, location, scheduled_at, max_participants, note, format_modes)
+           values ($1, $2, $3, $4, $5, $6, $7) returning *`,
+          [user.id, title, location, body.scheduledAt, maxParticipants, String(body.note || '').trim() || null, JSON.stringify(formatModes)]
         );
         for (const format of formats) await client.query('insert into public.game_formats (game_id, format) values ($1, $2)', [gameResult.rows[0].id, format]);
         await client.query('commit');
@@ -296,6 +307,7 @@ async function handleApi(req, res, requestPath) {
       const title = String(body.title || '').trim();
       const location = String(body.location || '').trim();
       const formats = Array.isArray(body.formats) ? [...new Set(body.formats)] : [];
+      const formatModes = normalizeFormatModes(body.formatModes, formats);
       const maxParticipants = Number(body.maxParticipants);
       if (!title || !location || !formats.length || !body.scheduledAt || !Number.isInteger(maxParticipants) || maxParticipants < 1 || formats.some((format) => !['singles', 'doubles', 'team'].includes(format))) {
         return sendJson(res, 400, { error: '게임 필수정보를 확인해 주세요.' });
@@ -309,10 +321,10 @@ async function handleApi(req, res, requestPath) {
         await client.query('begin');
         const gameResult = await client.query(
           `update public.games
-              set title = $1, location = $2, scheduled_at = $3, max_participants = $4, note = $5, updated_at = now()
-            where id = $6 and operator_id = $7
+              set title = $1, location = $2, scheduled_at = $3, max_participants = $4, note = $5, format_modes = $6, updated_at = now()
+            where id = $7 and operator_id = $8
             returning id`,
-          [title, location, body.scheduledAt, maxParticipants, String(body.note || '').trim() || null, gameId, user.id]
+          [title, location, body.scheduledAt, maxParticipants, String(body.note || '').trim() || null, JSON.stringify(formatModes), gameId, user.id]
         );
         if (!gameResult.rows[0]) {
           await client.query('rollback');

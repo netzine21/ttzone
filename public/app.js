@@ -12,6 +12,11 @@
     team: '단체전',
   };
 
+  const FORMAT_MODE_LABELS = {
+    leagueOnly: '리그전만 진행',
+    leagueTournament: '예선리그 후 본선 토너먼트',
+  };
+
   function getFormatIconSvg(format) {
     const icons = {
       singles: '<circle cx="12" cy="7" r="3"></circle><path d="M6 20c.7-4 2.7-6 6-6s5.3 2 6 6"></path>',
@@ -237,6 +242,14 @@
   function getGameFormats(game) {
     if (Array.isArray(game.formats) && game.formats.length) return game.formats;
     return game.format && FORMAT_LABELS[game.format] ? [game.format] : [];
+  }
+
+  function getFormatMode(game, format) {
+    return game?.formatModes?.[format] === 'leagueOnly' ? 'leagueOnly' : 'leagueTournament';
+  }
+
+  function renderFormatModeOptions(game = null) {
+    return `<div class="format-mode-options"><p class="format-mode-options__label">경기 진행방식</p>${Object.keys(FORMAT_LABELS).map((format) => `<label class="format-mode-option"><span class="format-mode-option__name">${escapeHtml(FORMAT_LABELS[format])}</span><select name="formatMode_${format}"><option value="leagueTournament" ${getFormatMode(game, format) === 'leagueTournament' ? 'selected' : ''}>${FORMAT_MODE_LABELS.leagueTournament}</option><option value="leagueOnly" ${getFormatMode(game, format) === 'leagueOnly' ? 'selected' : ''}>${FORMAT_MODE_LABELS.leagueOnly}</option></select></label>`).join('')}</div>`;
   }
 
   function isRegistrationClosed(game, format) {
@@ -586,8 +599,11 @@
     const summary = `<div class="schedule-table-wrap"><table class="public-league-summary public-league-summary--${escapeHtml(format)}"><tbody>${groups.map((group) => { const standingGroup = standingGroups.get(group.name); const participantCells = group.players.map((unit) => { const record = standingGroup?.standings.find((item) => item.player.playerKey === unit.playerKey); const rank = record?.rank; const members = unit.members?.length ? unit.members : [unit]; const names = members.map((member) => { const nickname = String(member.nickname || unit.nickname || unit.label); const displayName = format === 'team' && nickname.length > 1 ? nickname.slice(1) : nickname; return format === 'team' ? `<span class="public-league-entry__name">${escapeHtml(displayName)}</span>` : `<span class="public-league-entry__name">${escapeHtml(nickname)}</span><span class="public-league-entry__skill"> (${escapeHtml(member.rank || unit.rank || '-')})</span>`; }).join(', '); const team = format === 'singles' ? unit.teamName || unit.members?.[0]?.teamName || '-' : unit.label || unit.teamName || '-'; const recordText = record && (record.wins || record.losses || record.setsFor || record.setsAgainst) ? `<small class="public-league-entry__record">${record.wins}승 ${record.losses}패</small>` : ''; const primary = format === 'team' ? `<strong class="public-league-entry__team">${escapeHtml(team)}</strong><small class="public-league-entry__members">${names}</small>` : `<strong>${names}</strong><small>${escapeHtml(team)}</small>`; return `<td class="public-league-participant"><div class="public-league-entry rank-row rank-row--${rank || 'pending'}"><div>${rank ? `<span class="public-league-entry__rank">${rank}위</span>` : ''}${primary}${recordText}</div></div></td>`; }).join(''); const emptyCells = Array.from({ length: maxPlayers - group.players.length }, () => '<td class="public-league-participant public-league-participant--empty">-</td>').join(''); return `<tr><th class="public-league-summary__group">${escapeHtml(group.name)}</th>${participantCells}${emptyCells}</tr>`; }).join('')}</tbody></table></div>`;
     const matches = game.preliminaryMatches?.[format]?.matches || [];
     const completedMatches = matches.filter((match) => match.result?.winner && /^\d+\s*[-:]\s*\d+$/.test(String(match.result.score || '')));
+    const leagueOnlyMatrices = getFormatMode(game, format) === 'leagueOnly'
+      ? groups.map((group) => `<section class="public-league-matrix"><h4>${escapeHtml(group.name)} 경기결과</h4>${renderScheduleMatrix(group, matches.filter((match) => match.groupName === group.name))}</section>`).join('')
+      : '';
     const results = completedMatches.length ? `<section class="public-league-results"><h4>경기결과</h4><div class="schedule-table-wrap"><table class="public-data-table public-league-results-table"><thead><tr><th>조</th><th>라운드</th><th>대진</th><th>스코어</th><th>승자</th></tr></thead><tbody>${completedMatches.map((match) => `<tr><td>${escapeHtml(match.groupName)}</td><td>${escapeHtml(String(match.round))}</td><td>${escapeHtml(match.sideA)}<small>vs</small>${escapeHtml(match.sideB)}</td><td>${escapeHtml(match.result.score)}</td><td>${match.result.winner === 'A' ? escapeHtml(match.sideA) : escapeHtml(match.sideB)}</td></tr>`).join('')}</tbody></table></div></section>` : '';
-    return `${summary}${results}`;
+    return `${summary}${leagueOnlyMatrices}${results}`;
   }
 
   function renderPublicMatchScheduleTable(game, format) {
@@ -630,13 +646,14 @@
   }
 
   function renderCompetitionView(game, currentUser, format) {
-    const progressSubtab = ['participants', 'league', 'tournament'].includes(state.progressSubtab) ? state.progressSubtab : 'participants';
+    const tournamentEnabled = getFormatMode(game, format) !== 'leagueOnly';
+    const progressSubtab = tournamentEnabled && ['participants', 'league', 'tournament'].includes(state.progressSubtab) ? state.progressSubtab : (state.progressSubtab === 'league' ? 'league' : 'participants');
     const config = getTournamentConfig(game, format);
     const progressTabs = [
       ['participants', '참가선수', '<circle cx="9" cy="8" r="3"></circle><path d="M3 20c.7-3.3 2.7-5 6-5s5.3 1.7 6 5M16 6h5M18.5 3.5v5"></path>'],
       ['league', '리그전', '<circle cx="7" cy="7" r="2"></circle><circle cx="17" cy="7" r="2"></circle><circle cx="12" cy="17" r="2"></circle><path d="M8.5 8.5 11 15M15.5 8.5 13 15"></path>'],
       ['tournament', '토너먼트', '<path d="M5 4v16M19 4v16M5 8h6a3 3 0 0 1 3 3v2a3 3 0 0 0 3 3h2M5 16h6a3 3 0 0 0 3-3v-2a3 3 0 0 1 3-3h2"></path>']
-    ];
+    ].filter(([value]) => tournamentEnabled || value !== 'tournament');
     const participantCount = getGameRegistrations(game, format).length;
     const isOwner = currentUser?.id === game.operatorId;
     const groupSetup = game.qualifyingGroups?.[format];
@@ -806,6 +823,7 @@
               <label><span>복식</span><input type="checkbox" name="formats" value="doubles" /></label>
               <label><span>단체전</span><input type="checkbox" name="formats" value="team" /></label>
             </div>
+            ${renderFormatModeOptions()}
           </div>
 
           <div class="field-grid create-game-date-row">
@@ -856,6 +874,7 @@
               <div class="format-options">
                 ${['singles', 'doubles', 'team'].map((format) => `<label><span>${FORMAT_LABELS[format]}</span><input type="checkbox" name="formats" value="${format}" ${getGameFormats(game).includes(format) ? 'checked' : ''} /></label>`).join('')}
               </div>
+              ${renderFormatModeOptions(game)}
           </div>
 
           <div class="field-grid create-game-date-row">
@@ -2255,6 +2274,7 @@
     const title = trimValue(formData.title);
     const location = trimValue(formData.location);
     const formats = submittedData.getAll('formats').map(trimValue);
+    const formatModes = Object.fromEntries(formats.map((format) => [format, submittedData.get(`formatMode_${format}`) === 'leagueOnly' ? 'leagueOnly' : 'leagueTournament']));
     const scheduledAt = trimValue(formData.scheduledAt);
     const note = trimValue(formData.note);
     const maxParticipants = Number.parseInt(trimValue(formData.maxParticipants), 10);
@@ -2274,7 +2294,7 @@
     try {
       await apiRequest('/api/games', {
         method: 'POST',
-        body: JSON.stringify({ title, location, formats, scheduledAt, maxParticipants, note }),
+        body: JSON.stringify({ title, location, formats, formatModes, scheduledAt, maxParticipants, note }),
       });
       await loadState();
       form.reset();
@@ -2295,6 +2315,7 @@
       title,
       location,
       formats,
+      formatModes,
       format: formats[0],
       scheduledAt,
       maxParticipants,
@@ -2326,6 +2347,7 @@
     const title = trimValue(formData.title);
     const location = trimValue(formData.location);
     const formats = submittedData.getAll('formats').map(trimValue);
+    const formatModes = Object.fromEntries(formats.map((format) => [format, submittedData.get(`formatMode_${format}`) === 'leagueOnly' ? 'leagueOnly' : 'leagueTournament']));
     const scheduledAt = trimValue(formData.scheduledAt);
     const note = trimValue(formData.note);
     const maxParticipants = Number.parseInt(trimValue(formData.maxParticipants), 10);
@@ -2345,7 +2367,7 @@
     try {
       const savedPayload = await apiRequest(`/api/games/${encodeURIComponent(game.id)}`, {
         method: 'PATCH',
-        body: JSON.stringify({ title, location, formats, scheduledAt, maxParticipants, note }),
+        body: JSON.stringify({ title, location, formats, formatModes, scheduledAt, maxParticipants, note }),
       });
       const savedFormats = savedPayload.game?.formats;
       if (!Array.isArray(savedFormats) || savedFormats.length !== formats.length || formats.some((format) => !savedFormats.includes(format))) {
@@ -2365,7 +2387,7 @@
       }
     }
 
-    Object.assign(game, { title, location, formats, format: formats[0], scheduledAt, maxParticipants, note });
+    Object.assign(game, { title, location, formats, formatModes, format: formats[0], scheduledAt, maxParticipants, note });
     persistGames();
     state.editingGameId = null;
     state.selectedGameId = game.id;

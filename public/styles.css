@@ -813,6 +813,40 @@ button {
   accent-color: var(--primary-strong);
 }
 
+.format-mode-options {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(118, 240, 196, 0.12);
+  border-radius: var(--radius-md);
+  background: rgba(5, 11, 20, 0.4);
+}
+
+.format-mode-options__label {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.format-mode-option {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.format-mode-option__name {
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.format-mode-option select {
+  min-width: 0;
+}
+
 .format-registration-list {
   display: grid;
   gap: 14px;
@@ -1982,6 +2016,16 @@ button {
 
 .public-league-results {
   margin-top: 16px;
+}
+
+.public-league-matrix {
+  margin-top: 18px;
+}
+
+.public-league-matrix h4 {
+  margin: 0 0 8px;
+  color: var(--text);
+  font-size: 0.92rem;
 }
 
 .public-league-results h4 {
