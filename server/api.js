@@ -4,6 +4,20 @@ const { getPool } = require('./db');
 const SESSION_COOKIE = 'ttgms_session';
 const SESSION_DAYS = 30;
 let gameStateColumnsPromise = null;
+let accessColumnsPromise = null;
+
+async function ensureAccessColumns() {
+  if (!accessColumnsPromise) {
+    accessColumnsPromise = getPool().query(
+      `alter table public.users
+         add column if not exists role text not null default 'user';
+       alter table public.games
+         add column if not exists deleted_at timestamptz,
+         add column if not exists deleted_by uuid references public.users(id) on delete set null`
+    );
+  }
+  return accessColumnsPromise;
+}
 
 async function ensureGameStateColumns() {
   if (!gameStateColumnsPromise) {
@@ -78,6 +92,7 @@ function publicUser(row) {
     phone: row.phone,
     gender: row.gender,
     rank: row.rank,
+    role: row.role || 'user',
     region: row.region || '',
     address: row.address || '',
     createdAt: row.created_at,
@@ -177,11 +192,13 @@ function requirePool() {
 
 async function getGames(viewerId = null) {
   const pool = requirePool();
+  await ensureAccessColumns();
   await ensureGameStateColumns();
   const games = await pool.query(
     `select g.*, u.nickname as operator_nickname
        from public.games g
        join public.users u on u.id = g.operator_id
+      where g.deleted_at is null
       order by g.created_at desc`
   );
   const formats = await pool.query('select game_id, format from public.game_formats');
@@ -216,6 +233,7 @@ async function handleApi(req, res, requestPath) {
 
   try {
     const pool = requirePool();
+    await ensureAccessColumns();
     if (requestPath === '/api/auth/me' && req.method === 'GET') {
       return sendJson(res, 200, { user: publicUser(await findSession(req)) });
     }
@@ -658,6 +676,32 @@ async function handleApi(req, res, requestPath) {
         );
       }
       return sendJson(res, 201, { registration: result.rows[0] });
+    }
+
+    if (gameUpdateMatch && req.method === 'DELETE') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      const gameId = gameUpdateMatch[1];
+      const result = await pool.query(
+        `select operator_id, registration_closed, deleted_at
+           from public.games
+          where id = $1`,
+        [gameId]
+      );
+      const game = result.rows[0];
+      if (!game || game.deleted_at) return sendJson(res, 404, { error: '삭제할 게임을 찾을 수 없습니다.' });
+      const isAdmin = user.role === 'admin';
+      const isOwner = String(game.operator_id) === String(user.id);
+      if (!isAdmin && !isOwner) return sendJson(res, 403, { error: '게임 운영자 또는 관리자만 삭제할 수 있습니다.' });
+      const closed = game.registration_closed === true || Object.values(game.registration_closed || {}).some(Boolean);
+      if (!isAdmin && closed) return sendJson(res, 400, { error: '선수등록 마감 후에는 게임을 삭제할 수 없습니다.' });
+      await pool.query(
+        `update public.games
+            set deleted_at = now(), deleted_by = $1, updated_at = now()
+          where id = $2`,
+        [user.id, gameId]
+      );
+      return sendJson(res, 200, { ok: true });
     }
 
     return sendJson(res, 404, { error: 'API를 찾을 수 없습니다.' });

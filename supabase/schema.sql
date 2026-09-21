@@ -13,6 +13,7 @@ create table if not exists public.users (
   phone text not null,
   region text,
   address text,
+  role text not null default 'user',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -25,6 +26,8 @@ create table if not exists public.games (
   scheduled_at timestamptz not null,
   max_participants integer not null check (max_participants > 0),
   note text,
+  deleted_at timestamptz,
+  deleted_by uuid references public.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
