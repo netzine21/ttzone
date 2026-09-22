@@ -3424,6 +3424,27 @@ button {
   text-align: right;
 }
 
+.tournament-player-label {
+  display: inline-flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.tournament-side .tournament-player-label strong {
+  min-width: 0;
+  color: inherit;
+  text-align: left;
+}
+
+.tournament-player-label small {
+  display: block;
+  color: var(--muted-2);
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+
 .tournament-side.is-winner {
   color: var(--primary);
   font-weight: 800;

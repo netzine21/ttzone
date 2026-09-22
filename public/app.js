@@ -1175,8 +1175,18 @@
     return rank ? `${label} (${rank})` : label;
   }
 
+  function tournamentTeamDisplayLabel(entry) {
+    const teamName = entry?.teamName || entry?.members?.find((member) => member.teamName)?.teamName;
+    if (teamName) return teamName;
+    return entry?.members?.length > 1 ? tournamentLabel(entry) : '개인';
+  }
+
+  function renderTournamentPlayerLabel(entry) {
+    return `<span class="tournament-player-label"><strong>${escapeHtml(tournamentDisplayLabel(entry))}</strong><small>${escapeHtml(tournamentTeamDisplayLabel(entry))}</small></span>`;
+  }
+
   function renderPublicTournamentMatch(match) {
-    return `<div class="tournament-match"><div class="tournament-side ${match.result?.winner === 'A' ? 'is-winner' : ''}"><span>${escapeHtml(tournamentDisplayLabel(match.sideA))}</span><strong>${escapeHtml(String(match.result?.score || '').split(/[-:]/)[0] || '')}</strong></div><div class="tournament-side ${match.result?.winner === 'B' ? 'is-winner' : ''}"><span>${escapeHtml(tournamentDisplayLabel(match.sideB))}</span><strong>${escapeHtml(String(match.result?.score || '').split(/[-:]/)[1] || '')}</strong></div></div>`;
+    return `<div class="tournament-match"><div class="tournament-side ${match.result?.winner === 'A' ? 'is-winner' : ''}">${renderTournamentPlayerLabel(match.sideA)}<strong>${escapeHtml(String(match.result?.score || '').split(/[-:]/)[0] || '')}</strong></div><div class="tournament-side ${match.result?.winner === 'B' ? 'is-winner' : ''}">${renderTournamentPlayerLabel(match.sideB)}<strong>${escapeHtml(String(match.result?.score || '').split(/[-:]/)[1] || '')}</strong></div></div>`;
   }
 
   function buildTournamentBracket(entries, league, format) {
@@ -1290,7 +1300,7 @@
     const labelB = tournamentDisplayLabel(match.sideB);
     const playable = match.sideA && match.sideB;
     const scoreParts = String(match.result?.score || '').match(/^(\d+)\s*[-:]\s*(\d+)$/);
-    return `<div class="tournament-match"><div class="tournament-side ${match.result?.winner === 'A' ? 'is-winner' : ''}"><span>${escapeHtml(labelA)}</span><strong>${scoreParts ? scoreParts[1] : ''}</strong></div><div class="tournament-side ${match.result?.winner === 'B' ? 'is-winner' : ''}"><span>${escapeHtml(labelB)}</span><strong>${scoreParts ? scoreParts[2] : ''}</strong></div>${playable ? `<div class="tournament-match__input"><input class="schedule-result-input" data-tournament-score="${escapeHtml(match.id)}" value="${escapeHtml(match.result?.score || '')}" placeholder="세트 스코어" /><select data-tournament-winner="${escapeHtml(match.id)}"><option value="">승자 선택</option><option value="A" ${match.result?.winner === 'A' ? 'selected' : ''}>${escapeHtml(labelA)}</option><option value="B" ${match.result?.winner === 'B' ? 'selected' : ''}>${escapeHtml(labelB)}</option></select></div>` : `<small class="tournament-bye-note">${match.sideA || match.sideB ? '부전승' : '진출 대기'}</small>`}</div>`;
+    return `<div class="tournament-match"><div class="tournament-side ${match.result?.winner === 'A' ? 'is-winner' : ''}">${renderTournamentPlayerLabel(match.sideA)}<strong>${scoreParts ? scoreParts[1] : ''}</strong></div><div class="tournament-side ${match.result?.winner === 'B' ? 'is-winner' : ''}">${renderTournamentPlayerLabel(match.sideB)}<strong>${scoreParts ? scoreParts[2] : ''}</strong></div>${playable ? `<div class="tournament-match__input"><input class="schedule-result-input" data-tournament-score="${escapeHtml(match.id)}" value="${escapeHtml(match.result?.score || '')}" placeholder="세트 스코어" /><select data-tournament-winner="${escapeHtml(match.id)}"><option value="">승자 선택</option><option value="A" ${match.result?.winner === 'A' ? 'selected' : ''}>${escapeHtml(labelA)}</option><option value="B" ${match.result?.winner === 'B' ? 'selected' : ''}>${escapeHtml(labelB)}</option></select></div>` : `<small class="tournament-bye-note">${match.sideA || match.sideB ? '부전승' : '진출 대기'}</small>`}</div>`;
   }
 
   function renderTournamentRound(round, isFinal = false, title = '', bracketSize = 2, roundIndex = 0) {
