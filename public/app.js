@@ -248,8 +248,8 @@
     return game?.formatModes?.[format] === 'leagueOnly' ? 'leagueOnly' : 'leagueTournament';
   }
 
-  function renderFormatModeOptions(game = null) {
-    return `<div class="format-mode-options"><p class="format-mode-options__label">경기 진행방식</p>${Object.keys(FORMAT_LABELS).map((format) => `<label class="format-mode-option"><span class="format-mode-option__name">${escapeHtml(FORMAT_LABELS[format])}</span><select name="formatMode_${format}"><option value="leagueTournament" ${getFormatMode(game, format) === 'leagueTournament' ? 'selected' : ''}>${FORMAT_MODE_LABELS.leagueTournament}</option><option value="leagueOnly" ${getFormatMode(game, format) === 'leagueOnly' ? 'selected' : ''}>${FORMAT_MODE_LABELS.leagueOnly}</option></select></label>`).join('')}</div>`;
+  function renderFormatOptionsWithModes(game = null) {
+    return `<div class="format-options format-options--with-modes">${Object.keys(FORMAT_LABELS).map((format) => `<label class="format-option-with-mode"><span class="format-option-with-mode__choice"><input type="checkbox" name="formats" value="${format}" ${game && getGameFormats(game).includes(format) ? 'checked' : ''} /><span>${escapeHtml(FORMAT_LABELS[format])}</span></span><select name="formatMode_${format}" aria-label="${escapeHtml(FORMAT_LABELS[format])} 경기 진행방식"><option value="leagueTournament" ${getFormatMode(game, format) === 'leagueTournament' ? 'selected' : ''}>예선리그 후 토너먼트</option><option value="leagueOnly" ${getFormatMode(game, format) === 'leagueOnly' ? 'selected' : ''}>리그전만</option></select></label>`).join('')}</div>`;
   }
 
   function isRegistrationClosed(game, format) {
@@ -820,12 +820,7 @@
 
           <div class="field">
             <span class="field-label"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c3 0 5 2 5 5v4M17 20c-3 0-5-2-5-5V9" /><ellipse cx="7" cy="4" rx="3" ry="2" /><ellipse cx="17" cy="20" rx="3" ry="2" /></svg>경기형식</span></span>
-            <div class="format-options">
-              <label><span>개인전</span><input type="checkbox" name="formats" value="singles" /></label>
-              <label><span>복식</span><input type="checkbox" name="formats" value="doubles" /></label>
-              <label><span>단체전</span><input type="checkbox" name="formats" value="team" /></label>
-            </div>
-            ${renderFormatModeOptions()}
+            ${renderFormatOptionsWithModes()}
           </div>
 
           <div class="field-grid create-game-date-row">
@@ -873,10 +868,7 @@
           </div>
           <div class="field">
               <span class="field-label"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c3 0 5 2 5 5v4M17 20c-3 0-5-2-5-5V9" /><ellipse cx="7" cy="4" rx="3" ry="2" /><ellipse cx="17" cy="20" rx="3" ry="2" /></svg>경기형식</span></span>
-              <div class="format-options">
-                ${['singles', 'doubles', 'team'].map((format) => `<label><span>${FORMAT_LABELS[format]}</span><input type="checkbox" name="formats" value="${format}" ${getGameFormats(game).includes(format) ? 'checked' : ''} /></label>`).join('')}
-              </div>
-              ${renderFormatModeOptions(game)}
+              ${renderFormatOptionsWithModes(game)}
           </div>
 
           <div class="field-grid create-game-date-row">

@@ -813,6 +813,39 @@ button {
   accent-color: var(--primary-strong);
 }
 
+.format-options--with-modes {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.format-option-with-mode {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 9px 8px;
+  border: 1px solid rgba(165, 190, 214, 0.18);
+  border-radius: var(--radius-md);
+  background: rgba(5, 11, 20, 0.72);
+}
+
+.format-option-with-mode__choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.format-option-with-mode select {
+  min-width: 0;
+  width: 100%;
+  padding: 8px 26px 8px 8px;
+  font-size: 0.72rem;
+}
+
 .format-mode-options {
   display: grid;
   gap: 8px;
@@ -3675,6 +3708,10 @@ button {
 
   .create-game-date-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .format-options--with-modes {
+    grid-template-columns: 1fr;
   }
 
   .public-detail-meta {
