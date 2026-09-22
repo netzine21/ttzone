@@ -1132,9 +1132,15 @@
           left.losses += 1;
         }
       });
-      const standings = [...records.values()].sort((left, right) => right.wins - left.wins || (right.setsFor - right.setsAgainst) - (left.setsFor - left.setsAgainst) || right.setsFor - left.setsFor);
+      const standings = [...records.values()].sort((left, right) => {
+        const leftHasResult = left.wins > 0 || left.losses > 0;
+        const rightHasResult = right.wins > 0 || right.losses > 0;
+        if (leftHasResult !== rightHasResult) return leftHasResult ? -1 : 1;
+        return right.wins - left.wins || (right.setsFor - right.setsAgainst) - (left.setsFor - left.setsAgainst) || right.setsFor - left.setsFor;
+      });
       const complete = groupMatches.length > 0 && groupMatches.every((match) => match.result?.winner && /^(\d+)\s*[-:]\s*(\d+)$/.test(String(match.result.score || '')));
-      return { name: group.name, complete, standings: standings.map((record, index) => ({ ...record, rank: index + 1 })) };
+      let rank = 0;
+      return { name: group.name, complete, standings: standings.map((record) => ({ ...record, rank: record.wins > 0 || record.losses > 0 ? ++rank : '' })) };
     });
   }
 
