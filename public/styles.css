@@ -2680,8 +2680,8 @@ button {
 }
 
 .qualifying-generate-action {
-  align-self: end;
-  justify-self: center;
+  align-self: center;
+  justify-self: end;
   white-space: nowrap;
 }
 
@@ -3792,6 +3792,10 @@ button {
   .qualifying-settings {
     grid-template-columns: minmax(0, 1fr) 0.7fr;
     gap: 8px;
+  }
+
+  .qualifying-generate-action {
+    justify-self: end;
   }
 
   .format-selector,
