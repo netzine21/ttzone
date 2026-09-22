@@ -3143,6 +3143,29 @@ button {
   overflow-x: auto;
 }
 
+.tournament-progress-league-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin: 18px 0 10px;
+}
+
+.tournament-progress-league-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.tournament-progress-league-tab small {
+  color: var(--muted-2);
+  font-size: 0.7rem;
+}
+
+.tournament-progress-league-tab.is-active {
+  color: var(--primary);
+}
+
 .tournament-bracket-viewport {
   width: 100%;
   overflow: hidden;

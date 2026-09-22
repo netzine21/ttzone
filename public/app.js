@@ -37,6 +37,7 @@
     detailTab: 'status',
     statusSubtab: 'info',
     progressSubtab: 'participants',
+    progressTournamentLeague: 'upper',
     statusFormat: null,
     editingGameId: null,
     operationGameId: null,
@@ -665,7 +666,11 @@
     const groupSetup = game.qualifyingGroups?.[format];
     const canViewGroups = isOwner || groupSetup?.isPublic === true;
     const groupCount = groupSetup?.groups?.length || 0;
-    const progressContent = progressSubtab === 'participants' ? `<div class="competition-content-heading"><h3>[${escapeHtml(FORMAT_LABELS[format])} 참가자 목록]</h3><span>총 ${participantCount}명/팀</span></div>${renderPublicParticipantList(game, format)}` : progressSubtab === 'league' ? `<div class="competition-content-heading"><h3>[${escapeHtml(FORMAT_LABELS[format])} 리그전]</h3><span>총 ${groupCount}개 조</span></div>${canViewGroups ? renderPublicLeagueStandings(game, format) : '<div class="empty-state">운영자가 조편성을 준비 중입니다.</div>'}` : `<h3 class="competition-tournament-heading">[${escapeHtml(FORMAT_LABELS[format])} 토너먼트 대진표]</h3>${canViewGroups && config?.upper ? `<h4>상위리그</h4>${renderPublicTournamentBracket(config.upper)}` : ''}${canViewGroups && config?.lower ? `<h4>하위리그</h4>${renderPublicTournamentBracket(config.lower)}` : (!config ? '<div class="empty-state">아직 본선 토너먼트가 생성되지 않았습니다.</div>' : !canViewGroups ? '<div class="empty-state">운영자가 경기 진행을 준비 중입니다.</div>' : '')}`;
+    const tournamentLeagues = ['upper', 'lower'].filter((league) => config?.[league]);
+    const tournamentLeague = tournamentLeagues.includes(state.progressTournamentLeague) ? state.progressTournamentLeague : tournamentLeagues[0];
+    const tournamentBracket = config?.[tournamentLeague];
+    const tournamentContent = `<h3 class="competition-tournament-heading">[${escapeHtml(FORMAT_LABELS[format])} 토너먼트 대진표]</h3>${tournamentLeagues.length ? `<div class="tournament-progress-league-tabs" role="tablist" aria-label="토너먼트 리그 선택">${tournamentLeagues.map((league) => `<button type="button" class="game-list-action tournament-progress-league-tab ${league === tournamentLeague ? 'is-active' : ''}" data-tournament-progress-league="${league}"><span>${league === 'lower' ? '하위리그' : '상위리그'}</span><small>${config[league].completed ? '종료' : '진행 중'}</small></button>`).join('')}</div>${canViewGroups && tournamentBracket ? renderPublicTournamentBracket(tournamentBracket) : !canViewGroups ? '<div class="empty-state">운영자가 경기 진행을 준비 중입니다.</div>' : ''}` : '<div class="empty-state">아직 본선 토너먼트가 생성되지 않았습니다.</div>'}`;
+    const progressContent = progressSubtab === 'participants' ? `<div class="competition-content-heading"><h3>[${escapeHtml(FORMAT_LABELS[format])} 참가자 목록]</h3><span>총 ${participantCount}명/팀</span></div>${renderPublicParticipantList(game, format)}` : progressSubtab === 'league' ? `<div class="competition-content-heading"><h3>[${escapeHtml(FORMAT_LABELS[format])} 리그전]</h3><span>총 ${groupCount}개 조</span></div>${canViewGroups ? renderPublicLeagueStandings(game, format) : '<div class="empty-state">운영자가 조편성을 준비 중입니다.</div>'}` : tournamentContent;
     return `<div class="competition-view"><div class="format-selector" role="tablist" aria-label="경기종목">${getGameFormats(game).map((item) => `<button type="button" class="format-selector__item ${item === format ? 'is-active' : ''}" data-status-format="${escapeHtml(item)}"><svg class="progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${getFormatIconSvg(item)}</svg><span>${escapeHtml(FORMAT_LABELS[item])}</span></button>`).join('')}</div><div class="competition-subtabs competition-progress__tabs" role="tablist" aria-label="경기진행 메뉴">${progressTabs.map(([value, label, icon]) => `<button type="button" class="game-list-action progress-tab ${progressSubtab === value ? 'is-active' : ''}" data-status-progress="${value}"><svg class="game-list-action__icon progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${icon}</svg><span>${label}</span></button>`).join('')}</div>${progressContent}</div>`;
   }
   function renderApplicationsView(game, currentUser) {
@@ -1345,6 +1350,11 @@
     return matches.length > 0 && matches.every((match) => match.result?.winner && /^(\d+)\s*[-:]\s*(\d+)$/.test(String(match.result.score || '')));
   }
 
+  function isTournamentBracketComplete(bracket) {
+    const matches = bracket?.rounds?.flat().filter((match) => match.sideA && match.sideB) || [];
+    return matches.length > 0 && matches.every((match) => match.result?.winner && /^(\d+)\s*[-:]\s*(\d+)$/.test(String(match.result.score || '')));
+  }
+
   function renderTournamentOperationPanel(games, game, formats, format) {
     const standings = getQualifyingStandings(game, format);
     const config = getTournamentConfig(game, format);
@@ -1551,11 +1561,17 @@
       syncTournamentBracket(bracket);
     });
     tournaments.updatedAt = new Date().toISOString();
-    const tournamentComplete = isTournamentComplete(tournaments);
-    if (tournamentComplete) {
-      tournaments.completed = true;
-      tournaments.completedAt = new Date().toISOString();
-    }
+    const leaguesToCheck = leagueToSave === 'upper' || leagueToSave === 'lower' ? leaguesToSave : ['upper', 'lower'];
+    leaguesToCheck.forEach((league) => {
+      const bracket = tournaments[league];
+      if (bracket && isTournamentBracketComplete(bracket)) {
+        bracket.completed = true;
+        bracket.completedAt = new Date().toISOString();
+      }
+    });
+    const enabledLeagues = ['upper', 'lower'].filter((league) => tournaments[league]);
+    const tournamentComplete = enabledLeagues.length > 0 && enabledLeagues.every((league) => tournaments[league].completed === true);
+    if (tournamentComplete) tournaments.completed = true;
     try {
       await apiRequest(`/api/games/${encodeURIComponent(game.id)}/tournaments`, {
         method: 'PATCH',
@@ -1576,15 +1592,17 @@
     const tournaments = getTournamentConfig(game, format);
     if (!currentUser || !game || game.operatorId !== currentUser.id || !tournaments || tournaments.completed) return;
     let targetMatch = null;
+    let targetLeague = null;
     for (const league of ['upper', 'lower']) {
       const bracket = tournaments[league];
       const match = bracket?.rounds?.flat().find((item) => item.id === matchId);
       if (match) {
         targetMatch = match;
+        targetLeague = league;
         break;
       }
     }
-    if (!targetMatch) return;
+    if (!targetMatch || tournaments[targetLeague]?.completed) return;
     const scoreInput = document.querySelector(`[data-tournament-score="${CSS.escape(matchId)}"]`);
     const winnerInput = document.querySelector(`[data-tournament-winner="${CSS.escape(matchId)}"]`);
     targetMatch.result = { score: trimValue(scoreInput?.value), winner: winnerInput?.value || '' };
@@ -1886,7 +1904,13 @@
     if (state.detailTab !== 'progress' || state.operationGameId || !Boolean(state.selectedPublicGameId || state.selectedGameId)) return false;
     const liveGame = state.games.find((game) => game.id === (state.selectedPublicGameId || state.selectedGameId));
     const liveFormat = liveGame ? getPublicFormat(liveGame) : null;
-    if (state.progressSubtab === 'tournament' && liveGame && getTournamentConfig(liveGame, liveFormat)?.completed) return false;
+    if (state.progressSubtab === 'tournament' && liveGame) {
+      const liveTournament = getTournamentConfig(liveGame, liveFormat);
+      const liveLeague = liveTournament && ['upper', 'lower'].includes(state.progressTournamentLeague) && liveTournament[state.progressTournamentLeague]
+        ? state.progressTournamentLeague
+        : 'upper';
+      if (liveTournament?.[liveLeague]?.completed) return false;
+    }
     return true;
   }
 
@@ -2808,6 +2832,13 @@
     const statusProgressButton = event.target.closest('[data-status-progress]');
     if (statusProgressButton) {
       state.progressSubtab = statusProgressButton.dataset.statusProgress;
+      render();
+      return;
+    }
+
+    const tournamentProgressLeagueButton = event.target.closest('[data-tournament-progress-league]');
+    if (tournamentProgressLeagueButton) {
+      state.progressTournamentLeague = tournamentProgressLeagueButton.dataset.tournamentProgressLeague;
       render();
       return;
     }
