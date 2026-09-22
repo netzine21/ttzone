@@ -4257,6 +4257,16 @@ button {
     color: #111;
   }
 
+  body.is-printing-schedule .schedule-print-group {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  body.is-printing-schedule .schedule-print-group:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
   body.is-printing-tournament #app > *:not(.operations-page),
   body.is-printing-tournament > .page-shell {
     display: none !important;
