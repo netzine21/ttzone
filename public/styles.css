@@ -2219,16 +2219,6 @@ button {
   overflow-x: auto;
 }
 
-.operation-submenu::before {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(118, 240, 196, 0.25) 20%, rgba(118, 240, 196, 0.92) 50%, rgba(118, 240, 196, 0.25) 80%, transparent);
-  content: '';
-}
-
 .operation-submenu__item {
   appearance: none;
   flex: 0 0 auto;
