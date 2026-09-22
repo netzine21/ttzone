@@ -3355,9 +3355,11 @@ button {
 
 .tournament-bracket--split .tournament-side span {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
 }
 
 .tournament-bracket--size-16 .tournament-side,
