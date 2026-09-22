@@ -1082,20 +1082,23 @@
     const saved = game.preliminaryMatches?.[format];
     const groups = game.qualifyingGroups?.[format]?.groups || [];
     const matches = saved?.matches || [];
-    const selectedGroup = groups.find((group) => group.name === state.selectedScheduleGroup) || groups[0];
-    const selectedMatches = selectedGroup ? matches.filter((match) => match.groupName === selectedGroup.name) : [];
     const isResultsMode = mode === 'results';
+    const showAllGroups = !state.selectedScheduleGroup || state.selectedScheduleGroup === '__all__';
+    const selectedGroup = groups.find((group) => group.name === state.selectedScheduleGroup) || groups[0];
+    const visibleGroups = !isResultsMode && showAllGroups ? groups : selectedGroup ? [selectedGroup] : [];
+    const selectedMatches = selectedGroup ? matches.filter((match) => match.groupName === selectedGroup.name) : [];
+    const savedContent = `${isResultsMode ? renderQualifyingStandingsOverview(game, format) : ''}${visibleGroups.map((group) => { const groupMatches = matches.filter((match) => match.groupName === group.name); return `<div class="schedule-summary"><strong>${escapeHtml(FORMAT_LABELS[format])} ${escapeHtml(group.name)} ${isResultsMode ? '경기결과' : '대진표'}</strong><span>${escapeHtml(String(groupMatches.length))}경기 · ${escapeHtml(String(group.players.length))}명/팀</span></div><div class="schedule-group-matrices"><section class="schedule-group-block"><div class="group-result-heading"><h3>${escapeHtml(group.name)} ${isResultsMode ? '경기결과 입력' : '대진 매트릭스'}</h3><span class="subtle-note">${escapeHtml(group.name)} 탁구대</span></div>${renderScheduleMatrix(group, groupMatches)}<h4 class="schedule-order-title">${escapeHtml(group.name)} 경기 진행순서</h4>${renderScheduleResultsTable(groupMatches, isResultsMode, format)}</section></div>`; }).join('')}${isResultsMode ? '<div class="button-row group-save-row"><button type="button" class="btn btn-secondary" data-save-schedule-results>경기결과 저장</button></div>' : ''}`;
     return `
       <div class="schedule-panel">
         <div class="operation-controls schedule-generation-controls">
           <div class="field"><label for="operationScheduleGame">게임</label><select id="operationScheduleGame" data-operation-game>${games.map((item) => `<option value="${escapeHtml(item.id)}" ${item.id === game.id ? 'selected' : ''}>${escapeHtml(item.title)}</option>`).join('')}</select></div>
           <div class="field"><label for="operationScheduleFormat">경기종목</label><select id="operationScheduleFormat" data-operation-format>${formats.map((item) => `<option value="${escapeHtml(item)}" ${item === format ? 'selected' : ''}>${escapeHtml(FORMAT_LABELS[item])}</option>`).join('')}</select></div>
-          ${groups.length ? `<div class="field"><label for="operationScheduleGroup">${isResultsMode ? '경기결과 입력 조' : '출력할 조'}</label><select id="operationScheduleGroup" data-schedule-group>${groups.map((group) => `<option value="${escapeHtml(group.name)}" ${group.name === selectedGroup?.name ? 'selected' : ''}>${escapeHtml(group.name)}</option>`).join('')}</select></div>` : ''}
-          ${isResultsMode ? '' : '<button type="button" class="game-list-action game-list-action--primary" data-generate-schedule><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"></path><circle cx="12" cy="12" r="8"></circle></svg><span>전체 조 대진표 생성</span></button>'}
+          ${groups.length ? `<div class="field"><label for="operationScheduleGroup">${isResultsMode ? '경기결과 입력 조' : '대진표 조'}</label><select id="operationScheduleGroup" data-schedule-group><option value="__all__" ${showAllGroups ? 'selected' : ''}>전체</option>${groups.map((group) => `<option value="${escapeHtml(group.name)}" ${!showAllGroups && group.name === selectedGroup?.name ? 'selected' : ''}>${escapeHtml(group.name)}</option>`).join('')}</select></div>` : ''}
+          ${isResultsMode ? '' : '<button type="button" class="game-list-action game-list-action--primary" data-generate-schedule><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"></path><circle cx="12" cy="12" r="8"></circle></svg><span>대진표 생성</span></button>'}
           ${saved && !isResultsMode ? '<button type="button" class="game-list-action" data-print-schedule><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V4h12v5M6 17H4V10h16v7h-2M6 14h12v6H6z"></path><path d="M17 12h1"></path></svg><span>선택 조 인쇄</span></button><button type="button" class="game-list-action" data-print-all-schedules><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V4h12v5M6 17H4V10h16v7h-2M6 14h12v6H6z"></path><path d="M17 12h1M8 12h5"></path></svg><span>전체 대진표 인쇄</span></button>' : ''}
         </div>
         <div class="operation-note operation-note--schedule">${isResultsMode ? '생성된 예선 대진표의 경기 결과를 입력하고 저장합니다. 점수는 11점 5전 3선승 기준입니다.' : '조별 단일리그 대진표를 생성합니다. 같은 조의 선수 또는 팀이 서로 한 번씩 경기합니다.'}</div>
-        ${!groups.length ? '<div class="empty-state">먼저 조편성을 완료해 주세요.</div>' : !saved ? (isResultsMode ? '<div class="empty-state">먼저 예선 대진표 생성 메뉴에서 대진표를 만들어 주세요.</div>' : '<div class="empty-state">대진표 생성 버튼을 눌러 예선리그 대진을 만들어 주세요.</div>') : `${isResultsMode ? renderQualifyingStandingsOverview(game, format) : ''}<div class="schedule-summary"><strong>${escapeHtml(FORMAT_LABELS[format])} ${escapeHtml(selectedGroup.name)} ${isResultsMode ? '경기결과' : '대진표'}</strong><span>${escapeHtml(String(selectedMatches.length))}경기 · ${escapeHtml(String(selectedGroup.players.length))}명/팀</span></div><div class="schedule-group-matrices"><section class="schedule-group-block"><div class="group-result-heading"><h3>${escapeHtml(selectedGroup.name)} ${isResultsMode ? '경기결과 입력' : '대진 매트릭스'}</h3><span class="subtle-note">${escapeHtml(selectedGroup.name)} 탁구대</span></div>${renderScheduleMatrix(selectedGroup, selectedMatches)}<h4 class="schedule-order-title">${escapeHtml(selectedGroup.name)} 경기 진행순서</h4>${renderScheduleResultsTable(selectedMatches, isResultsMode, format)}</section></div>${isResultsMode ? '<div class="button-row group-save-row"><button type="button" class="btn btn-secondary" data-save-schedule-results>경기결과 저장</button></div>' : ''}`}
+        ${!groups.length ? '<div class="empty-state">먼저 조편성을 완료해 주세요.</div>' : !saved ? (isResultsMode ? '<div class="empty-state">먼저 예선 대진표 생성 메뉴에서 대진표를 만들어 주세요.</div>' : '<div class="empty-state">대진표 생성 버튼을 눌러 예선리그 대진을 만들어 주세요.</div>') : savedContent}
       </div>
     `;
   }
@@ -1435,7 +1438,18 @@
       render();
       return;
     }
-    const matches = groups.flatMap((group, index) => buildRoundRobinMatches(group, format, index))
+    const selectedGroupName = state.selectedScheduleGroup && state.selectedScheduleGroup !== '__all__' ? state.selectedScheduleGroup : null;
+    const targetGroups = selectedGroupName ? groups.filter((group) => group.name === selectedGroupName) : groups;
+    if (!targetGroups.length) {
+      setFlash('대진표를 생성할 조를 확인해 주세요.', 'error');
+      render();
+      return;
+    }
+    const generatedMatches = targetGroups.flatMap((group, index) => buildRoundRobinMatches(group, format, index));
+    const existingMatches = selectedGroupName
+      ? (game.preliminaryMatches?.[format]?.matches || []).filter((match) => match.groupName !== selectedGroupName)
+      : [];
+    const matches = [...existingMatches, ...generatedMatches]
       .sort((left, right) => left.round - right.round || left.groupIndex - right.groupIndex)
       .map((match, index) => ({ ...match, order: index + 1 }));
     game.preliminaryMatches = game.preliminaryMatches || {};
