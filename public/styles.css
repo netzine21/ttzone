@@ -2680,8 +2680,11 @@ button {
 }
 
 .qualifying-generate-action {
-  align-self: center;
+  display: flex;
+  align-self: stretch;
+  align-items: center;
   justify-self: end;
+  justify-content: flex-end;
   white-space: nowrap;
 }
 
