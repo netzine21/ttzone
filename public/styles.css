@@ -2015,6 +2015,17 @@ button {
   text-align: center;
 }
 
+.public-league-summary--team .public-league-entry > div {
+  width: 100%;
+  text-align: center;
+}
+
+.public-league-summary--team .public-league-entry__team,
+.public-league-summary--team .public-league-entry__members,
+.public-league-summary--team .public-league-entry__record {
+  text-align: center;
+}
+
 .public-league-entry.rank-row--1 .public-league-entry__rank {
   background: #ffd166;
 }
