@@ -2003,6 +2003,18 @@ button {
   margin-top: 3px;
 }
 
+.public-league-summary--team .public-league-summary__group,
+.public-league-summary--team .public-league-participant {
+  vertical-align: middle;
+}
+
+.public-league-summary--team .public-league-entry {
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  text-align: center;
+}
+
 .public-league-entry.rank-row--1 .public-league-entry__rank {
   background: #ffd166;
 }
@@ -3879,6 +3891,8 @@ button {
 
   .public-league-summary--team .public-league-entry {
     min-width: 0;
+    align-items: center;
+    justify-content: center;
   }
 
   .public-league-entry small {
