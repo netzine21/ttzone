@@ -1590,6 +1590,34 @@ button {
   white-space: nowrap;
 }
 
+.game-format-status-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.game-format-status {
+  color: var(--muted-2);
+  font-size: 0.7rem;
+}
+
+.game-format-status--open {
+  color: var(--primary);
+}
+
+.game-format-status--closed {
+  color: #f3bd62;
+}
+
+.game-format-status--progress {
+  color: #7cc8ff;
+}
+
+.game-format-status--done {
+  color: var(--muted);
+}
+
 .game-status {
   flex: 0 0 auto;
   padding: 2px 8px;

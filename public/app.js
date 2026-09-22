@@ -258,27 +258,27 @@
     return game?.registrationClosed?.[format] === true;
   }
 
+  function getFormatStatus(game, format) {
+    if (game?.formatStatuses?.[format] === 'completed') return { key: 'done', label: '경기종료' };
+    const schedule = game?.preliminaryMatches?.[format];
+    const tournament = getTournamentConfig(game, format);
+    const tournamentLeagues = ['upper', 'lower'].filter((league) => tournament?.[league]);
+    if (tournamentLeagues.length && tournamentLeagues.every((league) => tournament[league].completed === true)) return { key: 'done', label: '경기종료' };
+    if (getFormatMode(game, format) === 'leagueOnly' && schedule?.completed === true) return { key: 'done', label: '경기종료' };
+    if (schedule?.matches?.length) return { key: 'progress', label: '경기진행중' };
+    if (isRegistrationClosed(game, format)) return { key: 'closed', label: '참가접수마감' };
+    return { key: 'open', label: '참가접수중' };
+  }
+
   function getGameStatus(game) {
     const explicitStatus = String(game.status || '').toLowerCase();
-    if (explicitStatus === 'completed' || game.completedAt) return { key: 'done', label: '종료' };
-
-    const preliminaryMatches = Object.values(game.preliminaryMatches || {})
-      .flatMap((schedule) => Array.isArray(schedule?.matches) ? schedule.matches : []);
-    const tournamentMatches = Object.values(game.tournaments || {})
-      .flatMap((tournament) => ['upper', 'lower'].flatMap((league) => tournament?.[league]?.rounds?.flat() || []));
-    const allMatches = [...preliminaryMatches, ...tournamentMatches];
-    if (allMatches.length && allMatches.every((match) => match.result?.winner && match.result?.score)) {
-      return { key: 'done', label: '종료' };
-    }
-
-    if (explicitStatus === 'in_progress') return { key: 'progress', label: '진행중' };
-
     const formats = getGameFormats(game);
-    const isFull = formats.length > 0 && formats.every((format) => getGameRegistrations(game, format).length >= Number(game.maxParticipants || 0));
-    const scheduledAt = new Date(game.scheduledAt).getTime();
-    if (Number.isFinite(scheduledAt) && scheduledAt <= Date.now()) return { key: 'progress', label: '진행중' };
-    if (isFull) return { key: 'closed', label: '접수마감' };
-    return { key: 'open', label: '참가접수중' };
+    if (explicitStatus === 'completed' || game.completedAt) return { key: 'done', label: '경기종료' };
+    const statuses = formats.map((format) => getFormatStatus(game, format));
+    if (statuses.some((status) => status.key === 'open')) return { key: 'open', label: '참가접수중' };
+    if (statuses.some((status) => status.key === 'closed')) return { key: 'closed', label: '참가접수마감' };
+    if (statuses.some((status) => status.key === 'progress')) return { key: 'progress', label: '경기진행중' };
+    return { key: 'done', label: '경기종료' };
   }
 
   function hasJoined(game, userId) {
@@ -525,9 +525,10 @@
 
   function renderGameCard(game, currentUser, isPublic = false) {
     const gameStatus = getGameStatus(game);
+    const formatStatuses = getGameFormats(game).map((format) => { const status = getFormatStatus(game, format); return `<span class="game-format-status game-format-status--${status.key}">${escapeHtml(FORMAT_LABELS[format])} ${escapeHtml(status.label)}</span>`; }).join('');
     return `
       <article class="game-card game-list-item" data-game-open="${escapeHtml(game.id)}">
-        <div class="game-list-item__body"><div class="game-list-item__title-row"><span class="game-status game-status--${gameStatus.key}">${gameStatus.label}</span><h3 class="game-title-link" data-game-open="${escapeHtml(game.id)}">${escapeHtml(game.title)}</h3></div><time class="game-list-item__date" datetime="${escapeHtml(game.scheduledAt)}">${escapeHtml(formatDateTime(game.scheduledAt))}</time></div>
+        <div class="game-list-item__body"><div class="game-list-item__title-row"><span class="game-status game-status--${gameStatus.key}">${gameStatus.label}</span><h3 class="game-title-link" data-game-open="${escapeHtml(game.id)}">${escapeHtml(game.title)}</h3></div><div class="game-format-status-list">${formatStatuses}</div><time class="game-list-item__date" datetime="${escapeHtml(game.scheduledAt)}">${escapeHtml(formatDateTime(game.scheduledAt))}</time></div>
       </article>
     `;
   }
@@ -1648,6 +1649,11 @@
       const winnerInput = document.querySelector(`[data-match-winner="${CSS.escape(match.id)}"]`);
       if (scoreInput || winnerInput) match.result = { score: trimValue(scoreInput?.value), winner: winnerInput?.value || '' };
     });
+    const scheduleComplete = schedule.matches.length > 0 && schedule.matches.every((match) => match.result?.winner && /^(\d+)\s*[-:]\s*(\d+)$/.test(String(match.result.score || '')));
+    if (scheduleComplete) {
+      schedule.completed = true;
+      schedule.completedAt = new Date().toISOString();
+    }
     schedule.updatedAt = new Date().toISOString();
     try {
       await apiRequest(`/api/games/${encodeURIComponent(game.id)}/preliminary-matches`, {
@@ -1655,7 +1661,7 @@
         body: JSON.stringify({ format, schedule }),
       });
       await loadState();
-      setFlash('예선리그 경기결과가 저장되었습니다.', 'success');
+      setFlash(scheduleComplete ? '예선리그 경기가 종료되었고 최종 결과가 저장되었습니다.' : '예선리그 경기결과가 저장되었습니다.', 'success');
     } catch (error) {
       setFlash(error.message || '예선리그 경기결과 저장에 실패했습니다.', 'error');
       await loadState();
