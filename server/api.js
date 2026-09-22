@@ -476,20 +476,55 @@ async function handleApi(req, res, requestPath) {
       const gameId = registrationCloseMatch[1];
       const format = String(body.format || '');
       const closed = body.closed === true;
+      const resetCompetition = !closed && body.resetCompetition === true;
       if (!['singles', 'doubles', 'team'].includes(format)) {
         return sendJson(res, 400, { error: '마감할 경기종목을 확인해 주세요.' });
       }
       const gameResult = await pool.query(
-        `update public.games
-            set registration_closed = jsonb_set(coalesce(registration_closed, '{}'::jsonb), $1::text[], $2::jsonb, true),
-                updated_at = now()
-          where id = $3 and operator_id = $4
-          returning id`,
-        [`{${format}}`, JSON.stringify(closed), gameId, user.id]
+        `select id, operator_id, qualifying_groups, preliminary_matches, tournaments
+           from public.games
+          where id = $1`,
+        [gameId]
       );
-      if (!gameResult.rows[0]) return sendJson(res, 404, { error: '마감할 게임을 찾을 수 없거나 운영자 권한이 없습니다.' });
+      const gameRow = gameResult.rows[0];
+      if (!gameRow) return sendJson(res, 404, { error: '마감할 게임을 찾을 수 없습니다.' });
+      if (user.role !== 'admin' && gameRow.operator_id !== user.id) {
+        return sendJson(res, 403, { error: '게임 운영자 또는 관리자만 선수등록 마감을 변경할 수 있습니다.' });
+      }
+
+      const hasCompetitionData = Boolean(
+        gameRow.qualifying_groups?.[format]?.groups?.length
+        || gameRow.preliminary_matches?.[format]?.matches?.length
+        || gameRow.tournaments?.[format]
+      );
+      if (!closed && hasCompetitionData && !resetCompetition) {
+        return sendJson(res, 400, {
+          error: '이미 조편성 또는 대진표가 생성되어 있습니다. 기존 경기 데이터를 초기화하고 마감을 취소하시겠습니까?',
+          requiresReset: true,
+        });
+      }
+
+      const updateQuery = resetCompetition
+        ? `update public.games
+              set registration_closed = jsonb_set(coalesce(registration_closed, '{}'::jsonb), $1::text[], 'false'::jsonb, true),
+                  qualifying_groups = coalesce(qualifying_groups, '{}'::jsonb) - $2,
+                  preliminary_matches = coalesce(preliminary_matches, '{}'::jsonb) - $2,
+                  tournaments = coalesce(tournaments, '{}'::jsonb) - $2,
+                  updated_at = now()
+            where id = $3
+            returning id`
+        : `update public.games
+              set registration_closed = jsonb_set(coalesce(registration_closed, '{}'::jsonb), $1::text[], $2::jsonb, true),
+                  updated_at = now()
+            where id = $3
+            returning id`;
+      const updateParams = resetCompetition
+        ? [`{${format}}`, format, gameId]
+        : [`{${format}}`, JSON.stringify(closed), gameId];
+      const updatedResult = await pool.query(updateQuery, updateParams);
+      if (!updatedResult.rows[0]) return sendJson(res, 404, { error: '마감 상태를 변경할 게임을 찾을 수 없습니다.' });
       const games = await getGames(user.id);
-      return sendJson(res, 200, { game: games.find((item) => item.id === gameId), format, closed });
+      return sendJson(res, 200, { game: games.find((item) => item.id === gameId), format, closed: resetCompetition ? false : closed, resetCompetition });
     }
 
     const bulkRegistrationMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations\/bulk$/);

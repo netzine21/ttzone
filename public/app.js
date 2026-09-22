@@ -993,9 +993,9 @@
         <div class="roster-import roster-import--standalone">
           <div class="roster-import-heading"><h2><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true">${getFormatIconSvg(format)}</svg>${escapeHtml(FORMAT_LABELS[format])} 참가선수 일괄등록</span></h2></div>
           <div class="roster-upload-actions"><label class="game-list-action game-list-action--primary file-button" for="operationRosterFile"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M8 8l4-4 4 4M5 14v5h14v-5"></path></svg><span>명부 파일 선택</span></label><input id="operationRosterFile" class="file-input" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" data-roster-upload="${escapeHtml(game.id)}" data-roster-format="${escapeHtml(format)}" /><button type="button" class="game-list-action" data-download-roster-template><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 11l4 4 4-4M5 20h14"></path></svg><span>양식 다운로드</span></button></div>
-          <div class="roster-registration-status roster-registration-status--upload"><div class="roster-registration-close">${registrationClosed ? '<span class="status-chip">선수등록 마감</span>' : `<button type="button" class="game-list-action" data-close-registration="${escapeHtml(game.id)}" data-close-registration-format="${escapeHtml(format)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"></path></svg><span>선수등록 마감</span></button>`}</div></div>
+          <div class="roster-registration-status roster-registration-status--upload"><div class="roster-registration-close">${registrationClosed ? `<button type="button" class="game-list-action" data-close-registration="${escapeHtml(game.id)}" data-close-registration-format="${escapeHtml(format)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"></path><path d="M9 14h6"></path></svg><span>선수등록 마감 취소</span></button>` : `<button type="button" class="game-list-action" data-close-registration="${escapeHtml(game.id)}" data-close-registration-format="${escapeHtml(format)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"></path></svg><span>선수등록 마감</span></button>`}</div></div>
         </div>
-        <section class="roster-list-panel"><div class="roster-list-heading"><div><p class="section-kicker">등록 현황</p><h2>${escapeHtml(FORMAT_LABELS[format])} 참가선수 명부</h2></div><span>${registrations.length}명(팀)</span></div><div class="roster-list-summary"><span class="registration-source registration-source--bulk">일괄등록 ${bulkCount}</span><span class="registration-source registration-source--online">온라인등록 ${onlineCount}</span><span class="registration-source registration-source--manual">개별등록 ${manualCount}</span></div>${registrationList}<div class="roster-registration-status roster-registration-status--bottom"><div class="roster-registration-close">${registrationClosed ? '<span class="status-chip">선수등록 마감</span>' : `<button type="button" class="game-list-action" data-close-registration="${escapeHtml(game.id)}" data-close-registration-format="${escapeHtml(format)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"></path></svg><span>선수등록 마감</span></button>`}</div></div></section>
+        <section class="roster-list-panel"><div class="roster-list-heading"><div><p class="section-kicker">등록 현황</p><h2>${escapeHtml(FORMAT_LABELS[format])} 참가선수 명부</h2></div><span>${registrations.length}명(팀)</span></div><div class="roster-list-summary"><span class="registration-source registration-source--bulk">일괄등록 ${bulkCount}</span><span class="registration-source registration-source--online">온라인등록 ${onlineCount}</span><span class="registration-source registration-source--manual">개별등록 ${manualCount}</span></div>${registrationList}<div class="roster-registration-status roster-registration-status--bottom"><div class="roster-registration-close">${registrationClosed ? `<button type="button" class="game-list-action" data-close-registration="${escapeHtml(game.id)}" data-close-registration-format="${escapeHtml(format)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"></path><path d="M9 14h6"></path></svg><span>선수등록 마감 취소</span></button>` : `<button type="button" class="game-list-action" data-close-registration="${escapeHtml(game.id)}" data-close-registration-format="${escapeHtml(format)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"></path></svg><span>선수등록 마감</span></button>`}</div></div></section>
       </div>
     `;
   }
@@ -2482,22 +2482,42 @@
       const currentUser = getCurrentUser();
       const game = state.games.find((item) => item.id === closeRegistrationButton.dataset.closeRegistration);
       const format = closeRegistrationButton.dataset.closeRegistrationFormat;
-      if (!currentUser || !game || game.operatorId !== currentUser.id || !format) return;
-      const registrationClosed = { ...(game.registrationClosed || {}), [format]: true };
+      const isAdmin = currentUser?.role === 'admin';
+      const isOwner = currentUser && game && game.operatorId === currentUser.id;
+      if (!currentUser || !game || (!isAdmin && !isOwner) || !format) return;
+      const reopening = isRegistrationClosed(game, format);
+      const hasCompetitionData = Boolean(
+        game.qualifyingGroups?.[format]?.groups?.length
+        || game.preliminaryMatches?.[format]?.matches?.length
+        || game.tournaments?.[format]
+      );
+      let resetCompetition = false;
+      if (reopening) {
+        const message = hasCompetitionData
+          ? `${FORMAT_LABELS[format]} 선수등록 마감을 취소하면 이미 생성된 조편성·대진표·경기결과가 초기화됩니다. 참가선수 명부는 유지됩니다. 계속하시겠습니까?`
+          : `${FORMAT_LABELS[format]} 선수등록 마감을 취소하시겠습니까? 참가선수 정보를 다시 수정할 수 있습니다.`;
+        if (!window.confirm(message)) return;
+        resetCompetition = hasCompetitionData;
+      } else if (!window.confirm(`${FORMAT_LABELS[format]} 선수등록을 마감하시겠습니까? 마감 후에는 참가선수 정보를 수정할 수 없습니다.`)) {
+        return;
+      }
       try {
         await apiRequest(`/api/games/${encodeURIComponent(game.id)}/registrations/close`, {
           method: 'PATCH',
-          body: JSON.stringify({ format, closed: true }),
+          body: JSON.stringify({ format, closed: !reopening, resetCompetition }),
         });
         await loadState();
         const updatedGame = state.games.find((item) => item.id === game.id);
-        const allFormatsClosed = getGameFormats(updatedGame).every((item) => isRegistrationClosed(updatedGame, item));
-        state.operationMenu = allFormatsClosed ? 'groups' : 'roster';
-        setFlash(`${FORMAT_LABELS[format]} 선수등록이 마감되었습니다.${allFormatsClosed ? ' 이제 조편성을 진행해 주세요.' : ''}`, 'success');
+        if (!reopening) {
+          const allFormatsClosed = getGameFormats(updatedGame).every((item) => isRegistrationClosed(updatedGame, item));
+          state.operationMenu = allFormatsClosed ? 'groups' : 'roster';
+          setFlash(`${FORMAT_LABELS[format]} 선수등록이 마감되었습니다.${allFormatsClosed ? ' 이제 조편성을 진행해 주세요.' : ''}`, 'success');
+        } else {
+          state.operationMenu = 'roster';
+          setFlash(`${FORMAT_LABELS[format]} 선수등록 마감이 취소되었습니다.${resetCompetition ? ' 기존 조편성·대진표는 초기화되었습니다.' : ''}`, 'success');
+        }
       } catch (error) {
-        game.registrationClosed = registrationClosed;
-        persistGames();
-        setFlash(error.message || '선수등록 마감에 실패했습니다.', 'error');
+        setFlash(error.message || (reopening ? '선수등록 마감 취소에 실패했습니다.' : '선수등록 마감에 실패했습니다.'), 'error');
       }
       render();
       return;
