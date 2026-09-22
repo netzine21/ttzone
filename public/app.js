@@ -632,6 +632,10 @@
     return renderBracketRound(round, renderPublicTournamentMatch, isFinal, title, bracketSize, roundIndex);
   }
 
+  function wrapTournamentBracket(content) {
+    return `<div class="tournament-bracket-viewport" data-tournament-viewport><div class="tournament-bracket-stage" data-tournament-stage>${content}</div></div>`;
+  }
+
   function tournamentRoundTitle(bracket, roundIndex, isFinal = false) {
     return isFinal ? '결승' : `${bracket.size / (2 ** roundIndex)}강`;
   }
@@ -639,12 +643,12 @@
   function renderPublicTournamentBracket(bracket) {
     if (!bracket?.rounds?.length) return '<div class="empty-state">아직 토너먼트 대진표가 생성되지 않았습니다.</div>';
     syncTournamentBracket(bracket);
-    if (bracket.rounds.length === 1) return `<div class="tournament-bracket public-tournament-bracket tournament-bracket--size-${bracket.size}"><div class="tournament-rounds tournament-rounds--single">${renderPublicTournamentRound(bracket.rounds[0], true, tournamentRoundTitle(bracket, 0, true), bracket.size, 0)}</div></div>${renderTournamentPodium(bracket)}`;
+    if (bracket.rounds.length === 1) return wrapTournamentBracket(`<div class="tournament-bracket public-tournament-bracket tournament-bracket--size-${bracket.size}"><div class="tournament-rounds tournament-rounds--single">${renderPublicTournamentRound(bracket.rounds[0], true, tournamentRoundTitle(bracket, 0, true), bracket.size, 0)}</div></div>${renderTournamentPodium(bracket)}`);
     const roundsBeforeFinal = bracket.rounds.slice(0, -1);
     const finalRound = bracket.rounds[bracket.rounds.length - 1];
     const leftRounds = roundsBeforeFinal.map((round) => round.slice(0, Math.ceil(round.length / 2)).map((match, index) => ({ ...match, bracketLocalIndex: index })));
     const rightRounds = roundsBeforeFinal.map((round) => round.slice(Math.ceil(round.length / 2)).reverse().map((match, index) => ({ ...match, bracketLocalIndex: index })));
-    return `<div class="tournament-bracket public-tournament-bracket tournament-bracket--size-${bracket.size} tournament-bracket--split"><div class="tournament-side-bracket tournament-side-bracket--left">${leftRounds.map((round, index) => renderPublicTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div><div class="tournament-center-bracket">${renderPublicTournamentRound(finalRound, true, tournamentRoundTitle(bracket, bracket.rounds.length - 1, true), bracket.size, bracket.rounds.length - 1)}</div><div class="tournament-side-bracket tournament-side-bracket--right">${rightRounds.map((round, index) => renderPublicTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div></div>${renderTournamentPodium(bracket)}`;
+    return wrapTournamentBracket(`<div class="tournament-bracket public-tournament-bracket tournament-bracket--size-${bracket.size} tournament-bracket--split"><div class="tournament-side-bracket tournament-side-bracket--left">${leftRounds.map((round, index) => renderPublicTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div><div class="tournament-center-bracket">${renderPublicTournamentRound(finalRound, true, tournamentRoundTitle(bracket, bracket.rounds.length - 1, true), bracket.size, bracket.rounds.length - 1)}</div><div class="tournament-side-bracket tournament-side-bracket--right">${rightRounds.map((round, index) => renderPublicTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div></div>${renderTournamentPodium(bracket)}`);
   }
 
   function renderCompetitionView(game, currentUser, format) {
@@ -1290,12 +1294,12 @@
 
   function renderTournamentBracket(bracket) {
     syncTournamentBracket(bracket);
-    if (bracket.rounds.length === 1) return `<div class="tournament-bracket"><div class="tournament-rounds tournament-rounds--single">${renderTournamentRound(bracket.rounds[0], true, tournamentRoundTitle(bracket, 0, true), bracket.size, 0)}</div><p class="subtle-note">부전승은 자동 진출하며, 경기는 11점 5전 3선승입니다.</p></div>${renderTournamentPodium(bracket)}`;
+    if (bracket.rounds.length === 1) return wrapTournamentBracket(`<div class="tournament-bracket"><div class="tournament-rounds tournament-rounds--single">${renderTournamentRound(bracket.rounds[0], true, tournamentRoundTitle(bracket, 0, true), bracket.size, 0)}</div><p class="subtle-note">부전승은 자동 진출하며, 경기는 11점 5전 3선승입니다.</p></div>${renderTournamentPodium(bracket)}`);
     const roundsBeforeFinal = bracket.rounds.slice(0, -1);
     const finalRound = bracket.rounds[bracket.rounds.length - 1];
     const leftRounds = roundsBeforeFinal.map((round) => round.slice(0, Math.ceil(round.length / 2)).map((match, index) => ({ ...match, bracketLocalIndex: index })));
     const rightRounds = roundsBeforeFinal.map((round) => round.slice(Math.ceil(round.length / 2)).reverse().map((match, index) => ({ ...match, bracketLocalIndex: index })));
-    return `<div class="tournament-bracket tournament-bracket--split tournament-bracket--size-${bracket.size}"><div class="tournament-side-bracket tournament-side-bracket--left">${leftRounds.map((round, index) => renderTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div><div class="tournament-center-bracket">${renderTournamentRound(finalRound, true, tournamentRoundTitle(bracket, bracket.rounds.length - 1, true), bracket.size, bracket.rounds.length - 1)}</div><div class="tournament-side-bracket tournament-side-bracket--right">${rightRounds.map((round, index) => renderTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div><p class="subtle-note tournament-bracket__note">좌·우측 각 라운드의 승자가 중앙 결승으로 진출합니다. 부전승은 자동 진출하며, 경기는 11점 5전 3선승입니다.</p></div>${renderTournamentPodium(bracket)}`;
+    return wrapTournamentBracket(`<div class="tournament-bracket tournament-bracket--split tournament-bracket--size-${bracket.size}"><div class="tournament-side-bracket tournament-side-bracket--left">${leftRounds.map((round, index) => renderTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div><div class="tournament-center-bracket">${renderTournamentRound(finalRound, true, tournamentRoundTitle(bracket, bracket.rounds.length - 1, true), bracket.size, bracket.rounds.length - 1)}</div><div class="tournament-side-bracket tournament-side-bracket--right">${rightRounds.map((round, index) => renderTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div><p class="subtle-note tournament-bracket__note">좌·우측 각 라운드의 승자가 중앙 결승으로 진출합니다. 부전승은 자동 진출하며, 경기는 11점 5전 3선승입니다.</p></div>${renderTournamentPodium(bracket)}`);
   }
 
   function getTournamentPrintableRound(bracket) {
@@ -1858,6 +1862,19 @@
     if (!liveRefreshTimer) liveRefreshTimer = window.setInterval(refreshLiveResults, 5000);
   }
 
+  function fitTournamentBrackets() {
+    document.querySelectorAll('[data-tournament-viewport]').forEach((viewport) => {
+      const stage = viewport.querySelector('[data-tournament-stage]');
+      if (!stage) return;
+      stage.style.transform = 'none';
+      viewport.style.height = '';
+      const naturalWidth = Math.max(stage.scrollWidth, 1);
+      const scale = Math.min(1, viewport.clientWidth / naturalWidth);
+      stage.style.transform = `scale(${scale})`;
+      viewport.style.height = `${stage.scrollHeight * scale}px`;
+    });
+  }
+
   function render() {
     const currentUser = getCurrentUser();
     updateTopActions(currentUser);
@@ -1868,6 +1885,7 @@
     app.className = currentUser ? 'app app--dashboard' : state.page === 'auth' ? 'app app--auth' : 'app app--public';
     const showPublicHome = !currentUser && state.page === 'public' && !state.selectedGameId && !publicGame;
     app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : showPublicHome ? renderPublicGamesPage() : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : state.page === 'auth' ? renderAuthPage() : publicGame ? renderPublicGameDetail(publicGame) : renderPublicGamesPage()}`;
+    window.requestAnimationFrame(fitTournamentBrackets);
     syncLiveRefresh();
   }
 
@@ -2931,6 +2949,7 @@
     app.addEventListener('submit', handleAppSubmit);
     app.addEventListener('change', handleAppChange);
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('resize', fitTournamentBrackets);
   }
 
   async function init() {

@@ -3143,6 +3143,18 @@ button {
   overflow-x: auto;
 }
 
+.tournament-bracket-viewport {
+  width: 100%;
+  overflow: hidden;
+}
+
+.tournament-bracket-stage {
+  width: 100%;
+  min-width: 960px;
+  transform-origin: top left;
+  will-change: transform;
+}
+
 .tournament-bracket--split {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(150px, 190px) minmax(0, 1fr);
