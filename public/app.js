@@ -1166,7 +1166,7 @@
 
   function tournamentDisplayLabel(entry) {
     const label = tournamentLabel(entry);
-    const rank = tournamentRankLabel(entry);
+    const rank = tournamentRankLabel(entry).match(/\d+/g)?.join(', ') || '';
     return rank ? `${label} (${rank})` : label;
   }
 
