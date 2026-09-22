@@ -2172,6 +2172,10 @@ button {
   content: '';
 }
 
+.operation-menu:has(+ .operation-submenu)::after {
+  display: none;
+}
+
 .operation-menu::-webkit-scrollbar {
   display: none;
 }
@@ -2627,6 +2631,25 @@ button {
 
 .schedule-matrix td {
   color: var(--text);
+}
+
+.schedule-matrix .matrix-score {
+  display: inline-grid;
+  min-width: 1.35em;
+  min-height: 1.35em;
+  place-items: center;
+  color: var(--text);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.schedule-matrix .matrix-score--winner {
+  width: 1.55em;
+  height: 1.55em;
+  border-radius: 50%;
+  color: #061018;
+  background: var(--primary);
+  box-shadow: 0 0 0 2px rgba(118, 240, 196, 0.18);
 }
 
 .schedule-matrix .matrix-diagonal {
