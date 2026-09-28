@@ -608,12 +608,12 @@
           <input id="signupPhone" name="phone" type="tel" autocomplete="tel" required placeholder="예: 010-1234-5678" />
         </div>
         <div class="field">
-          <label for="signupRegion">활동지역 <span class="field-requirement field-requirement--optional">선택</span></label>
-          <input id="signupRegion" name="region" type="text" autocomplete="address-level2" placeholder="예: 서울 강남 / 경기 분당" />
+          <label for="signupRegion">활동지역 <span class="field-requirement field-requirement--required">필수</span></label>
+          <input id="signupRegion" name="region" type="text" autocomplete="address-level2" required placeholder="예: 서울 강남 / 경기 분당" />
         </div>
         <div class="helper-row">
           <span>필수 항목을 모두 입력해야 가입할 수 있습니다.</span>
-          <span>활동지역은 선택 입력입니다.</span>
+          <span>활동지역을 기준으로 주변 탁구장을 우선 안내합니다.</span>
         </div>
         <div class="button-row">
           <button class="btn btn-primary" type="submit"><svg class="btn__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c.8-4.1 3.1-6.2 7-6.2s6.2 2.1 7 6.2"></path></svg><span>회원가입</span></button>
@@ -2668,6 +2668,7 @@
       !gender ? '성별' : '',
       !rank ? '통합부수' : '',
       !phone ? '휴대폰번호' : '',
+      !region ? '활동지역' : '',
     ].filter(Boolean);
     if (missingFields.length) {
       setFlash(`회원가입 실패: ${missingFields.join(', ')} 항목을 입력해 주세요.`, 'error');

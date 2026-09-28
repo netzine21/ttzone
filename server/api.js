@@ -497,7 +497,8 @@ async function handleApi(req, res, requestPath) {
       const phone = String(body.phone || '').trim();
       const gender = String(body.gender || '').trim();
       const rank = String(body.rank || '').trim();
-      if (!nickname || !memberId || !password || !phone || !rank || !['male', 'female'].includes(gender)) {
+      const region = String(body.region || '').trim();
+      if (!nickname || !memberId || !password || !phone || !rank || !region || !['male', 'female'].includes(gender)) {
         return sendJson(res, 400, { error: '필수 회원정보를 모두 입력해 주세요.' });
       }
       const passwordHash = await hashPassword(password);
@@ -505,7 +506,7 @@ async function handleApi(req, res, requestPath) {
         `insert into public.users (nickname, member_id, password_hash, gender, rank, phone, region, address)
          values ($1, $2, $3, $4, $5, $6, $7, $8)
          returning *`,
-        [nickname, memberId, passwordHash, gender, rank, phone, String(body.region || '').trim() || null, String(body.address || '').trim() || null]
+        [nickname, memberId, passwordHash, gender, rank, phone, region, String(body.address || '').trim() || null]
       );
       return sendJson(res, 201, { user: publicUser(result.rows[0]) });
     }
