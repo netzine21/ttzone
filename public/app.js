@@ -3618,10 +3618,28 @@
   }
 
   function clearGroupDragState() {
+    groupDragState?.ghost?.remove();
     document.querySelectorAll('.qualifying-group--drag-over, .group-player-row.is-dragging').forEach((element) => {
       element.classList.remove('qualifying-group--drag-over', 'is-dragging');
     });
     groupDragState = null;
+  }
+
+  function updateGroupDragGhost(event) {
+    if (!groupDragState?.ghost) return;
+    groupDragState.ghost.style.transform = `translate3d(${event.clientX + 12}px, ${event.clientY + 12}px, 0)`;
+  }
+
+  function createGroupDragGhost(event) {
+    if (!groupDragState || groupDragState.ghost) return;
+    const ghost = groupDragState.row.cloneNode(true);
+    const rect = groupDragState.row.getBoundingClientRect();
+    ghost.classList.remove('is-dragging');
+    ghost.classList.add('group-player-drag-ghost');
+    ghost.style.width = `${rect.width}px`;
+    document.body.appendChild(ghost);
+    groupDragState.ghost = ghost;
+    updateGroupDragGhost(event);
   }
 
   function moveDraggedGroupPlayer(playerKey, format, targetGroupName) {
@@ -3653,7 +3671,9 @@
     groupDragState.active = true;
     groupDragState.row.classList.add('is-dragging');
     groupDragState.row.setPointerCapture?.(event.pointerId);
+    createGroupDragGhost(event);
     event.preventDefault();
+    updateGroupDragGhost(event);
     const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-group-name]');
     document.querySelectorAll('.qualifying-group--drag-over').forEach((element) => element.classList.remove('qualifying-group--drag-over'));
     target?.classList.add('qualifying-group--drag-over');

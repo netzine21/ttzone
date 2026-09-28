@@ -4246,7 +4246,6 @@ button {
 
 .qualifying-group--drag-over {
   border-color: var(--primary);
-  background: rgba(118, 240, 196, 0.1);
   box-shadow: 0 0 0 2px rgba(118, 240, 196, 0.16);
 }
 
@@ -4289,7 +4288,18 @@ button {
 .group-player-row:active,
 .group-player-row.is-dragging {
   cursor: grabbing;
-  opacity: 0.58;
+  opacity: 0.24;
+}
+
+.group-player-drag-ghost {
+  position: fixed;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.94;
+  background: var(--bg-2);
+  border: 1px solid var(--primary);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  transform: translate3d(0, 0, 0);
 }
 
 .group-player-row select {
