@@ -5,6 +5,7 @@
     registrationClosures: 'ttgms:v1:registration-closures',
     venues: 'ttgms:v1:venues',
     session: 'ttgms:v1:session',
+    adminTab: 'ttgms:v1:admin-tab',
   };
 
   const FORMAT_LABELS = {
@@ -31,6 +32,7 @@
     users: [],
     adminUsers: [],
     adminVenues: [],
+    adminTab: 'users',
     venues: [],
     games: [],
     sessionUserId: null,
@@ -2101,19 +2103,28 @@
   function renderAdminPage(currentUser) {
     const users = Array.isArray(state.adminUsers) ? state.adminUsers : [];
     const venues = Array.isArray(state.adminVenues) ? state.adminVenues : [];
+    const adminTab = state.adminTab === 'venues' ? 'venues' : 'users';
     return `
       <section class="panel section-card admin-page">
         <div class="section-heading admin-page__heading">
-          <div><p class="section-kicker">관리자 관리</p><h1>회원 권한 관리</h1></div>
-          <button type="button" class="create-game-close" aria-label="관리자 관리 닫기" data-back-dashboard><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg></button>
+          <div><p class="section-kicker">시스템 관리</p><h1>시스템 관리</h1></div>
+          <button type="button" class="create-game-close" aria-label="시스템 관리 닫기" data-back-dashboard><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg></button>
         </div>
         <div class="admin-role-card"><strong>${escapeHtml(currentUser.nickname)}</strong><span>시스템관리자</span><p>전체 회원정보와 생성된 게임을 관리할 수 있습니다.</p></div>
+        <nav class="admin-tabs" aria-label="시스템 관리 메뉴">
+          <button type="button" class="admin-tab ${adminTab === 'users' ? 'is-active' : ''}" data-admin-tab="users">회원정보관리</button>
+          <button type="button" class="admin-tab ${adminTab === 'venues' ? 'is-active' : ''}" data-admin-tab="venues">탁구장정보관리</button>
+        </nav>
+        <div class="admin-tab-panel ${adminTab === 'users' ? 'is-active' : ''}" data-admin-panel="users">
+          <div class="section-heading admin-panel-heading"><div><p class="section-kicker">회원정보</p><h2>회원정보관리</h2></div></div>
         <div class="admin-users-table-wrap">
           <table class="admin-users-table">
             <thead><tr><th>회원명</th><th>아이디</th><th>연락처</th><th>권한</th><th>가입일</th></tr></thead>
             <tbody>${users.length ? users.map((user) => `<tr><td>${escapeHtml(user.nickname)}</td><td>${escapeHtml(user.memberId)}</td><td>${escapeHtml(user.phone || '미입력')}</td><td><span class="admin-role-badge admin-role-badge--${escapeHtml(user.role || 'user')}">${getRoleLabel(user.role)}</span></td><td>${escapeHtml(formatDateTime(user.createdAt))}</td></tr>`).join('') : '<tr><td colspan="5">회원 정보를 불러오는 중입니다.</td></tr>'}</tbody>
           </table>
         </div>
+        </div>
+        <div class="admin-tab-panel ${adminTab === 'venues' ? 'is-active' : ''}" data-admin-panel="venues">
         <div class="admin-venues-section">
           <div class="section-heading"><div><p class="section-kicker">탁구장 정보 DB</p><h2>탁구장 정보 관리</h2></div><div class="admin-venue-import-actions"><button class="btn btn-secondary" type="button" data-import-incheon>인천 공개목록 가져오기</button><button class="btn btn-secondary" type="button" data-import-bucheon>부천 공개목록 가져오기</button></div></div>
           <form class="admin-venue-create" data-form="admin-venue-create">
@@ -2130,6 +2141,7 @@
           <div class="admin-venue-toolbar"><label class="check-line"><input type="checkbox" data-admin-venue-select-all /> 전체 선택</label><select data-admin-venue-bulk-status><option value="">상태 일괄 변경</option><option value="pending">승인대기</option><option value="approved">사용</option><option value="archived">보관</option></select><button class="btn btn-secondary" type="button" data-admin-venue-bulk-save>선택 항목 저장</button></div>
           <div class="admin-venue-list">${venues.length ? venues.map((venue) => `<form class="admin-venue-card" data-form="admin-venue" data-venue-id="${escapeHtml(venue.id)}"><label class="admin-venue-select"><input type="checkbox" data-admin-venue-select value="${escapeHtml(venue.id)}" /><span>선택</span></label><div class="field"><label>탁구장명</label><input name="name" value="${escapeHtml(venue.name)}" required /></div><div class="field"><label>주소</label><input name="address" value="${escapeHtml(venue.address)}" required /></div><div class="field"><label>전화번호</label><input name="phone" value="${escapeHtml(venue.phone || '')}" /></div><div class="field"><label>상태</label><select name="status"><option value="pending" ${venue.status === 'pending' ? 'selected' : ''}>승인대기</option><option value="approved" ${venue.status === 'approved' ? 'selected' : ''}>사용</option><option value="archived" ${venue.status === 'archived' ? 'selected' : ''}>보관</option></select></div><button class="btn btn-secondary" type="submit">저장</button></form>`).join('') : '<p class="muted">등록된 탁구장이 없습니다.</p>'}</div>
         </div>
+        </div>
         <div class="button-row"><button class="btn btn-ghost" type="button" data-back-dashboard>게임목록으로 돌아가기</button></div>
       </section>
     `;
@@ -2143,6 +2155,7 @@
     state.selectedPublicGameId = null;
     state.operationGameId = null;
     state.operationFormat = null;
+    state.adminTab = readJson(STORAGE_KEYS.adminTab, 'users') === 'venues' ? 'venues' : 'users';
     state.adminUsers = [];
     state.adminVenues = [];
     render();
@@ -2243,7 +2256,7 @@
 
   function updateTopActions(currentUser) {
     const adminAction = currentUser?.role === 'admin'
-      ? '<button type="button" class="btn top-action top-action--admin" data-open-admin><span>관리자 관리</span></button>'
+      ? '<button type="button" class="btn top-action top-action--admin" data-open-admin><span>시스템 관리</span></button>'
       : '';
     const actions = currentUser
       ? `${adminAction}<button type="button" class="btn top-action" data-logout>${renderUserIcon()}<span>로그아웃(${escapeHtml(currentUser.nickname)})</span></button><button type="button" class="btn top-action" data-open-mypage>${renderUserIcon()}<span>Mypage</span></button>`
@@ -2999,6 +3012,14 @@
     if (adminButton) {
       await openAdminPage();
       closeMobileMenu();
+      return;
+    }
+
+    const adminTabButton = event.target.closest('[data-admin-tab]');
+    if (adminTabButton) {
+      state.adminTab = adminTabButton.dataset.adminTab === 'venues' ? 'venues' : 'users';
+      writeJson(STORAGE_KEYS.adminTab, state.adminTab);
+      render();
       return;
     }
 

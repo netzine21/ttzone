@@ -224,6 +224,44 @@ button {
   font-size: 0.86rem;
 }
 
+.admin-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin: 24px 0 18px;
+  border-bottom: 1px solid rgba(165, 190, 214, 0.16);
+}
+
+.admin-tab {
+  appearance: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 10px 4px 12px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-tab:hover,
+.admin-tab.is-active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.admin-tab-panel {
+  display: none;
+}
+
+.admin-tab-panel.is-active {
+  display: block;
+}
+
+.admin-panel-heading {
+  margin-bottom: 12px;
+}
+
 .admin-users-table-wrap {
   overflow-x: auto;
 }
