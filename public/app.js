@@ -656,7 +656,7 @@
       <section class="panel section-card">
         <div class="section-heading public-game-list-heading">
           <div>
-            <h2>공개 게임목록 <span class="public-game-list-count">· ${formatCount(games.length)}개 게임</span></h2>
+            <h2>탁구경기 목록</h2>
           </div>
         </div>
         ${renderGameStatusFilters(allGames)}
@@ -879,8 +879,7 @@
     const currentPage = Math.min(Math.max(state.gamePage, 1), totalPages);
     const pageStart = (currentPage - 1) * gamesPerPage;
     const visibleGames = filteredGames.slice(pageStart, pageStart + gamesPerPage);
-    const listTitle = state.gameFilter === 'mine' ? '내가 생성한 게임' : '공개 게임목록';
-    const listCount = state.gameFilter === 'mine' ? '' : ` <span class="public-game-list-count">· ${formatCount(filteredGames.length)}개 게임</span>`;
+    const listTitle = state.gameFilter === 'mine' ? '내가 생성한 게임' : '탁구경기 목록';
 
     const gameList = visibleGames.length
       ? visibleGames.map((game) => renderGameCard(game, currentUser)).join('')
@@ -908,7 +907,7 @@
       <section class="panel section-card">
         <div class="section-heading dashboard-game-list-heading">
           <div>
-            <h2>${listTitle}${listCount}</h2>
+            <h2>${listTitle}</h2>
           </div>
           <div class="game-list-actions" aria-label="게임 목록 작업">
             <button type="button" class="game-list-action game-list-action--primary" data-show-create-game><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg><span>게임 생성</span></button>
