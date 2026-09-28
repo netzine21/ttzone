@@ -1940,12 +1940,12 @@ button {
   border-collapse: collapse;
 }
 
-.public-league-summary-viewport {
+.public-league-results-viewport {
   width: 100%;
   overflow: hidden;
 }
 
-.public-league-summary-stage {
+.public-league-results-stage {
   width: max-content;
   min-width: 100%;
   transform-origin: top left;
