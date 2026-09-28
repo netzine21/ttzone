@@ -155,6 +155,7 @@ function publicGame(row, formats = [], registrations = [], viewerId = null) {
     note: row.note || '',
     operatorId: row.operator_id,
     operatorNickname: row.operator_nickname,
+    operatorPhone: row.operator_phone || '',
     registrations,
     participants: [],
     qualifyingGroups: visibleQualifyingGroups,
@@ -232,7 +233,7 @@ async function getGames(viewerId = null) {
   await ensureGameStateColumns();
   await ensureVenueColumns();
   const games = await pool.query(
-    `select g.*, u.nickname as operator_nickname
+    `select g.*, u.nickname as operator_nickname, u.phone as operator_phone
        from public.games g
        join public.users u on u.id = g.operator_id
       where g.deleted_at is null
