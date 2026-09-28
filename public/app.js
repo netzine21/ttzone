@@ -2095,7 +2095,7 @@
           </table>
         </div>
         <div class="admin-venues-section">
-          <div class="section-heading"><div><p class="section-kicker">탁구장 정보 DB</p><h2>탁구장 정보 관리</h2></div></div>
+          <div class="section-heading"><div><p class="section-kicker">탁구장 정보 DB</p><h2>탁구장 정보 관리</h2></div><button class="btn btn-secondary" type="button" data-import-incheon>인천 공개목록 가져오기</button></div>
           <div class="admin-venue-list">${venues.length ? venues.map((venue) => `<form class="admin-venue-card" data-form="admin-venue" data-venue-id="${escapeHtml(venue.id)}"><div class="field"><label>탁구장명</label><input name="name" value="${escapeHtml(venue.name)}" required /></div><div class="field"><label>주소</label><input name="address" value="${escapeHtml(venue.address)}" required /></div><div class="field"><label>상태</label><select name="status"><option value="pending" ${venue.status === 'pending' ? 'selected' : ''}>승인대기</option><option value="approved" ${venue.status === 'approved' ? 'selected' : ''}>사용</option><option value="archived" ${venue.status === 'archived' ? 'selected' : ''}>보관</option></select></div><button class="btn btn-secondary" type="submit">저장</button></form>`).join('') : '<p class="muted">등록된 탁구장이 없습니다.</p>'}</div>
         </div>
         <div class="button-row"><button class="btn btn-ghost" type="button" data-back-dashboard>게임목록으로 돌아가기</button></div>
@@ -2135,6 +2135,17 @@
       await openAdminPage();
     } catch (error) {
       setFlash(error.message || '탁구장 정보 저장에 실패했습니다.', 'error');
+      render();
+    }
+  }
+
+  async function handleImportIncheonVenues() {
+    try {
+      const result = await apiRequest('/api/admin/venues/import-incheon', { method: 'POST', body: JSON.stringify({}) });
+      setFlash(`인천 탁구장 ${result.imported}개를 승인대기 상태로 등록했습니다.`, 'success');
+      await openAdminPage();
+    } catch (error) {
+      setFlash(error.message || '인천 탁구장 목록 등록에 실패했습니다.', 'error');
       render();
     }
   }
@@ -2902,6 +2913,12 @@
     if (adminButton) {
       await openAdminPage();
       closeMobileMenu();
+      return;
+    }
+
+    const importIncheonButton = event.target.closest('[data-import-incheon]');
+    if (importIncheonButton) {
+      await handleImportIncheonVenues();
       return;
     }
 

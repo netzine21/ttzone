@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { getPool } = require('./db');
+const incheonVenues = require('./incheon-venues');
 
 const SESSION_COOKIE = 'ttgms_session';
 const SESSION_DAYS = 30;
@@ -327,6 +328,32 @@ async function handleApi(req, res, requestPath) {
       await ensureVenueColumns();
       const result = await pool.query('select * from public.venues order by name');
       return sendJson(res, 200, { venues: result.rows.map((venue) => ({ id: venue.id, name: venue.name, address: venue.address, region: venue.region || '', mapUrl: venue.map_url || '', status: venue.status, createdAt: venue.created_at, updatedAt: venue.updated_at })) });
+    }
+
+    if (requestPath === '/api/admin/venues/import-incheon' && req.method === 'POST') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      if (user.role !== 'admin') return sendJson(res, 403, { error: '시스템관리자만 인천 탁구장 목록을 가져올 수 있습니다.' });
+      await ensureVenueColumns();
+      const client = await pool.connect();
+      try {
+        await client.query('begin');
+        for (const [name, address] of incheonVenues) {
+          await client.query(
+            `insert into public.venues (name, address, region, status, created_by)
+             values ($1, $2, '인천', 'pending', $3)
+             on conflict ((lower(name)), (lower(address))) do nothing`,
+            [name, address, user.id]
+          );
+        }
+        await client.query('commit');
+        return sendJson(res, 200, { imported: incheonVenues.length, status: 'pending' });
+      } catch (error) {
+        await client.query('rollback');
+        throw error;
+      } finally {
+        client.release();
+      }
     }
 
     const adminVenueMatch = requestPath.match(/^\/api\/admin\/venues\/([^/]+)$/);
