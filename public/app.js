@@ -1159,7 +1159,15 @@
     }));
   }
 
-  function buildQualifyingGroups(game, format, groupCount) {
+  function getGroupingRankScore(unit) {
+    const rankValues = [unit.rank, ...(unit.members || []).map((member) => member.rank)]
+      .map((rank) => String(rank || '').match(/-?\d+(?:\.\d+)?/)?.[0])
+      .filter(Boolean)
+      .map(Number);
+    return rankValues.length ? rankValues.reduce((sum, value) => sum + value, 0) / rankValues.length : Number.POSITIVE_INFINITY;
+  }
+
+  function buildQualifyingGroups(game, format, groupCount, groupingBasis = 'balanced') {
     const units = getGroupingUnits(game, format);
     const count = Math.max(1, Math.min(groupCount, units.length));
     const baseSize = Math.floor(units.length / count);
@@ -1167,38 +1175,34 @@
     const extraGroupIndexes = shufflePlayers([...Array(count).keys()]).slice(0, extraUnits);
     const targetSizes = Array.from({ length: count }, (_, index) => baseSize + (extraGroupIndexes.includes(index) ? 1 : 0));
     const groups = Array.from({ length: count }, (_, index) => ({ name: `${index + 1}조`, players: [] }));
-    const players = [...units];
+    const players = [...units].sort((left, right) => getGroupingRankScore(left) - getGroupingRankScore(right));
 
-    if (format !== 'singles') {
-      const groupOrder = shufflePlayers([...Array(count).keys()]);
-      shufflePlayers(players).forEach((player, index) => {
-        groups[groupOrder[index % count]].players.push(player);
+    if (groupingBasis === 'similar') {
+      let targetIndex = 0;
+      players.forEach((player) => {
+        while (targetIndex < count - 1 && groups[targetIndex].players.length >= targetSizes[targetIndex]) targetIndex += 1;
+        groups[targetIndex].players.push(player);
       });
       return groups;
     }
 
-    const rankCounts = groups.map(() => ({}));
-    players.sort((left, right) => (right.rank || '부수 미입력').localeCompare(left.rank || '부수 미입력', 'ko'));
+    let nextGroupIndex = 0;
     players.forEach((player) => {
-      const rank = player.rank || '부수 미입력';
-      const eligibleIndexes = groups.map((group, index) => index).filter((index) => groups[index].players.length < targetSizes[index]);
-      const targetIndex = eligibleIndexes.reduce((bestIndex, index) => {
-        const group = groups[index];
-        const bestRankCount = rankCounts[bestIndex][rank] || 0;
-        const rankCount = rankCounts[index][rank] || 0;
-        if (rankCount < bestRankCount) return index;
-        if (rankCount === bestRankCount && group.players.length < groups[bestIndex].players.length) return index;
-        return bestIndex;
-      }, eligibleIndexes[0]);
-      groups[targetIndex].players.push(player);
-      rankCounts[targetIndex][rank] = (rankCounts[targetIndex][rank] || 0) + 1;
+      for (let offset = 0; offset < count; offset += 1) {
+        const candidate = (nextGroupIndex + offset) % count;
+        if (groups[candidate].players.length < targetSizes[candidate]) {
+          groups[candidate].players.push(player);
+          nextGroupIndex = (candidate + 1) % count;
+          break;
+        }
+      }
     });
     return groups;
   }
 
   function renderOperationGroups(game, format) {
     const setup = game.qualifyingGroups?.[format];
-    if (!setup) return '<div class="empty-state">아직 조편성이 없습니다. 참가자 수에 맞춰 조 수를 입력하고 조편성을 생성하세요.</div>';
+    if (!setup) return '<div class="empty-state">아직 조편성이 없습니다. 참가자 수에 맞춰 조편성 수를 입력하고 조편성을 생성하세요.</div>';
     return `<div class="group-list">${setup.groups.map((group) => `
       <section class="qualifying-group">
         <div class="qualifying-group__heading"><h3>${escapeHtml(group.name)}</h3><span>${escapeHtml(String(group.players.length))}명</span></div>
@@ -1614,8 +1618,9 @@
     const saved = game.qualifyingGroups?.[format];
     const participantCount = getGroupingUnits(game, format).length;
     const defaultGroupCount = saved?.groupCount || Math.max(1, Math.ceil(participantCount / 4));
+    const groupingBasis = saved?.groupingBasis || 'balanced';
     const calculatedSizes = saved?.groups?.map((group) => group.players.length) || [];
-    const calculatedSizeText = calculatedSizes.length ? calculatedSizes.join('명, ') + '명' : '조 수를 정하면 자동 계산';
+    const calculatedSizeText = calculatedSizes.length ? calculatedSizes.join('명, ') + '명' : '조편성 수를 정하면 자동 계산';
     const tournamentEnabled = getFormatMode(game, format) !== 'leagueOnly';
     const activeOperationSubmenu = tournamentEnabled ? state.operationSubmenu : 'qualifying';
     const operationTitle = { roster: '선수등록', groups: '예선리그 조편성', print: '대진표 출력', results: '경기결과 입력' }[state.operationMenu] || '예선리그 조편성';
@@ -1631,7 +1636,8 @@
         ${state.operationMenu === 'roster' ? renderRosterOperationPanel(games, game, formats, format) : state.operationMenu === 'print' && activeOperationSubmenu === 'qualifying' ? renderScheduleOperationPanel(games, game, formats, format, 'generate') : state.operationMenu === 'results' && activeOperationSubmenu === 'qualifying' ? renderScheduleOperationPanel(games, game, formats, format, 'results') : state.operationMenu === 'print' && activeOperationSubmenu === 'tournament' ? renderTournamentPrintPanel(games, game, formats, format) : state.operationMenu === 'results' && activeOperationSubmenu === 'tournament' ? renderTournamentOperationPanel(games, game, formats, format) : `<div class="operation-controls qualifying-controls">
           <div class="field"><label for="operationGame">게임</label><select id="operationGame" data-operation-game>${games.map((item) => `<option value="${escapeHtml(item.id)}" ${item.id === game.id ? 'selected' : ''}>${escapeHtml(item.title)}</option>`).join('')}</select></div>
           <div class="qualifying-settings"><div class="field"><label for="operationFormat">경기종목</label><select id="operationFormat" data-operation-format>${formats.map((item) => `<option value="${escapeHtml(item)}" ${item === format ? 'selected' : ''}>${escapeHtml(FORMAT_LABELS[item])}</option>`).join('')}</select></div>
-          <div class="field"><label for="groupCount">조 수</label><input id="groupCount" type="number" min="1" max="${Math.max(1, participantCount)}" value="${escapeHtml(String(defaultGroupCount))}" data-group-count /></div></div>
+          <div class="field"><label for="groupCount">조편성 수</label><input id="groupCount" type="number" min="1" max="${Math.max(1, participantCount)}" value="${escapeHtml(String(defaultGroupCount))}" data-group-count /></div>
+          <div class="field"><label for="groupingBasis">조편성 기준</label><select id="groupingBasis" data-grouping-basis><option value="balanced" ${groupingBasis === 'balanced' ? 'selected' : ''}>부수 균등 배치</option><option value="similar" ${groupingBasis === 'similar' ? 'selected' : ''}>비슷한 부수끼리 배치</option></select></div></div>
           <button type="button" class="game-list-action game-list-action--primary qualifying-generate-action" data-generate-groups><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"></path><circle cx="12" cy="12" r="8"></circle></svg><span>조편성 생성</span></button>
         </div>
         <div class="group-result-heading qualifying-result-heading"><div><p class="section-kicker">조편성 결과</p><h2>${escapeHtml(FORMAT_LABELS[format])} 예선리그</h2><p class="qualifying-result-guide">등록된 참가자를 기준으로 조를 자동 배정합니다. 현재 계산 결과: ${escapeHtml(calculatedSizeText)}</p></div>${saved ? '<span class="subtle-note">생성 후 선수별 조 이동 가능</span>' : ''}</div>
@@ -1674,6 +1680,7 @@
     const game = state.games.find((item) => item.id === state.operationGameId);
     const format = state.operationFormat;
     const groupCount = Number.parseInt(document.querySelector('[data-group-count]')?.value, 10);
+    const groupingBasis = document.querySelector('[data-grouping-basis]')?.value === 'similar' ? 'similar' : 'balanced';
     if (!currentUser || !game || game.operatorId !== currentUser.id || !format) return;
     const participantCount = getGroupingUnits(game, format).length;
     if (!participantCount) {
@@ -1682,13 +1689,14 @@
       return;
     }
     if (!Number.isInteger(groupCount) || groupCount < 1 || groupCount > participantCount) {
-      setFlash(`조 수는 1개부터 참가 단위 수(${participantCount}개) 사이로 입력해 주세요.`, 'error');
+      setFlash(`조편성 수는 1개부터 참가 단위 수(${participantCount}개) 사이로 입력해 주세요.`, 'error');
       render();
       return;
     }
+    if (game.qualifyingGroups?.[format]?.groups?.length && !window.confirm('기존 조편성을 새 기준으로 다시 생성할까요? 기존 조 이동과 결과가 초기화될 수 있습니다.')) return;
     game.qualifyingGroups = game.qualifyingGroups || {};
-    const groups = buildQualifyingGroups(game, format, groupCount);
-    game.qualifyingGroups[format] = { groupCount, groupSize: Math.ceil(participantCount / groupCount), groups, generatedAt: new Date().toISOString() };
+    const groups = buildQualifyingGroups(game, format, groupCount, groupingBasis);
+    game.qualifyingGroups[format] = { groupCount, groupingBasis, groupSize: Math.ceil(participantCount / groupCount), groups, generatedAt: new Date().toISOString() };
     if (game.preliminaryMatches) delete game.preliminaryMatches[format];
     persistGames();
     setFlash(`${FORMAT_LABELS[format]} 조편성이 생성되었습니다.`, 'success');

@@ -3396,16 +3396,16 @@ button {
 
 .qualifying-settings {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 0.7fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
 .qualifying-generate-action {
   display: flex;
-  align-self: stretch;
+  align-self: center;
   align-items: center;
-  justify-self: end;
-  justify-content: flex-end;
+  justify-self: center;
+  justify-content: center;
   white-space: nowrap;
 }
 
@@ -4686,12 +4686,16 @@ button {
   }
 
   .qualifying-settings {
-    grid-template-columns: minmax(0, 1fr) 0.7fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
+  .qualifying-settings > .field:last-child {
+    grid-column: 1 / -1;
+  }
+
   .qualifying-generate-action {
-    justify-self: end;
+    justify-self: center;
   }
 
   .format-selector,
