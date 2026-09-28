@@ -30,6 +30,8 @@
   const state = {
     users: [],
     adminUsers: [],
+    adminVenues: [],
+    venues: [],
     games: [],
     sessionUserId: null,
     authTab: 'signup',
@@ -114,8 +116,9 @@
 
   function getVenueSuggestions() {
     const savedVenues = readJson(STORAGE_KEYS.venues, []);
+    const directoryNames = state.venues.map((venue) => venue.name).filter(Boolean);
     const gameLocations = state.games.map((game) => game.location).filter(Boolean);
-    return [...new Set([...(Array.isArray(savedVenues) ? savedVenues : []), ...gameLocations])]
+    return [...new Set([...directoryNames, ...(Array.isArray(savedVenues) ? savedVenues : []), ...gameLocations])]
       .map(trimValue)
       .filter(Boolean)
       .sort((a, b) => a.localeCompare(b, 'ko'));
@@ -130,6 +133,11 @@
 
   function renderVenueSuggestions() {
     return getVenueSuggestions().map((venue) => `<option value="${escapeHtml(venue)}"></option>`).join('');
+  }
+
+  function findVenueByName(name) {
+    const key = trimValue(name).toLowerCase();
+    return state.venues.find((venue) => trimValue(venue.name).toLowerCase() === key) || null;
   }
 
   function formatPhoneNumber(value) {
@@ -176,6 +184,7 @@
   async function loadState() {
     let session = null;
     let games = null;
+    let venues = null;
     try {
       session = await apiRequest('/api/auth/me');
     } catch {
@@ -185,6 +194,11 @@
       games = await apiRequest('/api/games');
     } catch {
       // Fall back to local development data only when the game API is unavailable.
+    }
+    try {
+      venues = await apiRequest('/api/venues');
+    } catch {
+      // The local venue history remains available if the directory API is unavailable.
     }
     if (games) {
       const currentUser = session?.user || null;
@@ -196,6 +210,7 @@
         return legacyClosed ? { ...game, registrationClosed: { [getGameFormats(game)[0]]: true } } : { ...game, registrationClosed: {} };
       });
       state.sessionUserId = currentUser?.id || null;
+      state.venues = Array.isArray(venues?.venues) ? venues.venues : [];
       return;
     }
 
@@ -205,6 +220,7 @@
     state.games = Array.isArray(storedGames) ? storedGames : [];
     const storedSession = readJson(STORAGE_KEYS.session, null);
     state.sessionUserId = storedSession && typeof storedSession.userId === 'string' ? storedSession.userId : null;
+    state.venues = Array.isArray(venues?.venues) ? venues.venues : [];
 
     const existingUser = getCurrentUser();
     if (state.sessionUserId && !existingUser) {
@@ -709,7 +725,9 @@
     const editAction = currentUser?.id === game.operatorId ? `<div class="game-edit-bottom-action"><button type="button" class="game-list-action" data-edit-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h4L19 9l-4-4L5 15v4zM13 7l4 4" /></svg><span>게임수정</span></button></div>` : '';
     const canDelete = currentUser?.role === 'admin' || (isOwner && !formats.some((format) => isRegistrationClosed(game, format)));
     const deleteAction = canDelete ? `<div class="game-edit-bottom-action"><button type="button" class="game-list-action game-list-action--danger" data-delete-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M9 7V4h6v3M7 7l1 13h8l1-13" /></svg><span>${currentUser?.role === 'admin' ? '게임 삭제(관리자)' : '게임 삭제'}</span></button></div>` : '';
-    return `<dl class="meta-grid public-detail-meta"><div><dt>게임장소</dt><dd>${escapeHtml(game.location)}</dd></div><div><dt>게임일시</dt><dd>${escapeHtml(formatDateTime(game.scheduledAt))}</dd></div><div><dt>운영자</dt><dd>${escapeHtml(game.operatorNickname)}</dd></div><div><dt>운영자 휴대폰</dt><dd>${escapeHtml(operator?.phone || '미입력')}</dd></div><div><dt>경기방식</dt><dd class="format-detail-list">${formats.map((format) => `<span class="format-detail-item">${escapeHtml(FORMAT_LABELS[format])} <span class="format-detail-mode">(${escapeHtml(getFormatModeLabel(game, format))})</span></span>`).join(' · ')}</dd></div><div><dt>최대참가인원</dt><dd>${escapeHtml(String(game.maxParticipants))}명</dd></div></dl><div class="public-detail-note"><p class="section-kicker">게임안내</p><p>${game.note ? escapeHtml(game.note) : '<span class="muted">추가 안내가 없습니다.</span>'}</p></div>${applyAction}${editAction}${deleteAction}`;
+    const venueName = game.venueName || game.location;
+    const venueAddress = game.venueAddress ? `<small class="venue-address">${escapeHtml(game.venueAddress)}</small>` : '';
+    return `<dl class="meta-grid public-detail-meta"><div><dt>게임장소</dt><dd>${escapeHtml(venueName)}${venueAddress}</dd></div><div><dt>게임일시</dt><dd>${escapeHtml(formatDateTime(game.scheduledAt))}</dd></div><div><dt>운영자</dt><dd>${escapeHtml(game.operatorNickname)}</dd></div><div><dt>운영자 휴대폰</dt><dd>${escapeHtml(operator?.phone || '미입력')}</dd></div><div><dt>경기방식</dt><dd class="format-detail-list">${formats.map((format) => `<span class="format-detail-item">${escapeHtml(FORMAT_LABELS[format])} <span class="format-detail-mode">(${escapeHtml(getFormatModeLabel(game, format))})</span></span>`).join(' · ')}</dd></div><div><dt>최대참가인원</dt><dd>${escapeHtml(String(game.maxParticipants))}명</dd></div></dl><div class="public-detail-note"><p class="section-kicker">게임안내</p><p>${game.note ? escapeHtml(game.note) : '<span class="muted">추가 안내가 없습니다.</span>'}</p></div>${applyAction}${editAction}${deleteAction}`;
   }
 
   function getPublicGroupStandings(game, format) {
@@ -965,10 +983,15 @@
           </div>
 
           <div class="field">
-            <label for="gameLocation"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>게임장소</span></label>
-            <input id="gameLocation" name="location" type="search" list="gameVenueSuggestions" required placeholder="탁구장 이름 또는 주소 검색" />
+            <label for="gameVenueName"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>탁구장명</span></label>
+            <input id="gameVenueName" name="venueName" type="search" list="gameVenueSuggestions" data-venue-name data-venue-address-target="gameVenueAddress" required placeholder="탁구장 이름 검색" />
             <datalist id="gameVenueSuggestions">${renderVenueSuggestions()}</datalist>
-            <small class="field-hint">입력한 장소는 다음 게임 생성부터 검색할 수 있습니다.</small>
+          </div>
+
+          <div class="field">
+            <label for="gameVenueAddress">탁구장 주소</label>
+            <input id="gameVenueAddress" name="venueAddress" type="text" required placeholder="도로명 주소를 입력하세요" />
+            <small class="field-hint">등록된 탁구장을 선택하면 주소가 자동으로 입력됩니다.</small>
           </div>
 
           <div class="field">
@@ -1016,10 +1039,15 @@
             <input id="editGameTitle" name="title" type="text" required value="${escapeHtml(game.title)}" />
           </div>
           <div class="field">
-            <label for="editGameLocation"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>게임장소</span></label>
-            <input id="editGameLocation" name="location" type="search" list="editGameVenueSuggestions" required value="${escapeHtml(game.location)}" placeholder="탁구장 이름 또는 주소 검색" />
+            <label for="editGameVenueName"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>탁구장명</span></label>
+            <input id="editGameVenueName" name="venueName" type="search" list="editGameVenueSuggestions" data-venue-name data-venue-address-target="editGameVenueAddress" required value="${escapeHtml(game.venueName || game.location)}" placeholder="탁구장 이름 검색" />
             <datalist id="editGameVenueSuggestions">${renderVenueSuggestions()}</datalist>
-            <small class="field-hint">입력한 장소는 다음 게임 생성부터 검색할 수 있습니다.</small>
+          </div>
+
+          <div class="field">
+            <label for="editGameVenueAddress">탁구장 주소</label>
+            <input id="editGameVenueAddress" name="venueAddress" type="text" required value="${escapeHtml(game.venueAddress || '')}" placeholder="도로명 주소를 입력하세요" />
+            <small class="field-hint">등록된 탁구장을 선택하면 주소가 자동으로 입력됩니다.</small>
           </div>
           <div class="field">
               <span class="field-label"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c3 0 5 2 5 5v4M17 20c-3 0-5-2-5-5V9" /><ellipse cx="7" cy="4" rx="3" ry="2" /><ellipse cx="17" cy="20" rx="3" ry="2" /></svg>경기형식</span></span>
@@ -2052,6 +2080,7 @@
 
   function renderAdminPage(currentUser) {
     const users = Array.isArray(state.adminUsers) ? state.adminUsers : [];
+    const venues = Array.isArray(state.adminVenues) ? state.adminVenues : [];
     return `
       <section class="panel section-card admin-page">
         <div class="section-heading admin-page__heading">
@@ -2064,6 +2093,10 @@
             <thead><tr><th>회원명</th><th>아이디</th><th>연락처</th><th>권한</th><th>가입일</th></tr></thead>
             <tbody>${users.length ? users.map((user) => `<tr><td>${escapeHtml(user.nickname)}</td><td>${escapeHtml(user.memberId)}</td><td>${escapeHtml(user.phone || '미입력')}</td><td><span class="admin-role-badge admin-role-badge--${escapeHtml(user.role || 'user')}">${getRoleLabel(user.role)}</span></td><td>${escapeHtml(formatDateTime(user.createdAt))}</td></tr>`).join('') : '<tr><td colspan="5">회원 정보를 불러오는 중입니다.</td></tr>'}</tbody>
           </table>
+        </div>
+        <div class="admin-venues-section">
+          <div class="section-heading"><div><p class="section-kicker">탁구장 정보 DB</p><h2>탁구장 정보 관리</h2></div></div>
+          <div class="admin-venue-list">${venues.length ? venues.map((venue) => `<form class="admin-venue-card" data-form="admin-venue" data-venue-id="${escapeHtml(venue.id)}"><div class="field"><label>탁구장명</label><input name="name" value="${escapeHtml(venue.name)}" required /></div><div class="field"><label>주소</label><input name="address" value="${escapeHtml(venue.address)}" required /></div><div class="field"><label>상태</label><select name="status"><option value="pending" ${venue.status === 'pending' ? 'selected' : ''}>승인대기</option><option value="approved" ${venue.status === 'approved' ? 'selected' : ''}>사용</option><option value="archived" ${venue.status === 'archived' ? 'selected' : ''}>보관</option></select></div><button class="btn btn-secondary" type="submit">저장</button></form>`).join('') : '<p class="muted">등록된 탁구장이 없습니다.</p>'}</div>
         </div>
         <div class="button-row"><button class="btn btn-ghost" type="button" data-back-dashboard>게임목록으로 돌아가기</button></div>
       </section>
@@ -2079,14 +2112,31 @@
     state.operationGameId = null;
     state.operationFormat = null;
     state.adminUsers = [];
+    state.adminVenues = [];
     render();
     try {
-      const result = await apiRequest('/api/admin/users');
-      state.adminUsers = Array.isArray(result.users) ? result.users : [];
+      const [userResult, venueResult] = await Promise.all([apiRequest('/api/admin/users'), apiRequest('/api/admin/venues')]);
+      state.adminUsers = Array.isArray(userResult.users) ? userResult.users : [];
+      state.adminVenues = Array.isArray(venueResult.venues) ? venueResult.venues : [];
     } catch (error) {
       setFlash(error.message || '회원 목록을 불러오지 못했습니다.', 'error');
     }
     render();
+  }
+
+  async function handleAdminVenueUpdate(form) {
+    const formData = Object.fromEntries(new FormData(form).entries());
+    try {
+      await apiRequest(`/api/admin/venues/${encodeURIComponent(form.dataset.venueId)}`, {
+        method: 'PATCH',
+        body: JSON.stringify(formData),
+      });
+      setFlash('탁구장 정보가 저장되었습니다.', 'success');
+      await openAdminPage();
+    } catch (error) {
+      setFlash(error.message || '탁구장 정보 저장에 실패했습니다.', 'error');
+      render();
+    }
   }
 
   function renderLockIcon(isLocked) {
@@ -2672,14 +2722,16 @@
     const submittedData = new FormData(form);
     const formData = Object.fromEntries(submittedData.entries());
     const title = trimValue(formData.title);
-    const location = trimValue(formData.location);
+    const venueName = trimValue(formData.venueName);
+    const venueAddress = trimValue(formData.venueAddress);
+    const location = venueName && venueAddress ? `${venueName} · ${venueAddress}` : venueName;
     const formats = submittedData.getAll('formats').map(trimValue);
     const formatModes = Object.fromEntries(formats.map((format) => [format, submittedData.get(`formatMode_${format}`) === 'leagueOnly' ? 'leagueOnly' : 'leagueTournament']));
     const scheduledAt = trimValue(formData.scheduledAt);
     const note = trimValue(formData.note);
     const maxParticipants = Number.parseInt(trimValue(formData.maxParticipants), 10);
 
-    if (!title || !location || !formats.length || !scheduledAt || !Number.isInteger(maxParticipants) || maxParticipants < 1) {
+    if (!title || !venueName || !venueAddress || !formats.length || !scheduledAt || !Number.isInteger(maxParticipants) || maxParticipants < 1) {
       setFlash('게임 생성에 필요한 항목과 경기형식을 하나 이상 선택해 주세요.', 'error');
       render();
       return;
@@ -2696,7 +2748,7 @@
     try {
       await apiRequest('/api/games', {
         method: 'POST',
-        body: JSON.stringify({ title, location, formats, formatModes, scheduledAt, maxParticipants, note }),
+        body: JSON.stringify({ title, location, venueName, venueAddress, formats, formatModes, scheduledAt, maxParticipants, note }),
       });
       await loadState();
       form.reset();
@@ -2716,6 +2768,8 @@
       id: makeId('game'),
       title,
       location,
+      venueName,
+      venueAddress,
       formats,
       formatModes,
       format: formats[0],
@@ -2747,7 +2801,9 @@
     const submittedData = new FormData(form);
     const formData = Object.fromEntries(submittedData.entries());
     const title = trimValue(formData.title);
-    const location = trimValue(formData.location);
+    const venueName = trimValue(formData.venueName);
+    const venueAddress = trimValue(formData.venueAddress);
+    const location = venueName && venueAddress ? `${venueName} · ${venueAddress}` : venueName;
     const formats = submittedData.getAll('formats').map(trimValue);
     const formatModes = Object.fromEntries(formats.map((format) => [format, submittedData.get(`formatMode_${format}`) === 'leagueOnly' ? 'leagueOnly' : 'leagueTournament']));
     const scheduledAt = trimValue(formData.scheduledAt);
@@ -2755,7 +2811,7 @@
     const maxParticipants = Number.parseInt(trimValue(formData.maxParticipants), 10);
     const participantCount = getGameParticipants(game).length;
 
-    if (!title || !location || !formats.length || !scheduledAt || !Number.isInteger(maxParticipants) || maxParticipants < participantCount) {
+    if (!title || !venueName || !venueAddress || !formats.length || !scheduledAt || !Number.isInteger(maxParticipants) || maxParticipants < participantCount) {
       setFlash(`필수 항목과 경기형식을 입력하고 최대참가인원을 현재 참가자 수(${participantCount}명) 이상으로 설정해 주세요.`, 'error');
       render();
       return;
@@ -2771,7 +2827,7 @@
     try {
       const savedPayload = await apiRequest(`/api/games/${encodeURIComponent(game.id)}`, {
         method: 'PATCH',
-        body: JSON.stringify({ title, location, formats, formatModes, scheduledAt, maxParticipants, note }),
+        body: JSON.stringify({ title, location, venueName, venueAddress, formats, formatModes, scheduledAt, maxParticipants, note }),
       });
       const savedFormats = savedPayload.game?.formats;
       if (!Array.isArray(savedFormats) || savedFormats.length !== formats.length || formats.some((format) => !savedFormats.includes(format))) {
@@ -2791,7 +2847,7 @@
       }
     }
 
-    Object.assign(game, { title, location, formats, formatModes, format: formats[0], scheduledAt, maxParticipants, note });
+    Object.assign(game, { title, location, venueName, venueAddress, formats, formatModes, format: formats[0], scheduledAt, maxParticipants, note });
     persistGames();
     state.editingGameId = null;
     state.selectedGameId = game.id;
@@ -3242,6 +3298,11 @@
       return;
     }
 
+    if (form.dataset.form === 'admin-venue') {
+      await handleAdminVenueUpdate(form);
+      return;
+    }
+
     if (form.dataset.form === 'game') {
       await handleGameCreate(form);
       return;
@@ -3305,9 +3366,17 @@
 
   function handleAppInput(event) {
     const input = event.target;
-    if (!(input instanceof HTMLInputElement) || input.id !== 'signupPhone') return;
-    const formatted = formatPhoneNumber(input.value);
-    if (input.value !== formatted) input.value = formatted;
+    if (!(input instanceof HTMLInputElement)) return;
+    if (input.id === 'signupPhone') {
+      const formatted = formatPhoneNumber(input.value);
+      if (input.value !== formatted) input.value = formatted;
+      return;
+    }
+    if (input.matches('[data-venue-name]')) {
+      const venue = findVenueByName(input.value);
+      const addressInput = document.getElementById(input.dataset.venueAddressTarget);
+      if (venue && addressInput) addressInput.value = venue.address;
+    }
   }
 
   async function handleStorageChange() {

@@ -268,6 +268,26 @@ button {
   background: var(--accent);
 }
 
+.admin-venues-section {
+  margin-top: 28px;
+}
+
+.admin-venue-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-venue-card {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.4fr) 110px auto;
+  align-items: end;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(6, 13, 24, 0.42);
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -907,6 +927,14 @@ button {
 .field-hint {
   color: var(--muted-2);
   font-size: 0.78rem;
+}
+
+.venue-address {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.82em;
+  line-height: 1.45;
 }
 
 .field input:focus,
