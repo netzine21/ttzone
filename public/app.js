@@ -111,6 +111,13 @@
     return String(value ?? '').trim();
   }
 
+  function formatPhoneNumber(value) {
+    const digits = String(value ?? '').replace(/\D/g, '').slice(0, 11);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  }
+
   function escapeHtml(value) {
     return String(value ?? '')
       .replaceAll('&', '&amp;')
@@ -2470,7 +2477,7 @@
     const nickname = trimValue(formData.nickname);
     const memberId = trimValue(formData.memberId).toLowerCase();
     const password = trimValue(formData.password);
-    const phone = trimValue(formData.phone);
+    const phone = formatPhoneNumber(formData.phone);
     const gender = trimValue(formData.gender);
     const region = trimValue(formData.region);
     const rank = trimValue(formData.rank);
@@ -3273,6 +3280,13 @@
     }
   }
 
+  function handleAppInput(event) {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || input.id !== 'signupPhone') return;
+    const formatted = formatPhoneNumber(input.value);
+    if (input.value !== formatted) input.value = formatted;
+  }
+
   async function handleStorageChange() {
     await loadState();
     render();
@@ -3295,6 +3309,7 @@
     document.querySelectorAll('[data-mobile-menu-close]').forEach((element) => element.addEventListener('click', closeMobileMenu));
     app.addEventListener('submit', handleAppSubmit);
     app.addEventListener('change', handleAppChange);
+    app.addEventListener('input', handleAppInput);
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('resize', fitTournamentBrackets);
     window.addEventListener('popstate', handleBrowserPopState);
