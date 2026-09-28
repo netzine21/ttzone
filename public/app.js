@@ -1089,7 +1089,7 @@
             <textarea id="editGameNote" name="note">${escapeHtml(game.note || '')}</textarea>
           </div>
           <div class="button-row">
-            <button class="btn btn-primary" type="submit">수정 내용 저장</button>
+            <button class="game-list-action game-list-action--primary" type="submit"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z" /><path d="M8 4v6h8V4M8 20v-6h8v6" /><path d="M12 16v3" /></svg><span>수정 내용 저장</span></button>
           </div>
         </form>
       </section>
