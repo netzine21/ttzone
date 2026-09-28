@@ -238,6 +238,18 @@ async function handleApi(req, res, requestPath) {
       return sendJson(res, 200, { user: publicUser(await findSession(req)) });
     }
 
+    if (requestPath === '/api/admin/users' && req.method === 'GET') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      if (user.role !== 'admin') return sendJson(res, 403, { error: '시스템관리자만 회원 목록을 확인할 수 있습니다.' });
+      const result = await pool.query(
+        `select id, nickname, member_id, gender, rank, phone, region, address, role, created_at, updated_at
+           from public.users
+          order by created_at desc`
+      );
+      return sendJson(res, 200, { users: result.rows.map(publicUser) });
+    }
+
     if (requestPath === '/api/auth/signup' && req.method === 'POST') {
       const body = await readBody(req);
       const nickname = String(body.nickname || '').trim();

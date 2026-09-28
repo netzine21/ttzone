@@ -195,6 +195,79 @@ button {
   color: var(--primary);
 }
 
+.top-action--admin {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.admin-page__heading {
+  align-items: center;
+}
+
+.admin-role-card {
+  display: grid;
+  gap: 4px;
+  margin: 18px 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(118, 240, 196, 0.28);
+  border-radius: var(--radius-md);
+  background: rgba(118, 240, 196, 0.08);
+}
+
+.admin-role-card span,
+.admin-role-card p {
+  color: var(--muted);
+}
+
+.admin-role-card p {
+  margin: 0;
+  font-size: 0.86rem;
+}
+
+.admin-users-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-users-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.admin-users-table th,
+.admin-users-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.admin-users-table th {
+  color: var(--text);
+  background: rgba(118, 240, 196, 0.08);
+}
+
+.admin-role-badge {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(165, 190, 214, 0.12);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.admin-role-badge--admin {
+  color: #04101a;
+  background: var(--primary);
+}
+
+.admin-role-badge--operator {
+  color: #17100a;
+  background: var(--accent);
+}
+
 .brand {
   display: flex;
   align-items: center;

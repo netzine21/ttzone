@@ -28,6 +28,7 @@
 
   const state = {
     users: [],
+    adminUsers: [],
     games: [],
     sessionUserId: null,
     authTab: 'signup',
@@ -1954,6 +1955,7 @@
     const selectedGame = state.games.find((game) => game.id === state.selectedGameId);
     const editingGame = state.games.find((game) => game.id === state.editingGameId);
 
+    if (state.page === 'admin' && currentUser.role === 'admin') return renderAdminPage(currentUser);
     if (state.operationGameId) {
       const operationGame = state.games.find((game) => game.id === state.operationGameId);
       if (operationGame?.operatorId === currentUser.id) {
@@ -2016,6 +2018,49 @@
     `;
   }
 
+  function getRoleLabel(role) {
+    return role === 'admin' ? '시스템관리자' : role === 'operator' ? '운영자' : '일반회원';
+  }
+
+  function renderAdminPage(currentUser) {
+    const users = Array.isArray(state.adminUsers) ? state.adminUsers : [];
+    return `
+      <section class="panel section-card admin-page">
+        <div class="section-heading admin-page__heading">
+          <div><p class="section-kicker">관리자 관리</p><h1>회원 권한 관리</h1></div>
+          <button type="button" class="create-game-close" aria-label="관리자 관리 닫기" data-back-dashboard><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg></button>
+        </div>
+        <div class="admin-role-card"><strong>${escapeHtml(currentUser.nickname)}</strong><span>시스템관리자</span><p>전체 회원정보와 생성된 게임을 관리할 수 있습니다.</p></div>
+        <div class="admin-users-table-wrap">
+          <table class="admin-users-table">
+            <thead><tr><th>회원명</th><th>아이디</th><th>연락처</th><th>권한</th><th>가입일</th></tr></thead>
+            <tbody>${users.length ? users.map((user) => `<tr><td>${escapeHtml(user.nickname)}</td><td>${escapeHtml(user.memberId)}</td><td>${escapeHtml(user.phone || '미입력')}</td><td><span class="admin-role-badge admin-role-badge--${escapeHtml(user.role || 'user')}">${getRoleLabel(user.role)}</span></td><td>${escapeHtml(formatDateTime(user.createdAt))}</td></tr>`).join('') : '<tr><td colspan="5">회원 정보를 불러오는 중입니다.</td></tr>'}</tbody>
+          </table>
+        </div>
+        <div class="button-row"><button class="btn btn-ghost" type="button" data-back-dashboard>게임목록으로 돌아가기</button></div>
+      </section>
+    `;
+  }
+
+  async function openAdminPage() {
+    const currentUser = getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') return;
+    state.page = 'admin';
+    state.selectedGameId = null;
+    state.selectedPublicGameId = null;
+    state.operationGameId = null;
+    state.operationFormat = null;
+    state.adminUsers = [];
+    render();
+    try {
+      const result = await apiRequest('/api/admin/users');
+      state.adminUsers = Array.isArray(result.users) ? result.users : [];
+    } catch (error) {
+      setFlash(error.message || '회원 목록을 불러오지 못했습니다.', 'error');
+    }
+    render();
+  }
+
   function renderLockIcon(isLocked) {
     return `<svg class="top-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3" class="top-action__shackle ${isLocked ? '' : 'is-open'}" /><rect x="5" y="10" width="14" height="10" rx="1.5" class="top-action__lock" /><circle cx="12" cy="15" r="1.3" class="top-action__keyhole" /></svg>`;
   }
@@ -2025,8 +2070,11 @@
   }
 
   function updateTopActions(currentUser) {
+    const adminAction = currentUser?.role === 'admin'
+      ? '<button type="button" class="btn top-action top-action--admin" data-open-admin><span>관리자 관리</span></button>'
+      : '';
     const actions = currentUser
-      ? `<button type="button" class="btn top-action" data-logout>${renderUserIcon()}<span>로그아웃(${escapeHtml(currentUser.nickname)})</span></button><button type="button" class="btn top-action" data-open-mypage>${renderUserIcon()}<span>Mypage</span></button>`
+      ? `${adminAction}<button type="button" class="btn top-action" data-logout>${renderUserIcon()}<span>로그아웃(${escapeHtml(currentUser.nickname)})</span></button><button type="button" class="btn top-action" data-open-mypage>${renderUserIcon()}<span>Mypage</span></button>`
       : `<button type="button" class="btn top-action" data-open-auth="signup">${renderUserIcon()}<span>회원가입</span></button><button type="button" class="btn top-action" data-open-auth="login">${renderLockIcon(true)}<span>로그인</span></button>`;
     if (topActions) topActions.innerHTML = actions;
     if (mobileMenuActions) mobileMenuActions.innerHTML = actions;
@@ -2761,6 +2809,13 @@
       state.selectedGameId = null;
       state.operationGameId = null;
       render();
+      return;
+    }
+
+    const adminButton = event.target.closest('[data-open-admin]');
+    if (adminButton) {
+      await openAdminPage();
+      closeMobileMenu();
       return;
     }
 
