@@ -4285,6 +4285,21 @@ button {
   user-select: none;
 }
 
+.group-player-drag-handle {
+  display: inline-grid;
+  flex: 0 0 18px;
+  place-items: center;
+  color: var(--muted-2);
+  cursor: grab;
+}
+
+.group-player-drag-handle svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+  stroke: none;
+}
+
 .group-player-row:active,
 .group-player-row.is-dragging {
   cursor: grabbing;
@@ -4478,7 +4493,9 @@ button {
   }
 
   .topbar-actions {
-    width: auto;
+  width: auto;
+  max-width: min(240px, calc(100vw - 32px));
+  padding-right: 12px;
     margin-left: auto;
     justify-content: flex-end;
   }
