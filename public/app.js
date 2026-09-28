@@ -78,6 +78,10 @@
   const mobileMenuActions = document.getElementById('mobileMenuActions');
   const mobileMenu = document.getElementById('mobileMenu');
   const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+  const serviceMenuActions = document.getElementById('serviceMenuActions');
+  const serviceMenu = document.getElementById('serviceMenu');
+  const serviceMenuToggle = document.querySelector('.service-menu-toggle');
+  const topbarUser = document.getElementById('topbarUser');
   const brand = document.querySelector('.brand');
   const brandName = document.querySelector('.brand-name');
 
@@ -2279,6 +2283,8 @@
 
   function updateTopActions(currentUser) {
     const venueAction = '<button type="button" class="btn top-action" data-open-venues><svg class="top-action__user-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg><span>탁구장 찾기</span></button>';
+    const fleaMarketAction = '<button type="button" class="btn top-action" data-coming-service><svg class="top-action__user-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14v12H5zM8 8a4 4 0 0 1 8 0" /><path d="M12 12v5M9.5 14.5h5" /></svg><span>탁구벼룩시장</span></button>';
+    const shopAction = '<button type="button" class="btn top-action" data-coming-service><svg class="top-action__user-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1 11H6zM8 9a4 4 0 0 1 8 0" /><path d="M9 13h6" /></svg><span>탁구용품 쇼핑몰</span></button>';
     const adminAction = currentUser?.role === 'admin'
       ? '<button type="button" class="btn top-action top-action--admin" data-open-admin><svg class="top-action__user-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" /><circle cx="12" cy="12" r="3.5" /><circle cx="12" cy="12" r="8" /></svg><span>시스템 관리</span></button>'
       : '';
@@ -2287,6 +2293,8 @@
       : `<button type="button" class="btn top-action" data-open-auth="signup">${renderUserIcon()}<span>회원가입</span></button><button type="button" class="btn top-action" data-open-auth="login">${renderLockIcon(true)}<span>로그인</span></button>${venueAction}${adminAction}`;
     if (topActions) topActions.innerHTML = '';
     if (mobileMenuActions) mobileMenuActions.innerHTML = actions;
+    if (serviceMenuActions) serviceMenuActions.innerHTML = venueAction + fleaMarketAction + shopAction;
+    if (topbarUser) topbarUser.textContent = currentUser ? currentUser.nickname : '';
     if (mobileMenuToggle) {
       mobileMenuToggle.classList.toggle('mobile-menu-toggle--authenticated', Boolean(currentUser));
       mobileMenuToggle.setAttribute('aria-label', currentUser ? '회원 메뉴 열기 (로그인됨)' : '회원 메뉴 열기');
@@ -2301,6 +2309,16 @@
 
   function closeMobileMenu() {
     setMobileMenuOpen(false);
+  }
+
+  function setServiceMenuOpen(isOpen) {
+    document.body.classList.toggle('service-menu-open', isOpen);
+    serviceMenu?.setAttribute('aria-hidden', String(!isOpen));
+    serviceMenuToggle?.setAttribute('aria-expanded', String(isOpen));
+  }
+
+  function closeServiceMenu() {
+    setServiceMenuOpen(false);
   }
 
   function shouldLiveRefresh() {
@@ -3054,6 +3072,13 @@
       return;
     }
 
+    const comingServiceButton = event.target.closest('[data-coming-service]');
+    if (comingServiceButton) {
+      setFlash('해당 부가서비스는 준비 중입니다.', 'info');
+      closeServiceMenu();
+      return;
+    }
+
     const adminTabButton = event.target.closest('[data-admin-tab]');
     if (adminTabButton) {
       state.adminTab = adminTabButton.dataset.adminTab === 'venues' ? 'venues' : 'users';
@@ -3600,8 +3625,14 @@
       await handleAppClick(event);
       closeMobileMenu();
     });
-    mobileMenuToggle?.addEventListener('click', () => setMobileMenuOpen(true));
+    mobileMenuToggle?.addEventListener('click', () => { closeServiceMenu(); setMobileMenuOpen(true); });
+    serviceMenuActions?.addEventListener('click', async (event) => {
+      await handleAppClick(event);
+      closeServiceMenu();
+    });
+    serviceMenuToggle?.addEventListener('click', () => { closeMobileMenu(); setServiceMenuOpen(true); });
     document.querySelectorAll('[data-mobile-menu-close]').forEach((element) => element.addEventListener('click', closeMobileMenu));
+    document.querySelectorAll('[data-service-menu-close]').forEach((element) => element.addEventListener('click', closeServiceMenu));
     app.addEventListener('submit', handleAppSubmit);
     app.addEventListener('change', handleAppChange);
     app.addEventListener('input', handleAppInput);
