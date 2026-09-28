@@ -2633,6 +2633,18 @@ button {
   color: var(--muted-2);
 }
 
+.schedule-matchup {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.schedule-matchup span {
+  color: var(--muted-2);
+  font-size: 0.78em;
+}
+
 .schedule-group-matrices {
   display: grid;
   gap: 18px;
@@ -3840,13 +3852,16 @@ button {
   }
 
   .schedule-results-table-wrap {
-    overflow-x: auto;
+    overflow-x: scroll;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 4px;
+    scrollbar-width: auto;
+    scrollbar-color: var(--primary) rgba(165, 190, 214, 0.12);
   }
 
   .schedule-results-table {
-    min-width: 430px;
+    width: 560px;
+    min-width: 560px;
     table-layout: fixed;
   }
 
@@ -3875,7 +3890,13 @@ button {
     width: 31%;
   }
 
-  .schedule-results-table .schedule-col-match strong {
+  .schedule-results-table .schedule-matchup {
+    gap: 5px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .schedule-results-table .schedule-matchup strong {
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;
