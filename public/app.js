@@ -2285,7 +2285,7 @@
     const actions = currentUser
       ? `${venueAction}${adminAction}<button type="button" class="btn top-action" data-logout>${renderUserIcon()}<span>로그아웃(${escapeHtml(currentUser.nickname)})</span></button><button type="button" class="btn top-action" data-open-mypage>${renderUserIcon()}<span>Mypage</span></button>`
       : `${venueAction}<button type="button" class="btn top-action" data-open-auth="signup">${renderUserIcon()}<span>회원가입</span></button><button type="button" class="btn top-action" data-open-auth="login">${renderLockIcon(true)}<span>로그인</span></button>`;
-    if (topActions) topActions.innerHTML = actions;
+    if (topActions) topActions.innerHTML = '';
     if (mobileMenuActions) mobileMenuActions.innerHTML = actions;
     if (mobileMenuToggle) {
       mobileMenuToggle.classList.toggle('mobile-menu-toggle--authenticated', Boolean(currentUser));
