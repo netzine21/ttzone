@@ -1944,7 +1944,9 @@ button {
   width: 100%;
   display: block;
   min-height: 1px;
-  overflow: visible;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .public-league-results-stage {
@@ -1953,6 +1955,27 @@ button {
   min-width: 760px;
   transform-origin: top left;
   will-change: transform;
+}
+
+.public-league-results-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin: 10px 0 8px;
+}
+
+.public-league-results-controls > span {
+  min-width: 44px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.public-league-results-controls .game-list-action {
+  min-width: 34px;
+  padding: 4px 8px;
+  font-size: 0.76rem;
 }
 
 .public-league-summary th,

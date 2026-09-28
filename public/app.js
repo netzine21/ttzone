@@ -38,6 +38,7 @@
     statusSubtab: 'info',
     progressSubtab: 'participants',
     progressTournamentLeague: 'upper',
+    leagueResultsZoom: 1,
     statusFormat: null,
     editingGameId: null,
     operationGameId: null,
@@ -614,7 +615,7 @@
       ? groups.map((group) => `<section class="public-league-matrix"><h4>${escapeHtml(group.name)} 경기결과</h4>${renderScheduleMatrix(group, matches.filter((match) => match.groupName === group.name))}</section>`).join('')
       : '';
     const results = getFormatMode(game, format) === 'leagueOnly' ? '' : completedMatches.length ? `<section class="public-league-results"><h4>경기결과</h4><div class="schedule-table-wrap"><table class="public-data-table public-league-results-table"><thead><tr><th>조</th><th>라운드</th><th>대진</th><th>스코어</th><th>승자</th></tr></thead><tbody>${completedMatches.map((match) => `<tr><td>${escapeHtml(match.groupName)}</td><td>${escapeHtml(String(match.round))}</td><td>${escapeHtml(match.sideA)}<small>vs</small>${escapeHtml(match.sideB)}</td><td>${escapeHtml(match.result.score)}</td><td>${match.result.winner === 'A' ? escapeHtml(match.sideA) : escapeHtml(match.sideB)}</td></tr>`).join('')}</tbody></table></div></section>` : '';
-    return `<div class="public-league-results-viewport public-league-results-viewport--${leagueOnly ? 'league-only' : 'league-tournament'}" data-public-league-viewport><div class="public-league-results-stage" data-public-league-stage>${summaryTable}${leagueOnlyMatrices}</div></div>${results}`;
+    return `<div class="public-league-results-controls" aria-label="리그전 결과표 크기 조정"><button type="button" class="game-list-action" data-league-results-zoom="out" aria-label="결과표 축소">−</button><span>${Math.round((state.leagueResultsZoom || 1) * 100)}%</span><button type="button" class="game-list-action" data-league-results-zoom="in" aria-label="결과표 확대">+</button><button type="button" class="game-list-action" data-league-results-zoom="reset">전체 보기</button></div><div class="public-league-results-viewport public-league-results-viewport--${leagueOnly ? 'league-only' : 'league-tournament'}" data-public-league-viewport><div class="public-league-results-stage" data-public-league-stage>${summaryTable}${leagueOnlyMatrices}</div></div>${results}`;
   }
 
   function renderPublicMatchScheduleTable(game, format) {
@@ -1995,7 +1996,7 @@
         viewport.style.height = 'auto';
         return;
       }
-      const scale = Math.min(1, availableWidth / naturalWidth);
+      const scale = Math.min(1, availableWidth / naturalWidth) * (state.leagueResultsZoom || 1);
       stage.style.transform = `scale(${scale})`;
       viewport.style.height = `${stage.scrollHeight * scale}px`;
     });
@@ -2865,6 +2866,17 @@
       state.statusSubtab = 'info';
       state.progressSubtab = 'participants';
       state.statusFormat = publicGame ? getGameFormats(publicGame)[0] || null : null;
+      render();
+      return;
+    }
+
+    const leagueResultsZoomButton = event.target.closest('[data-league-results-zoom]');
+    if (leagueResultsZoomButton) {
+      const action = leagueResultsZoomButton.dataset.leagueResultsZoom;
+      const currentZoom = state.leagueResultsZoom || 1;
+      state.leagueResultsZoom = action === 'reset'
+        ? 1
+        : Math.min(1.6, Math.max(0.7, currentZoom + (action === 'in' ? 0.1 : -0.1)));
       render();
       return;
     }
