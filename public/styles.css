@@ -1935,9 +1935,21 @@ button {
 
 .public-league-summary {
   width: 100%;
-  min-width: 0;
+  min-width: 760px;
   table-layout: fixed;
   border-collapse: collapse;
+}
+
+.public-league-summary-viewport {
+  width: 100%;
+  overflow: hidden;
+}
+
+.public-league-summary-stage {
+  width: max-content;
+  min-width: 100%;
+  transform-origin: top left;
+  will-change: transform;
 }
 
 .public-league-summary th,
