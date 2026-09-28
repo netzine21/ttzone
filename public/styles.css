@@ -1942,10 +1942,13 @@ button {
 
 .public-league-results-viewport {
   width: 100%;
-  overflow: hidden;
+  display: block;
+  min-height: 1px;
+  overflow: visible;
 }
 
 .public-league-results-stage {
+  display: block;
   width: max-content;
   min-width: 100%;
   transform-origin: top left;

@@ -1982,7 +1982,13 @@
       stage.style.transform = 'none';
       viewport.style.height = '';
       const naturalWidth = Math.max(stage.scrollWidth, 1);
-      const scale = Math.min(1, viewport.clientWidth / naturalWidth);
+      const availableWidth = viewport.clientWidth;
+      if (!naturalWidth || !availableWidth || !stage.scrollHeight) {
+        stage.style.transform = 'none';
+        viewport.style.height = 'auto';
+        return;
+      }
+      const scale = Math.min(1, availableWidth / naturalWidth);
       stage.style.transform = `scale(${scale})`;
       viewport.style.height = `${stage.scrollHeight * scale}px`;
     });
@@ -1998,7 +2004,10 @@
     app.className = currentUser ? 'app app--dashboard' : state.page === 'auth' ? 'app app--auth' : 'app app--public';
     const showPublicHome = !currentUser && state.page === 'public' && !state.selectedGameId && !publicGame;
     app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : showPublicHome ? renderPublicGamesPage() : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : state.page === 'auth' ? renderAuthPage() : publicGame ? renderPublicGameDetail(publicGame) : renderPublicGamesPage()}`;
-    window.requestAnimationFrame(fitTournamentBrackets);
+    window.requestAnimationFrame(() => {
+      fitTournamentBrackets();
+      window.requestAnimationFrame(fitTournamentBrackets);
+    });
     syncLiveRefresh();
   }
 
