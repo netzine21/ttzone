@@ -1067,22 +1067,30 @@ button {
 
 .choice-row {
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
   gap: 10px;
 }
 
 .choice-option {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 7px;
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text);
+  white-space: nowrap;
   cursor: pointer;
 }
 
 .choice-option input {
+  flex: 0 0 auto;
+  margin: 0;
   accent-color: var(--primary-strong);
 }
 

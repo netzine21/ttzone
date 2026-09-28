@@ -563,13 +563,9 @@
           <label for="signupRegion">활동지역 <span class="field-requirement field-requirement--optional">선택</span></label>
           <input id="signupRegion" name="region" type="text" autocomplete="address-level2" placeholder="예: 서울 강남 / 경기 분당" />
         </div>
-        <div class="field">
-          <label for="signupAddress">주소 <span class="field-requirement field-requirement--optional">선택</span></label>
-          <input id="signupAddress" name="address" type="text" autocomplete="street-address" placeholder="주소를 입력하세요" />
-        </div>
         <div class="helper-row">
           <span>필수 항목을 모두 입력해야 가입할 수 있습니다.</span>
-          <span>활동지역과 주소는 선택 입력입니다.</span>
+          <span>활동지역은 선택 입력입니다.</span>
         </div>
         <div class="button-row">
           <button class="btn btn-primary" type="submit">회원가입</button>
@@ -2481,7 +2477,6 @@
     const gender = trimValue(formData.gender);
     const region = trimValue(formData.region);
     const rank = trimValue(formData.rank);
-    const address = trimValue(formData.address);
     const memberIdKey = normalizeId(memberId);
 
     const missingFields = [
@@ -2501,7 +2496,7 @@
     try {
       await apiRequest('/api/auth/signup', {
         method: 'POST',
-        body: JSON.stringify({ nickname, memberId, password, phone, gender, rank, region, address }),
+        body: JSON.stringify({ nickname, memberId, password, phone, gender, rank, region }),
       });
       form.reset();
       state.signupCompleted = true;
@@ -2535,7 +2530,6 @@
       gender,
       region,
       rank,
-      address,
       createdAt: new Date().toISOString(),
     });
 
