@@ -531,7 +531,7 @@
     }
 
     return `
-      <form class="form-stack" data-form="signup" novalidate>
+      <form class="form-stack auth-signup-form" data-form="signup" novalidate>
         <div class="field">
           <label for="signupNickname">이름(닉네임) <span class="field-requirement field-requirement--required">필수</span></label>
           <input id="signupNickname" name="nickname" type="text" autocomplete="nickname" required placeholder="표시될 이름 또는 닉네임" />
@@ -568,7 +568,7 @@
           <span>활동지역은 선택 입력입니다.</span>
         </div>
         <div class="button-row">
-          <button class="btn btn-primary" type="submit">회원가입</button>
+          <button class="btn btn-primary" type="submit"><svg class="btn__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c.8-4.1 3.1-6.2 7-6.2s6.2 2.1 7 6.2"></path></svg><span>회원가입</span></button>
         </div>
       </form>
     `;

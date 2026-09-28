@@ -624,6 +624,21 @@ button {
   margin: 6px auto 0;
 }
 
+.auth-signup-form .button-row {
+  justify-content: center;
+}
+
+.btn__icon {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  vertical-align: middle;
+}
+
 .create-game-heading {
   position: relative;
   justify-content: center;
