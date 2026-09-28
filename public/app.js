@@ -249,6 +249,12 @@
     return game?.formatModes?.[format] === 'leagueOnly' ? 'leagueOnly' : 'leagueTournament';
   }
 
+  function getFormatModeLabel(game, format) {
+    return getFormatMode(game, format) === 'leagueOnly'
+      ? '리그전만'
+      : '예선리그 + 본선 토너먼트';
+  }
+
   function renderFormatOptionsWithModes(game = null) {
     return `<div class="format-options format-options--with-modes">${Object.keys(FORMAT_LABELS).map((format) => `<label class="format-option-with-mode"><span class="format-option-with-mode__choice"><input type="checkbox" name="formats" value="${format}" ${game && getGameFormats(game).includes(format) ? 'checked' : ''} /><span>${escapeHtml(FORMAT_LABELS[format])}</span></span><select name="formatMode_${format}" aria-label="${escapeHtml(FORMAT_LABELS[format])} 경기 진행방식"><option value="leagueTournament" ${getFormatMode(game, format) === 'leagueTournament' ? 'selected' : ''}>예선리그 후 토너먼트</option><option value="leagueOnly" ${getFormatMode(game, format) === 'leagueOnly' ? 'selected' : ''}>리그전만</option></select></label>`).join('')}</div>`;
   }
@@ -572,7 +578,7 @@
     const editAction = currentUser?.id === game.operatorId ? `<div class="game-edit-bottom-action"><button type="button" class="game-list-action" data-edit-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h4L19 9l-4-4L5 15v4zM13 7l4 4" /></svg><span>게임수정</span></button></div>` : '';
     const canDelete = currentUser?.role === 'admin' || (isOwner && !formats.some((format) => isRegistrationClosed(game, format)));
     const deleteAction = canDelete ? `<div class="game-edit-bottom-action"><button type="button" class="game-list-action game-list-action--danger" data-delete-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M9 7V4h6v3M7 7l1 13h8l1-13" /></svg><span>${currentUser?.role === 'admin' ? '게임 삭제(관리자)' : '게임 삭제'}</span></button></div>` : '';
-    return `<dl class="meta-grid public-detail-meta"><div><dt>게임장소</dt><dd>${escapeHtml(game.location)}</dd></div><div><dt>게임일시</dt><dd>${escapeHtml(formatDateTime(game.scheduledAt))}</dd></div><div><dt>운영자</dt><dd>${escapeHtml(game.operatorNickname)}</dd></div><div><dt>운영자 휴대폰</dt><dd>${escapeHtml(operator?.phone || '미입력')}</dd></div><div><dt>경기방식</dt><dd>${formats.map((format) => escapeHtml(FORMAT_LABELS[format])).join(' · ')}</dd></div><div><dt>최대참가인원</dt><dd>${escapeHtml(String(game.maxParticipants))}명</dd></div></dl><div class="public-detail-note"><p class="section-kicker">게임안내</p><p>${game.note ? escapeHtml(game.note) : '<span class="muted">추가 안내가 없습니다.</span>'}</p></div>${applyAction}${editAction}${deleteAction}`;
+    return `<dl class="meta-grid public-detail-meta"><div><dt>게임장소</dt><dd>${escapeHtml(game.location)}</dd></div><div><dt>게임일시</dt><dd>${escapeHtml(formatDateTime(game.scheduledAt))}</dd></div><div><dt>운영자</dt><dd>${escapeHtml(game.operatorNickname)}</dd></div><div><dt>운영자 휴대폰</dt><dd>${escapeHtml(operator?.phone || '미입력')}</dd></div><div><dt>경기방식</dt><dd class="format-detail-list">${formats.map((format) => `<span class="format-detail-item">${escapeHtml(FORMAT_LABELS[format])} <span class="format-detail-mode">(${escapeHtml(getFormatModeLabel(game, format))})</span></span>`).join(' · ')}</dd></div><div><dt>최대참가인원</dt><dd>${escapeHtml(String(game.maxParticipants))}명</dd></div></dl><div class="public-detail-note"><p class="section-kicker">게임안내</p><p>${game.note ? escapeHtml(game.note) : '<span class="muted">추가 안내가 없습니다.</span>'}</p></div>${applyAction}${editAction}${deleteAction}`;
   }
 
   function getPublicGroupStandings(game, format) {
