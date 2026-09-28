@@ -33,6 +33,8 @@
     adminUsers: [],
     adminVenues: [],
     adminTab: 'users',
+    venueRegionFilter: 'all',
+    venueSearch: '',
     venues: [],
     games: [],
     sessionUserId: null,
@@ -715,6 +717,27 @@
         <div class="game-list">${gameList}</div>
       </section>
     `;
+  }
+
+  function renderVenueFinderPage(currentUser) {
+    const activityRegion = trimValue(currentUser?.region);
+    const allVenues = Array.isArray(state.venues) ? state.venues : [];
+    const regions = [...new Set(allVenues.map((venue) => trimValue(venue.region)).filter(Boolean))].sort((left, right) => left.localeCompare(right, 'ko'));
+    const search = trimValue(state.venueSearch).toLowerCase();
+    const normalizeRegion = (value) => trimValue(value).toLowerCase().replace(/\s+/g, '');
+    const matchesActivity = (venue) => {
+      const wanted = normalizeRegion(activityRegion);
+      const haystack = normalizeRegion(`${venue.region || ''} ${venue.address || ''}`);
+      return Boolean(wanted && (haystack.includes(wanted) || wanted.includes(haystack)));
+    };
+    const matchesSearch = (venue) => !search || `${venue.name} ${venue.address} ${venue.phone || ''} ${venue.region || ''}`.toLowerCase().includes(search);
+    const regionFilter = state.venueRegionFilter || 'all';
+    const filteredVenues = allVenues
+      .filter((venue) => regionFilter === 'all' || (regionFilter === 'activity' ? matchesActivity(venue) : trimValue(venue.region) === regionFilter))
+      .filter(matchesSearch)
+      .sort((left, right) => (activityRegion && matchesActivity(left) !== matchesActivity(right) ? (matchesActivity(left) ? -1 : 1) : left.name.localeCompare(right.name, 'ko')));
+    const cards = filteredVenues.length ? filteredVenues.map((venue) => `<article class="venue-card"><div class="venue-card__heading"><h3>${escapeHtml(venue.name)}</h3>${venue.region ? `<span>${escapeHtml(venue.region)}</span>` : ''}</div><p class="venue-card__address"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>${escapeHtml(venue.address)}</p>${venue.phone ? `<a class="venue-card__phone" href="tel:${escapeHtml(venue.phone)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h3l1.2 4-2 1.5a14 14 0 0 0 5.3 5.3l1.5-2 4 1.2v3c0 1.1-.9 2-2 2C11.4 19 5 12.6 5 5c0-1.1.9-2 2-2z" /></svg>${escapeHtml(venue.phone)}</a>` : '<span class="venue-card__phone muted">전화번호 미등록</span>'}${venue.mapUrl ? `<a class="venue-card__map" href="${escapeHtml(venue.mapUrl)}" target="_blank" rel="noopener">지도 보기</a>` : ''}</article>`).join('') : '<div class="empty-state">조건에 맞는 탁구장이 없습니다.</div>';
+    return `<section class="panel section-card venue-finder"><div class="section-heading venue-finder__heading"><div><p class="section-kicker">탁구인을 위한 부가서비스</p><h1>탁구장 찾기</h1><p class="subtle-note">지역별 탁구장 정보를 확인할 수 있습니다.</p></div><button type="button" class="create-game-close" aria-label="탁구장 찾기 닫기" data-back-dashboard><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg></button></div><div class="venue-finder__controls"><label class="venue-finder__search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 5 5" /></svg><input type="search" data-venue-search placeholder="탁구장명, 주소 검색" value="${escapeHtml(state.venueSearch || '')}" /></label><select data-venue-region-filter aria-label="탁구장 지역 선택"><option value="all" ${regionFilter === 'all' ? 'selected' : ''}>전체지역</option>${activityRegion ? `<option value="activity" ${regionFilter === 'activity' ? 'selected' : ''}>내 활동지역 (${escapeHtml(activityRegion)})</option>` : ''}${regions.map((region) => `<option value="${escapeHtml(region)}" ${regionFilter === region ? 'selected' : ''}>${escapeHtml(region)}</option>`).join('')}</select></div><div class="venue-finder__summary">${escapeHtml(String(filteredVenues.length))}개 탁구장${activityRegion && regionFilter === 'activity' ? ` · ${escapeHtml(activityRegion)} 우선` : ''}</div><div class="venue-list">${cards}</div></section>`;
   }
 
   function renderGameDetailMenu(game, isOwner) {
@@ -2255,12 +2278,13 @@
   }
 
   function updateTopActions(currentUser) {
+    const venueAction = '<button type="button" class="btn top-action" data-open-venues><svg class="top-action__user-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg><span>탁구장 찾기</span></button>';
     const adminAction = currentUser?.role === 'admin'
       ? '<button type="button" class="btn top-action top-action--admin" data-open-admin><span>시스템 관리</span></button>'
       : '';
     const actions = currentUser
-      ? `${adminAction}<button type="button" class="btn top-action" data-logout>${renderUserIcon()}<span>로그아웃(${escapeHtml(currentUser.nickname)})</span></button><button type="button" class="btn top-action" data-open-mypage>${renderUserIcon()}<span>Mypage</span></button>`
-      : `<button type="button" class="btn top-action" data-open-auth="signup">${renderUserIcon()}<span>회원가입</span></button><button type="button" class="btn top-action" data-open-auth="login">${renderLockIcon(true)}<span>로그인</span></button>`;
+      ? `${venueAction}${adminAction}<button type="button" class="btn top-action" data-logout>${renderUserIcon()}<span>로그아웃(${escapeHtml(currentUser.nickname)})</span></button><button type="button" class="btn top-action" data-open-mypage>${renderUserIcon()}<span>Mypage</span></button>`
+      : `${venueAction}<button type="button" class="btn top-action" data-open-auth="signup">${renderUserIcon()}<span>회원가입</span></button><button type="button" class="btn top-action" data-open-auth="login">${renderLockIcon(true)}<span>로그인</span></button>`;
     if (topActions) topActions.innerHTML = actions;
     if (mobileMenuActions) mobileMenuActions.innerHTML = actions;
     if (mobileMenuToggle) {
@@ -2370,7 +2394,7 @@
     const publicGame = state.games.find((game) => game.id === state.selectedPublicGameId);
     app.className = currentUser ? 'app app--dashboard' : state.page === 'auth' ? 'app app--auth' : 'app app--public';
     const showPublicHome = !currentUser && state.page === 'public' && !state.selectedGameId && !publicGame;
-    app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : showPublicHome ? renderPublicGamesPage() : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : state.page === 'auth' ? renderAuthPage() : publicGame ? renderPublicGameDetail(publicGame) : renderPublicGamesPage()}`;
+    app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : state.page === 'venues' ? renderVenueFinderPage(currentUser) : showPublicHome ? renderPublicGamesPage() : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : state.page === 'auth' ? renderAuthPage() : publicGame ? renderPublicGameDetail(publicGame) : renderPublicGamesPage()}`;
     window.requestAnimationFrame(() => {
       fitTournamentBrackets();
       window.requestAnimationFrame(fitTournamentBrackets);
@@ -3016,6 +3040,20 @@
       return;
     }
 
+    const openVenuesButton = event.target.closest('[data-open-venues]');
+    if (openVenuesButton) {
+      const user = getCurrentUser();
+      state.page = 'venues';
+      state.selectedGameId = null;
+      state.selectedPublicGameId = null;
+      state.operationGameId = null;
+      state.venueSearch = '';
+      state.venueRegionFilter = user?.region ? 'activity' : 'all';
+      render();
+      closeMobileMenu();
+      return;
+    }
+
     const adminTabButton = event.target.closest('[data-admin-tab]');
     if (adminTabButton) {
       state.adminTab = adminTabButton.dataset.adminTab === 'venues' ? 'venues' : 'users';
@@ -3473,6 +3511,11 @@
 
   async function handleAppChange(event) {
     const input = event.target;
+    if (input.matches('[data-venue-region-filter]')) {
+      state.venueRegionFilter = input.value || 'all';
+      render();
+      return;
+    }
     if (input.matches('[data-tournament-score], [data-tournament-winner]')) {
       await handleTournamentMatchChange(input.dataset.tournamentScore || input.dataset.tournamentWinner);
       return;
@@ -3515,6 +3558,16 @@
   function handleAppInput(event) {
     const input = event.target;
     if (!(input instanceof HTMLInputElement)) return;
+    if (input.matches('[data-venue-search]')) {
+      state.venueSearch = input.value;
+      render();
+      const searchInput = document.querySelector('[data-venue-search]');
+      if (searchInput) {
+        searchInput.focus();
+        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+      }
+      return;
+    }
     if (input.id === 'signupPhone') {
       const formatted = formatPhoneNumber(input.value);
       if (input.value !== formatted) input.value = formatted;
