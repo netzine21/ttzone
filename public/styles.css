@@ -3259,9 +3259,36 @@ button {
   color: var(--primary);
 }
 
+.public-tournament-results-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin: 10px 0 8px;
+}
+
+.public-tournament-results-controls > span {
+  min-width: 44px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.public-tournament-results-controls .game-list-action {
+  min-width: 34px;
+  padding: 4px 8px;
+  font-size: 0.76rem;
+}
+
 .tournament-bracket-viewport {
   width: 100%;
   overflow: hidden;
+}
+
+.tournament-bracket-viewport[data-public-tournament-viewport] {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .tournament-bracket-stage {

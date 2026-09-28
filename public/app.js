@@ -39,6 +39,7 @@
     progressSubtab: 'participants',
     progressTournamentLeague: 'upper',
     leagueResultsZoom: 1,
+    tournamentZoom: 1,
     statusFormat: null,
     editingGameId: null,
     operationGameId: null,
@@ -642,8 +643,8 @@
     return renderBracketRound(round, renderPublicTournamentMatch, isFinal, title, bracketSize, roundIndex);
   }
 
-  function wrapTournamentBracket(content) {
-    return `<div class="tournament-bracket-viewport" data-tournament-viewport><div class="tournament-bracket-stage" data-tournament-stage>${content}</div></div>`;
+  function wrapTournamentBracket(content, publicView = false) {
+    return `<div class="tournament-bracket-viewport" data-tournament-viewport${publicView ? ' data-public-tournament-viewport' : ''}><div class="tournament-bracket-stage" data-tournament-stage>${content}</div></div>`;
   }
 
   function tournamentRoundTitle(bracket, roundIndex, isFinal = false) {
@@ -653,12 +654,13 @@
   function renderPublicTournamentBracket(bracket) {
     if (!bracket?.rounds?.length) return '<div class="empty-state">아직 토너먼트 대진표가 생성되지 않았습니다.</div>';
     syncTournamentBracket(bracket);
-    if (bracket.rounds.length === 1) return wrapTournamentBracket(`<div class="tournament-bracket public-tournament-bracket tournament-bracket--size-${bracket.size}"><div class="tournament-rounds tournament-rounds--single">${renderPublicTournamentRound(bracket.rounds[0], true, tournamentRoundTitle(bracket, 0, true), bracket.size, 0)}</div></div>${renderTournamentPodium(bracket)}`);
+    const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소">−</button><span>${Math.round((state.tournamentZoom || 1) * 100)}%</span><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대">+</button><button type="button" class="game-list-action" data-tournament-zoom="reset">전체 보기</button></div>`;
+    if (bracket.rounds.length === 1) return `${controls}${wrapTournamentBracket(`<div class="tournament-bracket public-tournament-bracket tournament-bracket--size-${bracket.size}"><div class="tournament-rounds tournament-rounds--single">${renderPublicTournamentRound(bracket.rounds[0], true, tournamentRoundTitle(bracket, 0, true), bracket.size, 0)}</div></div>${renderTournamentPodium(bracket)}`, true)}`;
     const roundsBeforeFinal = bracket.rounds.slice(0, -1);
     const finalRound = bracket.rounds[bracket.rounds.length - 1];
     const leftRounds = roundsBeforeFinal.map((round) => round.slice(0, Math.ceil(round.length / 2)).map((match, index) => ({ ...match, bracketLocalIndex: index })));
     const rightRounds = roundsBeforeFinal.map((round) => round.slice(Math.ceil(round.length / 2)).reverse().map((match, index) => ({ ...match, bracketLocalIndex: index })));
-    return wrapTournamentBracket(`<div class="tournament-bracket public-tournament-bracket tournament-bracket--size-${bracket.size} tournament-bracket--split"><div class="tournament-side-bracket tournament-side-bracket--left">${leftRounds.map((round, index) => renderPublicTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div><div class="tournament-center-bracket">${renderPublicTournamentRound(finalRound, true, tournamentRoundTitle(bracket, bracket.rounds.length - 1, true), bracket.size, bracket.rounds.length - 1)}</div><div class="tournament-side-bracket tournament-side-bracket--right">${rightRounds.map((round, index) => renderPublicTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div></div>${renderTournamentPodium(bracket)}`);
+    return `${controls}${wrapTournamentBracket(`<div class="tournament-bracket public-tournament-bracket tournament-bracket--size-${bracket.size} tournament-bracket--split"><div class="tournament-side-bracket tournament-side-bracket--left">${leftRounds.map((round, index) => renderPublicTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div><div class="tournament-center-bracket">${renderPublicTournamentRound(finalRound, true, tournamentRoundTitle(bracket, bracket.rounds.length - 1, true), bracket.size, bracket.rounds.length - 1)}</div><div class="tournament-side-bracket tournament-side-bracket--right">${rightRounds.map((round, index) => renderPublicTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div></div>${renderTournamentPodium(bracket)}`, true)}`;
   }
 
   function renderCompetitionView(game, currentUser, format) {
@@ -1978,6 +1980,16 @@
       stage.style.transform = `scale(${scale})`;
       viewport.style.height = `${stage.scrollHeight * scale}px`;
     });
+    document.querySelectorAll('[data-public-tournament-viewport]').forEach((viewport) => {
+      const stage = viewport.querySelector('[data-tournament-stage]');
+      if (!stage) return;
+      const availableWidth = viewport.clientWidth;
+      if (!availableWidth) return;
+      const naturalWidth = Math.max(stage.scrollWidth, 1);
+      const scale = Math.min(1, availableWidth / naturalWidth) * (state.tournamentZoom || 1);
+      stage.style.transform = `scale(${scale})`;
+      viewport.style.height = `${stage.scrollHeight * scale}px`;
+    });
     document.querySelectorAll('[data-public-league-viewport]').forEach((viewport) => {
       const stage = viewport.querySelector('[data-public-league-stage]');
       if (!stage) return;
@@ -2875,6 +2887,17 @@
       const action = leagueResultsZoomButton.dataset.leagueResultsZoom;
       const currentZoom = state.leagueResultsZoom || 1;
       state.leagueResultsZoom = action === 'reset'
+        ? 1
+        : Math.min(1.6, Math.max(0.7, currentZoom + (action === 'in' ? 0.1 : -0.1)));
+      render();
+      return;
+    }
+
+    const tournamentZoomButton = event.target.closest('[data-tournament-zoom]');
+    if (tournamentZoomButton) {
+      const action = tournamentZoomButton.dataset.tournamentZoom;
+      const currentZoom = state.tournamentZoom || 1;
+      state.tournamentZoom = action === 'reset'
         ? 1
         : Math.min(1.6, Math.max(0.7, currentZoom + (action === 'in' ? 0.1 : -0.1)));
       render();
