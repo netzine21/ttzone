@@ -1949,8 +1949,8 @@ button {
 
 .public-league-results-stage {
   display: block;
-  width: max-content;
-  min-width: 100%;
+  width: 760px;
+  min-width: 760px;
   transform-origin: top left;
   will-change: transform;
 }
