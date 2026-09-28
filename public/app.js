@@ -2280,11 +2280,11 @@
   function updateTopActions(currentUser) {
     const venueAction = '<button type="button" class="btn top-action" data-open-venues><svg class="top-action__user-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg><span>탁구장 찾기</span></button>';
     const adminAction = currentUser?.role === 'admin'
-      ? '<button type="button" class="btn top-action top-action--admin" data-open-admin><span>시스템 관리</span></button>'
+      ? '<button type="button" class="btn top-action top-action--admin" data-open-admin><svg class="top-action__user-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" /><circle cx="12" cy="12" r="3.5" /><circle cx="12" cy="12" r="8" /></svg><span>시스템 관리</span></button>'
       : '';
     const actions = currentUser
-      ? `${venueAction}${adminAction}<button type="button" class="btn top-action" data-logout>${renderUserIcon()}<span>로그아웃(${escapeHtml(currentUser.nickname)})</span></button><button type="button" class="btn top-action" data-open-mypage>${renderUserIcon()}<span>Mypage</span></button>`
-      : `${venueAction}<button type="button" class="btn top-action" data-open-auth="signup">${renderUserIcon()}<span>회원가입</span></button><button type="button" class="btn top-action" data-open-auth="login">${renderLockIcon(true)}<span>로그인</span></button>`;
+      ? `<button type="button" class="btn top-action" data-open-mypage>${renderUserIcon()}<span>Mypage</span></button><button type="button" class="btn top-action" data-logout>${renderUserIcon()}<span>로그아웃(${escapeHtml(currentUser.nickname)})</span></button>${venueAction}${adminAction}`
+      : `<button type="button" class="btn top-action" data-open-auth="signup">${renderUserIcon()}<span>회원가입</span></button><button type="button" class="btn top-action" data-open-auth="login">${renderLockIcon(true)}<span>로그인</span></button>${venueAction}${adminAction}`;
     if (topActions) topActions.innerHTML = '';
     if (mobileMenuActions) mobileMenuActions.innerHTML = actions;
     if (mobileMenuToggle) {
