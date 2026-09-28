@@ -4241,6 +4241,13 @@ button {
   border: 1px solid rgba(165, 190, 214, 0.14);
   border-radius: 18px;
   background: rgba(6, 13, 24, 0.48);
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.qualifying-group--drag-over {
+  border-color: var(--primary);
+  background: rgba(118, 240, 196, 0.1);
+  box-shadow: 0 0 0 2px rgba(118, 240, 196, 0.16);
 }
 
 .qualifying-group__heading {
@@ -4274,6 +4281,15 @@ button {
   background: rgba(255, 255, 255, 0.035);
   color: var(--muted);
   font-size: 0.84rem;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.group-player-row:active,
+.group-player-row.is-dragging {
+  cursor: grabbing;
+  opacity: 0.58;
 }
 
 .group-player-row select {

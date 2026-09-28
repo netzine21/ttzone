@@ -72,6 +72,7 @@
   let browserHistoryReady = false;
   let restoringBrowserHistory = false;
   let lastBrowserRouteKey = '';
+  let groupDragState = null;
 
   const app = document.getElementById('app');
   const topActions = document.getElementById('topActions');
@@ -1204,9 +1205,9 @@
     const setup = game.qualifyingGroups?.[format];
     if (!setup) return '<div class="empty-state">아직 조편성이 없습니다. 참가자 수에 맞춰 조편성 수를 입력하고 조편성을 생성하세요.</div>';
     return `<div class="group-list">${setup.groups.map((group) => `
-      <section class="qualifying-group">
+      <section class="qualifying-group" data-group-name="${escapeHtml(group.name)}">
         <div class="qualifying-group__heading"><h3>${escapeHtml(group.name)}</h3><span>${escapeHtml(String(group.players.length))}명</span></div>
-        <div class="group-player-list">${group.players.map((player) => `<div class="group-player-row"><span><strong>${escapeHtml(player.label || player.nickname)}</strong>${player.members?.length > 1 ? ` · ${escapeHtml(String(player.members.length))}명` : player.rank ? ` · ${escapeHtml(player.rank)}` : ''}${player.members?.length > 1 ? `<small>${player.members.map((member) => escapeHtml(member.nickname)).join(', ')}</small>` : ''}</span><select data-group-assignment="${escapeHtml(player.playerKey)}" data-group-format="${escapeHtml(format)}"><option value="">조 선택</option>${setup.groups.map((option) => `<option value="${escapeHtml(option.name)}" ${option.name === group.name ? 'selected' : ''}>${escapeHtml(option.name)}</option>`).join('')}</select></div>`).join('')}</div>
+        <div class="group-player-list">${group.players.map((player) => `<div class="group-player-row" draggable="true" data-group-player="${escapeHtml(player.playerKey)}" data-group-format="${escapeHtml(format)}" title="끌어서 다른 조로 이동"><span><strong>${escapeHtml(player.label || player.nickname)}</strong>${player.members?.length > 1 ? ` · ${escapeHtml(String(player.members.length))}명` : player.rank ? ` · ${escapeHtml(player.rank)}` : ''}${player.members?.length > 1 ? `<small>${player.members.map((member) => escapeHtml(member.nickname)).join(', ')}</small>` : ''}</span><select data-group-assignment="${escapeHtml(player.playerKey)}" data-group-format="${escapeHtml(format)}"><option value="">조 선택</option>${setup.groups.map((option) => `<option value="${escapeHtml(option.name)}" ${option.name === group.name ? 'selected' : ''}>${escapeHtml(option.name)}</option>`).join('')}</select></div>`).join('')}</div>
       </section>
     `).join('')}</div>`;
   }
@@ -3616,6 +3617,82 @@
     }
   }
 
+  function clearGroupDragState() {
+    document.querySelectorAll('.qualifying-group--drag-over, .group-player-row.is-dragging').forEach((element) => {
+      element.classList.remove('qualifying-group--drag-over', 'is-dragging');
+    });
+    groupDragState = null;
+  }
+
+  function moveDraggedGroupPlayer(playerKey, format, targetGroupName) {
+    const game = state.games.find((item) => item.id === state.operationGameId);
+    const setup = game?.qualifyingGroups?.[format];
+    if (!game || !setup || !targetGroupName) return;
+    const sourceGroup = setup.groups.find((group) => group.players.some((player) => player.playerKey === playerKey));
+    const targetGroup = setup.groups.find((group) => group.name === targetGroupName);
+    if (!sourceGroup || !targetGroup || sourceGroup === targetGroup) return;
+    const playerIndex = sourceGroup.players.findIndex((player) => player.playerKey === playerKey);
+    const [player] = sourceGroup.players.splice(playerIndex, 1);
+    targetGroup.players.push(player);
+    if (game.preliminaryMatches) delete game.preliminaryMatches[format];
+    persistGames();
+    setFlash(`${targetGroup.name}으로 이동했습니다. 저장 버튼을 눌러 반영해 주세요.`, 'info');
+    render();
+  }
+
+  function handleGroupDragStart(event) {
+    const row = event.target.closest('[data-group-player]');
+    if (!row) return;
+    groupDragState = { playerKey: row.dataset.groupPlayer, format: row.dataset.groupFormat, row };
+    row.classList.add('is-dragging');
+    event.dataTransfer?.setData('text/plain', row.dataset.groupPlayer);
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+  }
+
+  function handleGroupDragOver(event) {
+    const group = event.target.closest('[data-group-name]');
+    if (!group || !groupDragState) return;
+    event.preventDefault();
+    document.querySelectorAll('.qualifying-group--drag-over').forEach((element) => element.classList.remove('qualifying-group--drag-over'));
+    group.classList.add('qualifying-group--drag-over');
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+  }
+
+  function handleGroupDrop(event) {
+    const group = event.target.closest('[data-group-name]');
+    if (!group || !groupDragState) return;
+    event.preventDefault();
+    const { playerKey, format } = groupDragState;
+    clearGroupDragState();
+    moveDraggedGroupPlayer(playerKey, format, group.dataset.groupName);
+  }
+
+  function handleGroupPointerDown(event) {
+    const row = event.target.closest('[data-group-player]');
+    if (!row || event.target.closest('select, option, button')) return;
+    groupDragState = { playerKey: row.dataset.groupPlayer, format: row.dataset.groupFormat, row, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, active: false };
+  }
+
+  function handleGroupPointerMove(event) {
+    if (!groupDragState || groupDragState.pointerId !== event.pointerId) return;
+    const distance = Math.hypot(event.clientX - groupDragState.startX, event.clientY - groupDragState.startY);
+    if (!groupDragState.active && distance < 8) return;
+    groupDragState.active = true;
+    groupDragState.row.classList.add('is-dragging');
+    event.preventDefault();
+    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-group-name]');
+    document.querySelectorAll('.qualifying-group--drag-over').forEach((element) => element.classList.remove('qualifying-group--drag-over'));
+    target?.classList.add('qualifying-group--drag-over');
+  }
+
+  function handleGroupPointerUp(event) {
+    if (!groupDragState || groupDragState.pointerId !== event.pointerId) return;
+    const drag = groupDragState;
+    const target = drag.active ? document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-group-name]') : null;
+    clearGroupDragState();
+    if (target) moveDraggedGroupPlayer(drag.playerKey, drag.format, target.dataset.groupName);
+  }
+
   async function handleStorageChange() {
     await loadState();
     render();
@@ -3645,6 +3722,14 @@
     app.addEventListener('submit', handleAppSubmit);
     app.addEventListener('change', handleAppChange);
     app.addEventListener('input', handleAppInput);
+    app.addEventListener('dragstart', handleGroupDragStart);
+    app.addEventListener('dragover', handleGroupDragOver);
+    app.addEventListener('drop', handleGroupDrop);
+    app.addEventListener('dragend', clearGroupDragState);
+    app.addEventListener('pointerdown', handleGroupPointerDown);
+    app.addEventListener('pointermove', handleGroupPointerMove, { passive: false });
+    app.addEventListener('pointerup', handleGroupPointerUp);
+    app.addEventListener('pointercancel', clearGroupDragState);
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('resize', fitTournamentBrackets);
     window.addEventListener('popstate', handleBrowserPopState);
