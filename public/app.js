@@ -2209,16 +2209,21 @@
   }
 
   async function handleAdminVenueBulkStatus() {
-    const selected = [...document.querySelectorAll('[data-admin-venue-select]:checked')].map((input) => input.value);
+    const selectedInputs = [...document.querySelectorAll('[data-admin-venue-select]:checked')];
+    const selected = selectedInputs.map((input) => input.value);
     const status = document.querySelector('[data-admin-venue-bulk-status]')?.value || '';
-    if (!selected.length || !status) {
-      setFlash('장소와 변경할 상태를 선택해 주세요.', 'error');
+    if (!selected.length) {
+      setFlash('상태를 변경할 탁구장을 선택해 주세요.', 'error');
       return;
     }
+    const updates = selectedInputs.map((input) => ({
+      id: input.value,
+      status: input.closest('[data-form="admin-venue"]')?.querySelector('[name="status"]')?.value || '',
+    }));
     try {
       const result = await apiRequest('/api/admin/venues/bulk-status', {
         method: 'PATCH',
-        body: JSON.stringify({ ids: selected, status }),
+        body: JSON.stringify({ ids: selected, status, updates }),
       });
       setFlash(`${result.updated}개 탁구장 상태를 변경했습니다.`, 'success');
       await openAdminPage();

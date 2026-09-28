@@ -426,15 +426,38 @@ async function handleApi(req, res, requestPath) {
       await ensureVenueColumns();
       const body = await readBody(req);
       const ids = Array.isArray(body.ids) ? body.ids.filter(Boolean) : [];
-      const status = ['pending', 'approved', 'archived'].includes(body.status) ? body.status : null;
-      if (!ids.length || !status) return sendJson(res, 400, { error: '변경할 장소와 상태를 선택해 주세요.' });
-      const result = await pool.query(
-        `update public.venues
-            set status = $1, updated_at = now()
-          where id = any($2::uuid[])`,
-        [status, ids]
-      );
-      return sendJson(res, 200, { updated: result.rowCount, status });
+      const bulkStatus = ['pending', 'approved', 'archived'].includes(body.status) ? body.status : null;
+      const requestedUpdates = Array.isArray(body.updates) ? body.updates : [];
+      const updates = ids.map((id) => {
+        const requested = requestedUpdates.find((item) => String(item.id) === String(id));
+        return { id, status: bulkStatus || requested?.status };
+      });
+      if (!updates.length || updates.some((item) => !['pending', 'approved', 'archived'].includes(item.status))) {
+        return sendJson(res, 400, { error: '변경할 장소의 상태를 선택해 주세요.' });
+      }
+      const client = await pool.connect();
+      try {
+        await client.query('begin');
+        let updated = 0;
+        for (const item of updates) {
+          const result = await client.query(
+            `update public.venues set status = $1, updated_at = now() where id = $2::uuid returning id`,
+            [item.status, item.id]
+          );
+          updated += result.rowCount;
+        }
+        if (updated !== updates.length) {
+          await client.query('rollback');
+          return sendJson(res, 400, { error: '일부 탁구장 정보를 찾지 못해 저장을 취소했습니다.' });
+        }
+        await client.query('commit');
+        return sendJson(res, 200, { updated, status: bulkStatus || '개별 상태' });
+      } catch (error) {
+        await client.query('rollback');
+        throw error;
+      } finally {
+        client.release();
+      }
     }
 
     const adminVenueMatch = requestPath.match(/^\/api\/admin\/venues\/([^/]+)$/);
