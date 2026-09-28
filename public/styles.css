@@ -208,8 +208,8 @@ button {
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 148px;
-  height: 53px;
+  width: 230px;
+  height: 62px;
   flex: none;
 }
 
@@ -259,6 +259,15 @@ button {
   font-size: 14px;
   font-weight: 700;
   letter-spacing: -0.5px;
+}
+
+.brand-mark__tagline {
+  fill: #f8fbff;
+  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 7.5px;
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: -0.4px;
 }
 
 .brand-name {
@@ -4492,8 +4501,8 @@ button {
   }
 
   .brand-mark {
-    width: 118px;
-    height: 42px;
+    width: 184px;
+    height: 50px;
   }
 
   .tabs {
