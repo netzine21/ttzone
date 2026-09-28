@@ -61,6 +61,9 @@
   let flashTimer = null;
   let liveRefreshTimer = null;
   let liveRefreshInFlight = false;
+  let browserHistoryReady = false;
+  let restoringBrowserHistory = false;
+  let lastBrowserRouteKey = '';
 
   const app = document.getElementById('app');
   const topActions = document.getElementById('topActions');
@@ -195,6 +198,77 @@
 
   function getCurrentUser() {
     return state.users.find((user) => user.id === state.sessionUserId) || null;
+  }
+
+  function getBrowserRoute() {
+    return {
+      page: state.page,
+      selectedPublicGameId: state.selectedPublicGameId,
+      selectedGameId: state.selectedGameId,
+      detailTab: state.detailTab,
+      statusSubtab: state.statusSubtab,
+      progressSubtab: state.progressSubtab,
+      progressTournamentLeague: state.progressTournamentLeague,
+      statusFormat: state.statusFormat,
+      editingGameId: state.editingGameId,
+      operationGameId: state.operationGameId,
+      operationFormat: state.operationFormat,
+      operationMenu: state.operationMenu,
+      operationSubmenu: state.operationSubmenu,
+      showCreateGame: state.showCreateGame,
+      authTab: state.authTab,
+    };
+  }
+
+  function syncBrowserHistory() {
+    const route = getBrowserRoute();
+    const routeKey = JSON.stringify(route);
+    const historyState = { ttgmsRoute: route };
+    if (!browserHistoryReady) {
+      window.history.replaceState(historyState, '', window.location.href);
+      browserHistoryReady = true;
+      lastBrowserRouteKey = routeKey;
+      return;
+    }
+    if (restoringBrowserHistory) {
+      window.history.replaceState(historyState, '', window.location.href);
+      lastBrowserRouteKey = routeKey;
+      return;
+    }
+    if (routeKey !== lastBrowserRouteKey) {
+      window.history.pushState(historyState, '', window.location.href);
+      lastBrowserRouteKey = routeKey;
+    }
+  }
+
+  function restoreBrowserRoute(route) {
+    if (!route || typeof route !== 'object') return;
+    Object.assign(state, {
+      page: route.page || 'public',
+      selectedPublicGameId: route.selectedPublicGameId || null,
+      selectedGameId: route.selectedGameId || null,
+      detailTab: route.detailTab || 'status',
+      statusSubtab: route.statusSubtab || 'info',
+      progressSubtab: route.progressSubtab || 'participants',
+      progressTournamentLeague: route.progressTournamentLeague || 'upper',
+      statusFormat: route.statusFormat || null,
+      editingGameId: route.editingGameId || null,
+      operationGameId: route.operationGameId || null,
+      operationFormat: route.operationFormat || null,
+      operationMenu: route.operationMenu || 'groups',
+      operationSubmenu: route.operationSubmenu || 'qualifying',
+      showCreateGame: Boolean(route.showCreateGame),
+      authTab: route.authTab || 'signup',
+    });
+  }
+
+  function handleBrowserPopState(event) {
+    const route = event.state?.ttgmsRoute;
+    if (!route) return;
+    restoringBrowserHistory = true;
+    restoreBrowserRoute(route);
+    render();
+    restoringBrowserHistory = false;
   }
 
   function formatDateTime(value) {
@@ -2029,6 +2103,7 @@
       window.requestAnimationFrame(fitTournamentBrackets);
     });
     syncLiveRefresh();
+    syncBrowserHistory();
   }
 
   async function goToHome(event) {
@@ -3126,6 +3201,7 @@
     app.addEventListener('change', handleAppChange);
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('resize', fitTournamentBrackets);
+    window.addEventListener('popstate', handleBrowserPopState);
   }
 
   async function init() {
