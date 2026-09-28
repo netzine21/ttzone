@@ -423,7 +423,13 @@ async function handleApi(req, res, requestPath) {
       if (!name || !address) return sendJson(res, 400, { error: '탁구장명과 주소를 입력해 주세요.' });
       const result = await pool.query(
         `update public.venues
-            set name = $1, address = $2, phone = $3, region = $4, map_url = $5, status = $6, updated_at = now()
+            set name = $1,
+                address = $2,
+                phone = $3,
+                region = coalesce(nullif($4, ''), region),
+                map_url = coalesce(nullif($5, ''), map_url),
+                status = $6,
+                updated_at = now()
           where id = $7
           returning *`,
         [name, address, phone || null, String(body.region || '').trim() || null, String(body.mapUrl || '').trim() || null, status, adminVenueMatch[1]]
@@ -560,7 +566,7 @@ async function handleApi(req, res, requestPath) {
         const gameResult = await client.query(
           `update public.games
               set title = $1, location = $2, venue_id = $3, venue_name = $4, venue_address = $5, venue_phone = $6, scheduled_at = $7, max_participants = $8, note = $9, format_modes = $10, updated_at = now()
-            where id = $10 and operator_id = $11
+            where id = $11 and operator_id = $12
             returning id`,
           [title, location, venueId, venueName, venueAddress, venuePhone, body.scheduledAt, maxParticipants, String(body.note || '').trim() || null, JSON.stringify(formatModes), gameId, user.id]
         );

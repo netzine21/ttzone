@@ -95,6 +95,7 @@
   async function apiRequest(path, options = {}) {
     const response = await fetch(path, {
       credentials: 'include',
+      cache: options.cache || 'no-store',
       headers: {
         ...(options.body ? { 'Content-Type': 'application/json' } : {}),
         ...(options.headers || {}),
@@ -324,6 +325,14 @@
       dateStyle: 'medium',
       timeStyle: 'short',
     }).format(date);
+  }
+
+  function formatDateTimeLocalInput(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value).slice(0, 16);
+    const pad = (number) => String(number).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
 
   function formatCount(value) {
@@ -1072,7 +1081,7 @@
             </div>
             <div class="field">
               <label for="editGameScheduledAt"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M8 3v4M16 3v4M4 10h16" /></svg>게임일시</span></label>
-              <input id="editGameScheduledAt" name="scheduledAt" type="datetime-local" required value="${escapeHtml(game.scheduledAt)}" />
+              <input id="editGameScheduledAt" name="scheduledAt" type="datetime-local" required value="${escapeHtml(formatDateTimeLocalInput(game.scheduledAt))}" />
             </div>
           </div>
           <div class="field">
