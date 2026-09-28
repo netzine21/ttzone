@@ -1201,6 +1201,10 @@ button {
   flex-wrap: wrap;
 }
 
+.game-edit-save-row {
+  justify-content: center;
+}
+
 .btn {
   appearance: none;
   border: 1px solid transparent;

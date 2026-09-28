@@ -999,13 +999,13 @@
           </div>
 
           <div class="field">
-            <label for="gameVenueAddress">탁구장 주소</label>
+            <label for="gameVenueAddress"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>탁구장 주소</span></label>
             <input id="gameVenueAddress" name="venueAddress" type="text" required placeholder="도로명 주소를 입력하세요" />
             <small class="field-hint">등록된 탁구장을 선택하면 주소가 자동으로 입력됩니다.</small>
           </div>
 
           <div class="field">
-            <label for="gameVenuePhone">탁구장 전화번호</label>
+            <label for="gameVenuePhone"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h3l1.2 4-2 1.5a14 14 0 0 0 5.3 5.3l1.5-2 4 1.2v3c0 1.1-.9 2-2 2C11.4 19 5 12.6 5 5c0-1.1.9-2 2-2z" /></svg>탁구장 전화번호</span></label>
             <input id="gameVenuePhone" name="venuePhone" type="tel" placeholder="예: 032-123-4567" />
           </div>
 
@@ -1060,13 +1060,13 @@
           </div>
 
           <div class="field">
-            <label for="editGameVenueAddress">탁구장 주소</label>
+            <label for="editGameVenueAddress"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>탁구장 주소</span></label>
             <input id="editGameVenueAddress" name="venueAddress" type="text" required value="${escapeHtml(game.venueAddress || '')}" placeholder="도로명 주소를 입력하세요" />
             <small class="field-hint">등록된 탁구장을 선택하면 주소가 자동으로 입력됩니다.</small>
           </div>
 
           <div class="field">
-            <label for="editGameVenuePhone">탁구장 전화번호</label>
+            <label for="editGameVenuePhone"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h3l1.2 4-2 1.5a14 14 0 0 0 5.3 5.3l1.5-2 4 1.2v3c0 1.1-.9 2-2 2C11.4 19 5 12.6 5 5c0-1.1.9-2 2-2z" /></svg>탁구장 전화번호</span></label>
             <input id="editGameVenuePhone" name="venuePhone" type="tel" value="${escapeHtml(game.venuePhone || '')}" placeholder="예: 032-123-4567" />
           </div>
           <div class="field">
@@ -1088,7 +1088,7 @@
             <label for="editGameNote"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /></svg>게임안내(선택)</span></label>
             <textarea id="editGameNote" name="note">${escapeHtml(game.note || '')}</textarea>
           </div>
-          <div class="button-row">
+          <div class="button-row game-edit-save-row">
             <button class="game-list-action game-list-action--primary" type="submit"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z" /><path d="M8 4v6h8V4M8 20v-6h8v6" /><path d="M12 16v3" /></svg><span>수정 내용 저장</span></button>
           </div>
         </form>
