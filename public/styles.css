@@ -904,6 +904,11 @@ button {
   color: var(--muted-2);
 }
 
+.field-hint {
+  color: var(--muted-2);
+  font-size: 0.78rem;
+}
+
 .field input:focus,
 .field select:focus,
 .field textarea:focus {

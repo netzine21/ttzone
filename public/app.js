@@ -3,6 +3,7 @@
     users: 'ttgms:v1:users',
     games: 'ttgms:v1:games',
     registrationClosures: 'ttgms:v1:registration-closures',
+    venues: 'ttgms:v1:venues',
     session: 'ttgms:v1:session',
   };
 
@@ -109,6 +110,26 @@
 
   function trimValue(value) {
     return String(value ?? '').trim();
+  }
+
+  function getVenueSuggestions() {
+    const savedVenues = readJson(STORAGE_KEYS.venues, []);
+    const gameLocations = state.games.map((game) => game.location).filter(Boolean);
+    return [...new Set([...(Array.isArray(savedVenues) ? savedVenues : []), ...gameLocations])]
+      .map(trimValue)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, 'ko'));
+  }
+
+  function rememberVenue(location) {
+    const value = trimValue(location);
+    if (!value) return;
+    const venues = getVenueSuggestions().filter((item) => item !== value);
+    writeJson(STORAGE_KEYS.venues, [value, ...venues].slice(0, 200));
+  }
+
+  function renderVenueSuggestions() {
+    return getVenueSuggestions().map((venue) => `<option value="${escapeHtml(venue)}"></option>`).join('');
   }
 
   function formatPhoneNumber(value) {
@@ -945,7 +966,9 @@
 
           <div class="field">
             <label for="gameLocation"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>게임장소</span></label>
-            <input id="gameLocation" name="location" type="text" required />
+            <input id="gameLocation" name="location" type="search" list="gameVenueSuggestions" required placeholder="탁구장 이름 또는 주소 검색" />
+            <datalist id="gameVenueSuggestions">${renderVenueSuggestions()}</datalist>
+            <small class="field-hint">입력한 장소는 다음 게임 생성부터 검색할 수 있습니다.</small>
           </div>
 
           <div class="field">
@@ -994,7 +1017,9 @@
           </div>
           <div class="field">
             <label for="editGameLocation"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>게임장소</span></label>
-            <input id="editGameLocation" name="location" type="text" required value="${escapeHtml(game.location)}" />
+            <input id="editGameLocation" name="location" type="search" list="editGameVenueSuggestions" required value="${escapeHtml(game.location)}" placeholder="탁구장 이름 또는 주소 검색" />
+            <datalist id="editGameVenueSuggestions">${renderVenueSuggestions()}</datalist>
+            <small class="field-hint">입력한 장소는 다음 게임 생성부터 검색할 수 있습니다.</small>
           </div>
           <div class="field">
               <span class="field-label"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c3 0 5 2 5 5v4M17 20c-3 0-5-2-5-5V9" /><ellipse cx="7" cy="4" rx="3" ry="2" /><ellipse cx="17" cy="20" rx="3" ry="2" /></svg>경기형식</span></span>
@@ -2666,6 +2691,8 @@
       return;
     }
 
+    rememberVenue(location);
+
     try {
       await apiRequest('/api/games', {
         method: 'POST',
@@ -2738,6 +2765,8 @@
       render();
       return;
     }
+
+    rememberVenue(location);
 
     try {
       const savedPayload = await apiRequest(`/api/games/${encodeURIComponent(game.id)}`, {
