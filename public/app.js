@@ -547,8 +547,8 @@
         <div class="field">
           <label>성별 <span class="field-requirement field-requirement--required">필수</span></label>
           <div class="choice-row">
-            <label class="choice-option"><input type="radio" name="gender" value="male" required /> 남자</label>
-            <label class="choice-option"><input type="radio" name="gender" value="female" required /> 여자</label>
+            <label class="choice-option">남자 <input type="radio" name="gender" value="male" required /></label>
+            <label class="choice-option">여자 <input type="radio" name="gender" value="female" required /></label>
           </div>
         </div>
         <div class="field">
@@ -1994,8 +1994,8 @@
           <div class="field">
             <label>성별</label>
             <div class="choice-row">
-              <label class="choice-option"><input type="radio" name="gender" value="male" ${currentUser.gender === 'male' ? 'checked' : ''} /> 남자</label>
-              <label class="choice-option"><input type="radio" name="gender" value="female" ${currentUser.gender === 'female' ? 'checked' : ''} /> 여자</label>
+              <label class="choice-option">남자 <input type="radio" name="gender" value="male" ${currentUser.gender === 'male' ? 'checked' : ''} /></label>
+              <label class="choice-option">여자 <input type="radio" name="gender" value="female" ${currentUser.gender === 'female' ? 'checked' : ''} /></label>
             </div>
           </div>
           <div class="field-grid">
