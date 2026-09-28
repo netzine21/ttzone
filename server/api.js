@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { getPool } = require('./db');
 const incheonVenues = require('./incheon-venues');
+const bucheonVenues = require('./bucheon-venues');
 
 const SESSION_COOKIE = 'ttgms_session';
 const SESSION_DAYS = 30;
@@ -383,6 +384,33 @@ async function handleApi(req, res, requestPath) {
         }
         await client.query('commit');
         return sendJson(res, 200, { imported: incheonVenues.length, status: 'pending' });
+      } catch (error) {
+        await client.query('rollback');
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
+
+    if (requestPath === '/api/admin/venues/import-bucheon' && req.method === 'POST') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      if (user.role !== 'admin') return sendJson(res, 403, { error: '시스템관리자만 부천 탁구장 목록을 가져올 수 있습니다.' });
+      await ensureVenueColumns();
+      const client = await pool.connect();
+      try {
+        await client.query('begin');
+        for (const [name, address, phone] of bucheonVenues) {
+          await client.query(
+            `insert into public.venues (name, address, phone, region, status, created_by)
+             values ($1, $2, $3, '경기 부천시', 'pending', $4)
+             on conflict ((lower(name)), (lower(address))) do update
+               set phone = coalesce(excluded.phone, public.venues.phone), updated_at = now()` ,
+            [name, address, phone || null, user.id]
+          );
+        }
+        await client.query('commit');
+        return sendJson(res, 200, { imported: bucheonVenues.length, status: 'pending' });
       } catch (error) {
         await client.query('rollback');
         throw error;

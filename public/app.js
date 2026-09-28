@@ -2115,7 +2115,7 @@
           </table>
         </div>
         <div class="admin-venues-section">
-          <div class="section-heading"><div><p class="section-kicker">탁구장 정보 DB</p><h2>탁구장 정보 관리</h2></div><button class="btn btn-secondary" type="button" data-import-incheon>인천 공개목록 가져오기</button></div>
+          <div class="section-heading"><div><p class="section-kicker">탁구장 정보 DB</p><h2>탁구장 정보 관리</h2></div><div class="admin-venue-import-actions"><button class="btn btn-secondary" type="button" data-import-incheon>인천 공개목록 가져오기</button><button class="btn btn-secondary" type="button" data-import-bucheon>부천 공개목록 가져오기</button></div></div>
           <form class="admin-venue-create" data-form="admin-venue-create">
             <div class="admin-venue-create__heading"><strong>새 탁구장 등록</strong><span>등록 즉시 게임 생성 화면에서 선택할 수 있습니다.</span></div>
             <div class="admin-venue-create__fields">
@@ -2193,6 +2193,17 @@
       await openAdminPage();
     } catch (error) {
       setFlash(error.message || '인천 탁구장 목록 등록에 실패했습니다.', 'error');
+      render();
+    }
+  }
+
+  async function handleImportBucheonVenues() {
+    try {
+      const result = await apiRequest('/api/admin/venues/import-bucheon', { method: 'POST', body: JSON.stringify({}) });
+      setFlash(`부천 탁구장 ${result.imported}개를 승인대기 상태로 등록했습니다.`, 'success');
+      await openAdminPage();
+    } catch (error) {
+      setFlash(error.message || '부천 탁구장 목록 등록에 실패했습니다.', 'error');
       render();
     }
   }
@@ -2989,6 +3000,12 @@
     const importIncheonButton = event.target.closest('[data-import-incheon]');
     if (importIncheonButton) {
       await handleImportIncheonVenues();
+      return;
+    }
+
+    const importBucheonButton = event.target.closest('[data-import-bucheon]');
+    if (importBucheonButton) {
+      await handleImportBucheonVenues();
       return;
     }
 
