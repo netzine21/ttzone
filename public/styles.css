@@ -165,7 +165,7 @@ button {
 
   .mobile-menu-toggle {
     position: absolute;
-    right: 0;
+    right: 42px;
     display: inline-grid;
     place-items: center;
     width: 32px;
@@ -187,7 +187,7 @@ button {
 
   .service-menu-toggle {
     position: absolute;
-    right: 42px;
+    right: 0;
     display: inline-grid;
     place-items: center;
     width: 32px;
@@ -4917,7 +4917,7 @@ button {
 
   .mobile-menu-toggle {
     position: absolute;
-    right: 0;
+    right: 36px;
     display: inline-grid;
     place-items: center;
     flex: 0 0 30px;
@@ -4940,11 +4940,11 @@ button {
 
   .service-menu-toggle {
     position: absolute;
-    right: 36px;
+    right: 0;
     display: inline-grid;
     place-items: center;
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     padding: 4px;
     border: 1px solid rgba(165, 190, 214, 0.22);
     border-radius: 50%;
