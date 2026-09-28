@@ -253,7 +253,7 @@ async function handleApi(req, res, requestPath) {
     if (requestPath === '/api/auth/signup' && req.method === 'POST') {
       const body = await readBody(req);
       const nickname = String(body.nickname || '').trim();
-      const memberId = String(body.memberId || '').trim();
+      const memberId = String(body.memberId || '').trim().toLowerCase();
       const password = String(body.password || '').trim();
       const phone = String(body.phone || '').trim();
       const gender = String(body.gender || '').trim();

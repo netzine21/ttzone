@@ -2468,7 +2468,7 @@
     const submittedData = new FormData(form);
     const formData = Object.fromEntries(submittedData.entries());
     const nickname = trimValue(formData.nickname);
-    const memberId = trimValue(formData.memberId);
+    const memberId = trimValue(formData.memberId).toLowerCase();
     const password = trimValue(formData.password);
     const phone = trimValue(formData.phone);
     const gender = trimValue(formData.gender);
