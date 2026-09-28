@@ -15,6 +15,7 @@ async function ensureVenueColumns() {
          id uuid primary key default gen_random_uuid(),
          name text not null,
          address text not null,
+         phone text,
          region text,
          map_url text,
          status text not null default 'pending',
@@ -24,10 +25,13 @@ async function ensureVenueColumns() {
        );
        create unique index if not exists venues_name_address_key
          on public.venues (lower(name), lower(address));
+       alter table public.venues
+         add column if not exists phone text;
        alter table public.games
          add column if not exists venue_id uuid references public.venues(id) on delete set null,
          add column if not exists venue_name text,
-         add column if not exists venue_address text`
+         add column if not exists venue_address text,
+         add column if not exists venue_phone text`
     );
   }
   return venueColumnsPromise;
@@ -141,6 +145,7 @@ function publicGame(row, formats = [], registrations = [], viewerId = null) {
     venueId: row.venue_id || null,
     venueName: row.venue_name || row.location,
     venueAddress: row.venue_address || '',
+    venuePhone: row.venue_phone || '',
     formats,
     format: formats[0] || null,
     formatModes: row.format_modes || {},
@@ -284,15 +289,16 @@ async function handleApi(req, res, requestPath) {
     if (requestPath === '/api/venues' && req.method === 'GET') {
       await ensureVenueColumns();
       const result = await pool.query(
-        `select id, name, address, region, map_url, status, created_by, created_at, updated_at
+        `select id, name, address, phone, region, map_url, status, created_by, created_at, updated_at
            from public.venues
-          where status <> 'archived'
+          where status = 'approved'
           order by name`
       );
       return sendJson(res, 200, { venues: result.rows.map((venue) => ({
         id: venue.id,
         name: venue.name,
         address: venue.address,
+        phone: venue.phone || '',
         region: venue.region || '',
         mapUrl: venue.map_url || '',
         status: venue.status,
@@ -309,14 +315,15 @@ async function handleApi(req, res, requestPath) {
       const body = await readBody(req);
       const name = String(body.name || '').trim();
       const address = String(body.address || '').trim();
+      const phone = String(body.phone || '').trim();
       if (!name || !address) return sendJson(res, 400, { error: '탁구장명과 주소를 입력해 주세요.' });
       const result = await pool.query(
-        `insert into public.venues (name, address, region, map_url, status, created_by)
-         values ($1, $2, $3, $4, $5, $6)
+        `insert into public.venues (name, address, phone, region, map_url, status, created_by)
+         values ($1, $2, $3, $4, $5, $6, $7)
          on conflict ((lower(name)), (lower(address)))
-         do update set updated_at = now()
+         do update set phone = coalesce(excluded.phone, public.venues.phone), updated_at = now()
          returning *`,
-        [name, address, String(body.region || '').trim() || null, String(body.mapUrl || '').trim() || null, user.role === 'admin' ? 'approved' : 'pending', user.id]
+        [name, address, phone || null, String(body.region || '').trim() || null, String(body.mapUrl || '').trim() || null, user.role === 'admin' ? 'approved' : 'pending', user.id]
       );
       return sendJson(res, 201, { venue: result.rows[0] });
     }
@@ -327,7 +334,7 @@ async function handleApi(req, res, requestPath) {
       if (user.role !== 'admin') return sendJson(res, 403, { error: '시스템관리자만 탁구장 목록을 관리할 수 있습니다.' });
       await ensureVenueColumns();
       const result = await pool.query('select * from public.venues order by name');
-      return sendJson(res, 200, { venues: result.rows.map((venue) => ({ id: venue.id, name: venue.name, address: venue.address, region: venue.region || '', mapUrl: venue.map_url || '', status: venue.status, createdAt: venue.created_at, updatedAt: venue.updated_at })) });
+      return sendJson(res, 200, { venues: result.rows.map((venue) => ({ id: venue.id, name: venue.name, address: venue.address, phone: venue.phone || '', region: venue.region || '', mapUrl: venue.map_url || '', status: venue.status, createdAt: venue.created_at, updatedAt: venue.updated_at })) });
     }
 
     if (requestPath === '/api/admin/venues/import-incheon' && req.method === 'POST') {
@@ -338,12 +345,13 @@ async function handleApi(req, res, requestPath) {
       const client = await pool.connect();
       try {
         await client.query('begin');
-        for (const [name, address] of incheonVenues) {
+        for (const [name, address, phone] of incheonVenues) {
           await client.query(
-            `insert into public.venues (name, address, region, status, created_by)
-             values ($1, $2, '인천', 'pending', $3)
-             on conflict ((lower(name)), (lower(address))) do nothing`,
-            [name, address, user.id]
+            `insert into public.venues (name, address, phone, region, status, created_by)
+             values ($1, $2, $3, '인천', 'pending', $4)
+             on conflict ((lower(name)), (lower(address))) do update
+               set phone = coalesce(excluded.phone, public.venues.phone), updated_at = now()`,
+            [name, address, phone || null, user.id]
           );
         }
         await client.query('commit');
@@ -356,6 +364,24 @@ async function handleApi(req, res, requestPath) {
       }
     }
 
+    if (requestPath === '/api/admin/venues/bulk-status' && req.method === 'PATCH') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      if (user.role !== 'admin') return sendJson(res, 403, { error: '시스템관리자만 탁구장 상태를 변경할 수 있습니다.' });
+      await ensureVenueColumns();
+      const body = await readBody(req);
+      const ids = Array.isArray(body.ids) ? body.ids.filter(Boolean) : [];
+      const status = ['pending', 'approved', 'archived'].includes(body.status) ? body.status : null;
+      if (!ids.length || !status) return sendJson(res, 400, { error: '변경할 장소와 상태를 선택해 주세요.' });
+      const result = await pool.query(
+        `update public.venues
+            set status = $1, updated_at = now()
+          where id = any($2::uuid[])`,
+        [status, ids]
+      );
+      return sendJson(res, 200, { updated: result.rowCount, status });
+    }
+
     const adminVenueMatch = requestPath.match(/^\/api\/admin\/venues\/([^/]+)$/);
     if (adminVenueMatch && req.method === 'PATCH') {
       const user = await findSession(req);
@@ -365,14 +391,15 @@ async function handleApi(req, res, requestPath) {
       const body = await readBody(req);
       const name = String(body.name || '').trim();
       const address = String(body.address || '').trim();
+      const phone = String(body.phone || '').trim();
       const status = ['pending', 'approved', 'archived'].includes(body.status) ? body.status : 'approved';
       if (!name || !address) return sendJson(res, 400, { error: '탁구장명과 주소를 입력해 주세요.' });
       const result = await pool.query(
         `update public.venues
-            set name = $1, address = $2, region = $3, map_url = $4, status = $5, updated_at = now()
-          where id = $6
+            set name = $1, address = $2, phone = $3, region = $4, map_url = $5, status = $6, updated_at = now()
+          where id = $7
           returning *`,
-        [name, address, String(body.region || '').trim() || null, String(body.mapUrl || '').trim() || null, status, adminVenueMatch[1]]
+        [name, address, phone || null, String(body.region || '').trim() || null, String(body.mapUrl || '').trim() || null, status, adminVenueMatch[1]]
       );
       if (!result.rows[0]) return sendJson(res, 404, { error: '탁구장 정보를 찾을 수 없습니다.' });
       return sendJson(res, 200, { venue: result.rows[0] });
@@ -433,6 +460,7 @@ async function handleApi(req, res, requestPath) {
       const location = String(body.location || '').trim();
       const venueName = String(body.venueName || '').trim();
       const venueAddress = String(body.venueAddress || '').trim();
+      const venuePhone = String(body.venuePhone || '').trim();
       const formats = Array.isArray(body.formats) ? [...new Set(body.formats)] : [];
       const formatModes = normalizeFormatModes(body.formatModes, formats);
       const maxParticipants = Number(body.maxParticipants);
@@ -440,21 +468,21 @@ async function handleApi(req, res, requestPath) {
         return sendJson(res, 400, { error: '게임 필수정보를 확인해 주세요.' });
       }
       const venueResult = await pool.query(
-        `insert into public.venues (name, address, status, created_by)
-         values ($1, $2, $3, $4)
+        `insert into public.venues (name, address, phone, status, created_by)
+         values ($1, $2, $3, $4, $5)
          on conflict ((lower(name)), (lower(address)))
-         do update set updated_at = now()
+         do update set phone = coalesce(excluded.phone, public.venues.phone), updated_at = now()
          returning id`,
-        [venueName, venueAddress, user.role === 'admin' ? 'approved' : 'pending', user.id]
+        [venueName, venueAddress, venuePhone || null, user.role === 'admin' ? 'approved' : 'pending', user.id]
       );
       const venueId = venueResult.rows[0].id;
       const client = await pool.connect();
       try {
         await client.query('begin');
         const gameResult = await client.query(
-          `insert into public.games (operator_id, title, location, venue_id, venue_name, venue_address, scheduled_at, max_participants, note, format_modes)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning *`,
-          [user.id, title, location, venueId, venueName, venueAddress, body.scheduledAt, maxParticipants, String(body.note || '').trim() || null, JSON.stringify(formatModes)]
+          `insert into public.games (operator_id, title, location, venue_id, venue_name, venue_address, venue_phone, scheduled_at, max_participants, note, format_modes)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) returning *`,
+          [user.id, title, location, venueId, venueName, venueAddress, venuePhone, body.scheduledAt, maxParticipants, String(body.note || '').trim() || null, JSON.stringify(formatModes)]
         );
         for (const format of formats) await client.query('insert into public.game_formats (game_id, format) values ($1, $2)', [gameResult.rows[0].id, format]);
         await client.query('commit');
@@ -479,6 +507,7 @@ async function handleApi(req, res, requestPath) {
       const location = String(body.location || '').trim();
       const venueName = String(body.venueName || '').trim();
       const venueAddress = String(body.venueAddress || '').trim();
+      const venuePhone = String(body.venuePhone || '').trim();
       const formats = Array.isArray(body.formats) ? [...new Set(body.formats)] : [];
       const formatModes = normalizeFormatModes(body.formatModes, formats);
       const maxParticipants = Number(body.maxParticipants);
@@ -486,12 +515,12 @@ async function handleApi(req, res, requestPath) {
         return sendJson(res, 400, { error: '게임 필수정보를 확인해 주세요.' });
       }
       const venueResult = await pool.query(
-        `insert into public.venues (name, address, status, created_by)
-         values ($1, $2, $3, $4)
+        `insert into public.venues (name, address, phone, status, created_by)
+         values ($1, $2, $3, $4, $5)
          on conflict ((lower(name)), (lower(address)))
-         do update set updated_at = now()
+         do update set phone = coalesce(excluded.phone, public.venues.phone), updated_at = now()
          returning id`,
-        [venueName, venueAddress, user.role === 'admin' ? 'approved' : 'pending', user.id]
+        [venueName, venueAddress, venuePhone || null, user.role === 'admin' ? 'approved' : 'pending', user.id]
       );
       const venueId = venueResult.rows[0].id;
       const participantCount = await pool.query('select count(*)::int as count from public.registrations where game_id = $1', [gameId]);
@@ -503,10 +532,10 @@ async function handleApi(req, res, requestPath) {
         await client.query('begin');
         const gameResult = await client.query(
           `update public.games
-              set title = $1, location = $2, venue_id = $3, venue_name = $4, venue_address = $5, scheduled_at = $6, max_participants = $7, note = $8, format_modes = $9, updated_at = now()
+              set title = $1, location = $2, venue_id = $3, venue_name = $4, venue_address = $5, venue_phone = $6, scheduled_at = $7, max_participants = $8, note = $9, format_modes = $10, updated_at = now()
             where id = $10 and operator_id = $11
             returning id`,
-          [title, location, venueId, venueName, venueAddress, body.scheduledAt, maxParticipants, String(body.note || '').trim() || null, JSON.stringify(formatModes), gameId, user.id]
+          [title, location, venueId, venueName, venueAddress, venuePhone, body.scheduledAt, maxParticipants, String(body.note || '').trim() || null, JSON.stringify(formatModes), gameId, user.id]
         );
         if (!gameResult.rows[0]) {
           await client.query('rollback');

@@ -727,7 +727,8 @@
     const deleteAction = canDelete ? `<div class="game-edit-bottom-action"><button type="button" class="game-list-action game-list-action--danger" data-delete-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M9 7V4h6v3M7 7l1 13h8l1-13" /></svg><span>${currentUser?.role === 'admin' ? '게임 삭제(관리자)' : '게임 삭제'}</span></button></div>` : '';
     const venueName = game.venueName || game.location;
     const venueAddress = game.venueAddress ? `<small class="venue-address">${escapeHtml(game.venueAddress)}</small>` : '';
-    return `<dl class="meta-grid public-detail-meta"><div><dt>게임장소</dt><dd>${escapeHtml(venueName)}${venueAddress}</dd></div><div><dt>게임일시</dt><dd>${escapeHtml(formatDateTime(game.scheduledAt))}</dd></div><div><dt>운영자</dt><dd>${escapeHtml(game.operatorNickname)}</dd></div><div><dt>운영자 휴대폰</dt><dd>${escapeHtml(operator?.phone || '미입력')}</dd></div><div><dt>경기방식</dt><dd class="format-detail-list">${formats.map((format) => `<span class="format-detail-item">${escapeHtml(FORMAT_LABELS[format])} <span class="format-detail-mode">(${escapeHtml(getFormatModeLabel(game, format))})</span></span>`).join(' · ')}</dd></div><div><dt>최대참가인원</dt><dd>${escapeHtml(String(game.maxParticipants))}명</dd></div></dl><div class="public-detail-note"><p class="section-kicker">게임안내</p><p>${game.note ? escapeHtml(game.note) : '<span class="muted">추가 안내가 없습니다.</span>'}</p></div>${applyAction}${editAction}${deleteAction}`;
+    const venuePhone = game.venuePhone ? `<small class="venue-address">전화 ${escapeHtml(game.venuePhone)}</small>` : '';
+    return `<dl class="meta-grid public-detail-meta"><div><dt>게임장소</dt><dd>${escapeHtml(venueName)}${venueAddress}${venuePhone}</dd></div><div><dt>게임일시</dt><dd>${escapeHtml(formatDateTime(game.scheduledAt))}</dd></div><div><dt>운영자</dt><dd>${escapeHtml(game.operatorNickname)}</dd></div><div><dt>운영자 휴대폰</dt><dd>${escapeHtml(operator?.phone || '미입력')}</dd></div><div><dt>경기방식</dt><dd class="format-detail-list">${formats.map((format) => `<span class="format-detail-item">${escapeHtml(FORMAT_LABELS[format])} <span class="format-detail-mode">(${escapeHtml(getFormatModeLabel(game, format))})</span></span>`).join(' · ')}</dd></div><div><dt>최대참가인원</dt><dd>${escapeHtml(String(game.maxParticipants))}명</dd></div></dl><div class="public-detail-note"><p class="section-kicker">게임안내</p><p>${game.note ? escapeHtml(game.note) : '<span class="muted">추가 안내가 없습니다.</span>'}</p></div>${applyAction}${editAction}${deleteAction}`;
   }
 
   function getPublicGroupStandings(game, format) {
@@ -984,7 +985,7 @@
 
           <div class="field">
             <label for="gameVenueName"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>탁구장명</span></label>
-            <input id="gameVenueName" name="venueName" type="search" list="gameVenueSuggestions" data-venue-name data-venue-address-target="gameVenueAddress" required placeholder="탁구장 이름 검색" />
+            <input id="gameVenueName" name="venueName" type="search" list="gameVenueSuggestions" data-venue-name data-venue-address-target="gameVenueAddress" data-venue-phone-target="gameVenuePhone" required placeholder="탁구장 이름 검색" />
             <datalist id="gameVenueSuggestions">${renderVenueSuggestions()}</datalist>
           </div>
 
@@ -992,6 +993,11 @@
             <label for="gameVenueAddress">탁구장 주소</label>
             <input id="gameVenueAddress" name="venueAddress" type="text" required placeholder="도로명 주소를 입력하세요" />
             <small class="field-hint">등록된 탁구장을 선택하면 주소가 자동으로 입력됩니다.</small>
+          </div>
+
+          <div class="field">
+            <label for="gameVenuePhone">탁구장 전화번호</label>
+            <input id="gameVenuePhone" name="venuePhone" type="tel" placeholder="예: 032-123-4567" />
           </div>
 
           <div class="field">
@@ -1040,7 +1046,7 @@
           </div>
           <div class="field">
             <label for="editGameVenueName"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>탁구장명</span></label>
-            <input id="editGameVenueName" name="venueName" type="search" list="editGameVenueSuggestions" data-venue-name data-venue-address-target="editGameVenueAddress" required value="${escapeHtml(game.venueName || game.location)}" placeholder="탁구장 이름 검색" />
+            <input id="editGameVenueName" name="venueName" type="search" list="editGameVenueSuggestions" data-venue-name data-venue-address-target="editGameVenueAddress" data-venue-phone-target="editGameVenuePhone" required value="${escapeHtml(game.venueName || game.location)}" placeholder="탁구장 이름 검색" />
             <datalist id="editGameVenueSuggestions">${renderVenueSuggestions()}</datalist>
           </div>
 
@@ -1048,6 +1054,11 @@
             <label for="editGameVenueAddress">탁구장 주소</label>
             <input id="editGameVenueAddress" name="venueAddress" type="text" required value="${escapeHtml(game.venueAddress || '')}" placeholder="도로명 주소를 입력하세요" />
             <small class="field-hint">등록된 탁구장을 선택하면 주소가 자동으로 입력됩니다.</small>
+          </div>
+
+          <div class="field">
+            <label for="editGameVenuePhone">탁구장 전화번호</label>
+            <input id="editGameVenuePhone" name="venuePhone" type="tel" value="${escapeHtml(game.venuePhone || '')}" placeholder="예: 032-123-4567" />
           </div>
           <div class="field">
               <span class="field-label"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c3 0 5 2 5 5v4M17 20c-3 0-5-2-5-5V9" /><ellipse cx="7" cy="4" rx="3" ry="2" /><ellipse cx="17" cy="20" rx="3" ry="2" /></svg>경기형식</span></span>
@@ -2096,7 +2107,8 @@
         </div>
         <div class="admin-venues-section">
           <div class="section-heading"><div><p class="section-kicker">탁구장 정보 DB</p><h2>탁구장 정보 관리</h2></div><button class="btn btn-secondary" type="button" data-import-incheon>인천 공개목록 가져오기</button></div>
-          <div class="admin-venue-list">${venues.length ? venues.map((venue) => `<form class="admin-venue-card" data-form="admin-venue" data-venue-id="${escapeHtml(venue.id)}"><div class="field"><label>탁구장명</label><input name="name" value="${escapeHtml(venue.name)}" required /></div><div class="field"><label>주소</label><input name="address" value="${escapeHtml(venue.address)}" required /></div><div class="field"><label>상태</label><select name="status"><option value="pending" ${venue.status === 'pending' ? 'selected' : ''}>승인대기</option><option value="approved" ${venue.status === 'approved' ? 'selected' : ''}>사용</option><option value="archived" ${venue.status === 'archived' ? 'selected' : ''}>보관</option></select></div><button class="btn btn-secondary" type="submit">저장</button></form>`).join('') : '<p class="muted">등록된 탁구장이 없습니다.</p>'}</div>
+          <div class="admin-venue-toolbar"><label class="check-line"><input type="checkbox" data-admin-venue-select-all /> 전체 선택</label><select data-admin-venue-bulk-status><option value="">상태 일괄 변경</option><option value="pending">승인대기</option><option value="approved">사용</option><option value="archived">보관</option></select><button class="btn btn-secondary" type="button" data-admin-venue-bulk-save>선택 항목 저장</button></div>
+          <div class="admin-venue-list">${venues.length ? venues.map((venue) => `<form class="admin-venue-card" data-form="admin-venue" data-venue-id="${escapeHtml(venue.id)}"><label class="admin-venue-select"><input type="checkbox" data-admin-venue-select value="${escapeHtml(venue.id)}" /><span>선택</span></label><div class="field"><label>탁구장명</label><input name="name" value="${escapeHtml(venue.name)}" required /></div><div class="field"><label>주소</label><input name="address" value="${escapeHtml(venue.address)}" required /></div><div class="field"><label>전화번호</label><input name="phone" value="${escapeHtml(venue.phone || '')}" /></div><div class="field"><label>상태</label><select name="status"><option value="pending" ${venue.status === 'pending' ? 'selected' : ''}>승인대기</option><option value="approved" ${venue.status === 'approved' ? 'selected' : ''}>사용</option><option value="archived" ${venue.status === 'archived' ? 'selected' : ''}>보관</option></select></div><button class="btn btn-secondary" type="submit">저장</button></form>`).join('') : '<p class="muted">등록된 탁구장이 없습니다.</p>'}</div>
         </div>
         <div class="button-row"><button class="btn btn-ghost" type="button" data-back-dashboard>게임목록으로 돌아가기</button></div>
       </section>
@@ -2146,6 +2158,26 @@
       await openAdminPage();
     } catch (error) {
       setFlash(error.message || '인천 탁구장 목록 등록에 실패했습니다.', 'error');
+      render();
+    }
+  }
+
+  async function handleAdminVenueBulkStatus() {
+    const selected = [...document.querySelectorAll('[data-admin-venue-select]:checked')].map((input) => input.value);
+    const status = document.querySelector('[data-admin-venue-bulk-status]')?.value || '';
+    if (!selected.length || !status) {
+      setFlash('장소와 변경할 상태를 선택해 주세요.', 'error');
+      return;
+    }
+    try {
+      const result = await apiRequest('/api/admin/venues/bulk-status', {
+        method: 'PATCH',
+        body: JSON.stringify({ ids: selected, status }),
+      });
+      setFlash(`${result.updated}개 탁구장 상태를 변경했습니다.`, 'success');
+      await openAdminPage();
+    } catch (error) {
+      setFlash(error.message || '탁구장 상태 변경에 실패했습니다.', 'error');
       render();
     }
   }
@@ -2735,6 +2767,7 @@
     const title = trimValue(formData.title);
     const venueName = trimValue(formData.venueName);
     const venueAddress = trimValue(formData.venueAddress);
+    const venuePhone = trimValue(formData.venuePhone);
     const location = venueName && venueAddress ? `${venueName} · ${venueAddress}` : venueName;
     const formats = submittedData.getAll('formats').map(trimValue);
     const formatModes = Object.fromEntries(formats.map((format) => [format, submittedData.get(`formatMode_${format}`) === 'leagueOnly' ? 'leagueOnly' : 'leagueTournament']));
@@ -2759,7 +2792,7 @@
     try {
       await apiRequest('/api/games', {
         method: 'POST',
-        body: JSON.stringify({ title, location, venueName, venueAddress, formats, formatModes, scheduledAt, maxParticipants, note }),
+        body: JSON.stringify({ title, location, venueName, venueAddress, venuePhone, formats, formatModes, scheduledAt, maxParticipants, note }),
       });
       await loadState();
       form.reset();
@@ -2781,6 +2814,7 @@
       location,
       venueName,
       venueAddress,
+      venuePhone,
       formats,
       formatModes,
       format: formats[0],
@@ -2814,6 +2848,7 @@
     const title = trimValue(formData.title);
     const venueName = trimValue(formData.venueName);
     const venueAddress = trimValue(formData.venueAddress);
+    const venuePhone = trimValue(formData.venuePhone);
     const location = venueName && venueAddress ? `${venueName} · ${venueAddress}` : venueName;
     const formats = submittedData.getAll('formats').map(trimValue);
     const formatModes = Object.fromEntries(formats.map((format) => [format, submittedData.get(`formatMode_${format}`) === 'leagueOnly' ? 'leagueOnly' : 'leagueTournament']));
@@ -2838,7 +2873,7 @@
     try {
       const savedPayload = await apiRequest(`/api/games/${encodeURIComponent(game.id)}`, {
         method: 'PATCH',
-        body: JSON.stringify({ title, location, venueName, venueAddress, formats, formatModes, scheduledAt, maxParticipants, note }),
+        body: JSON.stringify({ title, location, venueName, venueAddress, venuePhone, formats, formatModes, scheduledAt, maxParticipants, note }),
       });
       const savedFormats = savedPayload.game?.formats;
       if (!Array.isArray(savedFormats) || savedFormats.length !== formats.length || formats.some((format) => !savedFormats.includes(format))) {
@@ -2858,7 +2893,7 @@
       }
     }
 
-    Object.assign(game, { title, location, venueName, venueAddress, formats, formatModes, format: formats[0], scheduledAt, maxParticipants, note });
+    Object.assign(game, { title, location, venueName, venueAddress, venuePhone, formats, formatModes, format: formats[0], scheduledAt, maxParticipants, note });
     persistGames();
     state.editingGameId = null;
     state.selectedGameId = game.id;
@@ -2919,6 +2954,18 @@
     const importIncheonButton = event.target.closest('[data-import-incheon]');
     if (importIncheonButton) {
       await handleImportIncheonVenues();
+      return;
+    }
+
+    const bulkVenueSaveButton = event.target.closest('[data-admin-venue-bulk-save]');
+    if (bulkVenueSaveButton) {
+      await handleAdminVenueBulkStatus();
+      return;
+    }
+
+    const selectAllVenues = event.target.closest('[data-admin-venue-select-all]');
+    if (selectAllVenues) {
+      document.querySelectorAll('[data-admin-venue-select]').forEach((input) => { input.checked = selectAllVenues.checked; });
       return;
     }
 
@@ -3392,7 +3439,9 @@
     if (input.matches('[data-venue-name]')) {
       const venue = findVenueByName(input.value);
       const addressInput = document.getElementById(input.dataset.venueAddressTarget);
+      const phoneInput = document.getElementById(input.dataset.venuePhoneTarget);
       if (venue && addressInput) addressInput.value = venue.address;
+      if (venue && phoneInput) phoneInput.value = venue.phone || '';
     }
   }
 
