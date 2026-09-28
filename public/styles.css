@@ -157,6 +157,17 @@ button {
   flex: none;
 }
 
+.top-action__user-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
 .top-action__lock {
   fill: currentColor;
   stroke: currentColor;
@@ -4293,23 +4304,32 @@ button {
     left: 0;
     display: inline-grid;
     place-items: center;
-    flex: 0 0 28px;
-    gap: 4px;
-    width: 28px;
-    height: 28px;
-    padding: 4px;
-    border: 0;
-    border-radius: 0;
-    color: var(--text);
-    background: transparent;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    padding: 5px;
+    border: 1px solid rgba(165, 190, 214, 0.22);
+    border-radius: 50%;
+    color: var(--muted);
+    background: rgba(6, 13, 24, 0.35);
+    box-shadow: none;
   }
 
-  .mobile-menu-toggle span {
-    display: block;
-    width: 19px;
-    height: 2px;
-    border-radius: 99px;
-    background: currentColor;
+  .mobile-menu-toggle--authenticated {
+    color: var(--primary);
+    border-color: rgba(118, 240, 196, 0.62);
+    background: rgba(118, 240, 196, 0.1);
+    box-shadow: 0 0 0 3px rgba(118, 240, 196, 0.08);
+  }
+
+  .mobile-menu-toggle__icon {
+    width: 21px;
+    height: 21px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
   }
 
   .mobile-menu-backdrop {

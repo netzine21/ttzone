@@ -1988,12 +1988,20 @@
     return `<svg class="top-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3" class="top-action__shackle ${isLocked ? '' : 'is-open'}" /><rect x="5" y="10" width="14" height="10" rx="1.5" class="top-action__lock" /><circle cx="12" cy="15" r="1.3" class="top-action__keyhole" /></svg>`;
   }
 
+  function renderUserIcon() {
+    return '<svg class="top-action__user-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c.8-4.1 3.1-6.2 7-6.2s6.2 2.1 7 6.2"></path></svg>';
+  }
+
   function updateTopActions(currentUser) {
     const actions = currentUser
-      ? `<button type="button" class="btn top-action" data-logout>${renderLockIcon(false)}<span>로그아웃(${escapeHtml(currentUser.nickname)})</span></button><button type="button" class="btn top-action" data-open-mypage>Mypage</button>`
-      : `<button type="button" class="btn top-action" data-open-auth="signup"><span>회원가입</span></button><button type="button" class="btn top-action" data-open-auth="login">${renderLockIcon(true)}<span>로그인</span></button>`;
+      ? `<button type="button" class="btn top-action" data-logout>${renderUserIcon()}<span>로그아웃(${escapeHtml(currentUser.nickname)})</span></button><button type="button" class="btn top-action" data-open-mypage>${renderUserIcon()}<span>Mypage</span></button>`
+      : `<button type="button" class="btn top-action" data-open-auth="signup">${renderUserIcon()}<span>회원가입</span></button><button type="button" class="btn top-action" data-open-auth="login">${renderLockIcon(true)}<span>로그인</span></button>`;
     if (topActions) topActions.innerHTML = actions;
     if (mobileMenuActions) mobileMenuActions.innerHTML = actions;
+    if (mobileMenuToggle) {
+      mobileMenuToggle.classList.toggle('mobile-menu-toggle--authenticated', Boolean(currentUser));
+      mobileMenuToggle.setAttribute('aria-label', currentUser ? '회원 메뉴 열기 (로그인됨)' : '회원 메뉴 열기');
+    }
   }
 
   function setMobileMenuOpen(isOpen) {
