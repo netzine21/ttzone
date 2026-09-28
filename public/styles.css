@@ -3839,6 +3839,57 @@ button {
     height: 14px;
   }
 
+  .schedule-results-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+
+  .schedule-results-table {
+    min-width: 430px;
+    table-layout: fixed;
+  }
+
+  .schedule-results-table th,
+  .schedule-results-table td {
+    padding: 8px 6px;
+    font-size: 0.78rem;
+  }
+
+  .schedule-results-table .schedule-col-index,
+  .schedule-results-table .schedule-col-round,
+  .schedule-results-table .schedule-col-table,
+  .schedule-results-table .schedule-col-rule {
+    display: none;
+  }
+
+  .schedule-results-table .schedule-col-match {
+    width: 45%;
+  }
+
+  .schedule-results-table .schedule-col-score {
+    width: 24%;
+  }
+
+  .schedule-results-table .schedule-col-winner {
+    width: 31%;
+  }
+
+  .schedule-results-table .schedule-col-match strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .schedule-results-table .schedule-result-input,
+  .schedule-results-table select {
+    min-width: 0;
+    width: 100%;
+    padding: 7px 5px;
+    font-size: 0.78rem;
+  }
+
   .create-game-heading {
     flex-direction: row;
     align-items: center;
