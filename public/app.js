@@ -363,6 +363,34 @@
     return { key: 'done', label: '경기종료' };
   }
 
+  function getPublicGameFilterKey(game) {
+    const statusKey = getGameStatus(game).key;
+    if (statusKey === 'open') return 'open';
+    if (statusKey === 'done') return 'done';
+    return 'progress';
+  }
+
+  function filterGamesByStatus(games, filterName) {
+    if (!['open', 'progress', 'done'].includes(filterName)) return games;
+    return games.filter((game) => getPublicGameFilterKey(game) === filterName);
+  }
+
+  function renderGameStatusFilters(games) {
+    const counts = {
+      all: games.length,
+      open: games.filter((game) => getPublicGameFilterKey(game) === 'open').length,
+      progress: games.filter((game) => getPublicGameFilterKey(game) === 'progress').length,
+      done: games.filter((game) => getPublicGameFilterKey(game) === 'done').length,
+    };
+    const filters = [
+      ['all', '전체 게임'],
+      ['open', '참가접수중'],
+      ['progress', '경기진행중'],
+      ['done', '경기종료'],
+    ];
+    return `<div class="public-game-filter-group" role="group" aria-label="게임 상태 필터">${filters.map(([key, label]) => `<button type="button" class="public-game-filter ${state.gameFilter === key ? 'is-active' : ''}" data-game-filter="${key}" aria-pressed="${state.gameFilter === key ? 'true' : 'false'}">${label} <span class="public-game-filter__count">${formatCount(counts[key])}</span></button>`).join('')}</div>`;
+  }
+
   function hasJoined(game, userId) {
     return getGameRegistrations(game).some((participant) => participant.userId === userId);
   }
@@ -616,12 +644,13 @@
   }
 
   function renderPublicGamesPage() {
-    const games = state.games
+    const allGames = state.games
       .slice()
       .sort((left, right) => new Date(left.scheduledAt) - new Date(right.scheduledAt));
+    const games = filterGamesByStatus(allGames, state.gameFilter);
     const gameList = games.length
       ? games.map((game) => renderGameCard(game, null, true)).join('')
-      : '<div class="empty-state">아직 생성된 게임이 없습니다. 운영자가 게임을 생성하면 이곳에 표시됩니다.</div>';
+      : `<div class="empty-state">${allGames.length ? '선택한 상태의 게임이 없습니다.' : '아직 생성된 게임이 없습니다. 운영자가 게임을 생성하면 이곳에 표시됩니다.'}</div>`;
 
     return `
       <section class="panel section-card">
@@ -630,6 +659,7 @@
             <h2>공개 게임목록 <span class="public-game-list-count">· ${formatCount(games.length)}개 게임</span></h2>
           </div>
         </div>
+        ${renderGameStatusFilters(allGames)}
         <div class="game-list">${gameList}</div>
       </section>
     `;
@@ -837,10 +867,12 @@
   }
 
   function renderGamesSection(currentUser) {
-    const filteredGames = state.games
+    const allGames = state.games
       .slice()
-      .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
-      .filter((game) => (state.gameFilter === 'mine' ? game.operatorId === currentUser.id : true));
+      .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt));
+    const filteredGames = state.gameFilter === 'mine'
+      ? allGames.filter((game) => game.operatorId === currentUser.id)
+      : filterGamesByStatus(allGames, state.gameFilter);
 
     const gamesPerPage = 10;
     const totalPages = Math.max(1, Math.ceil(filteredGames.length / gamesPerPage));
@@ -883,6 +915,7 @@
             ${gameFilterAction}
           </div>
         </div>
+        ${state.gameFilter === 'mine' ? '' : renderGameStatusFilters(allGames)}
         <div class="game-list">
           ${gameList}
         </div>
@@ -2361,7 +2394,8 @@
   }
 
   function setGameFilter(filterName) {
-    state.gameFilter = filterName === 'mine' && state.gameFilter !== 'mine' ? 'mine' : 'all';
+    const allowedFilters = ['all', 'mine', 'open', 'progress', 'done'];
+    state.gameFilter = allowedFilters.includes(filterName) ? filterName : 'all';
     state.gamePage = 1;
     render();
   }

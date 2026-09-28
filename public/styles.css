@@ -1300,6 +1300,38 @@ button {
   letter-spacing: normal;
 }
 
+.public-game-filter-group {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 10px auto 0;
+}
+
+.public-game-filter {
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: var(--muted-2);
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.public-game-filter.is-active {
+  color: #04101a;
+  background: var(--primary);
+}
+
+.public-game-filter__count {
+  color: inherit;
+  opacity: 0.72;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
 .dashboard-game-list-heading {
   position: relative;
   justify-content: center;
@@ -4274,6 +4306,16 @@ button {
   .game-list-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .public-game-filter-group {
+    gap: 2px;
+    margin-top: 8px;
+  }
+
+  .public-game-filter {
+    padding: 4px 6px;
+    font-size: 0.72rem;
   }
 
   .game-pagination {
