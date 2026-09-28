@@ -289,6 +289,38 @@ button {
   min-width: 150px;
 }
 
+.admin-venue-create {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid rgba(118, 240, 196, 0.3);
+  border-radius: var(--radius-md);
+  background: rgba(118, 240, 196, 0.06);
+}
+
+.admin-venue-create__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.admin-venue-create__heading span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.admin-venue-create__fields {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(130px, 1fr)) auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.admin-venue-create__submit {
+  white-space: nowrap;
+}
+
 .admin-venue-card {
   display: grid;
   grid-template-columns: 56px minmax(150px, 0.8fr) minmax(220px, 1.4fr) minmax(130px, 0.8fr) 110px auto;
@@ -4105,6 +4137,14 @@ button {
     margin-top: 8px;
   }
 
+  .admin-venue-create__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-venue-create__submit {
+    width: 100%;
+  }
+
   .game-detail-actions .game-list-action {
     gap: 3px;
     padding: 2px 0;
@@ -4506,6 +4546,15 @@ button {
   .page-shell {
     width: min(var(--max-width), calc(100% - 16px));
     padding-top: 12px;
+  }
+
+  .admin-venue-create__heading {
+    display: grid;
+    gap: 4px;
+  }
+
+  .admin-venue-create__fields {
+    grid-template-columns: 1fr;
   }
 
   .topbar {

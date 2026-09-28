@@ -2107,6 +2107,17 @@
         </div>
         <div class="admin-venues-section">
           <div class="section-heading"><div><p class="section-kicker">탁구장 정보 DB</p><h2>탁구장 정보 관리</h2></div><button class="btn btn-secondary" type="button" data-import-incheon>인천 공개목록 가져오기</button></div>
+          <form class="admin-venue-create" data-form="admin-venue-create">
+            <div class="admin-venue-create__heading"><strong>새 탁구장 등록</strong><span>등록 즉시 게임 생성 화면에서 선택할 수 있습니다.</span></div>
+            <div class="admin-venue-create__fields">
+              <div class="field"><label for="adminVenueName">탁구장명</label><input id="adminVenueName" name="name" required placeholder="예: 부천탁구클럽" /></div>
+              <div class="field"><label for="adminVenueAddress">주소</label><input id="adminVenueAddress" name="address" required placeholder="도로명 주소" /></div>
+              <div class="field"><label for="adminVenuePhone">전화번호</label><input id="adminVenuePhone" name="phone" type="tel" placeholder="예: 032-123-4567" /></div>
+              <div class="field"><label for="adminVenueRegion">지역</label><input id="adminVenueRegion" name="region" placeholder="예: 경기 부천시" /></div>
+              <div class="field"><label for="adminVenueMapUrl">지도 링크</label><input id="adminVenueMapUrl" name="mapUrl" type="url" placeholder="선택 입력" /></div>
+              <button class="btn btn-primary admin-venue-create__submit" type="submit">탁구장 등록</button>
+            </div>
+          </form>
           <div class="admin-venue-toolbar"><label class="check-line"><input type="checkbox" data-admin-venue-select-all /> 전체 선택</label><select data-admin-venue-bulk-status><option value="">상태 일괄 변경</option><option value="pending">승인대기</option><option value="approved">사용</option><option value="archived">보관</option></select><button class="btn btn-secondary" type="button" data-admin-venue-bulk-save>선택 항목 저장</button></div>
           <div class="admin-venue-list">${venues.length ? venues.map((venue) => `<form class="admin-venue-card" data-form="admin-venue" data-venue-id="${escapeHtml(venue.id)}"><label class="admin-venue-select"><input type="checkbox" data-admin-venue-select value="${escapeHtml(venue.id)}" /><span>선택</span></label><div class="field"><label>탁구장명</label><input name="name" value="${escapeHtml(venue.name)}" required /></div><div class="field"><label>주소</label><input name="address" value="${escapeHtml(venue.address)}" required /></div><div class="field"><label>전화번호</label><input name="phone" value="${escapeHtml(venue.phone || '')}" /></div><div class="field"><label>상태</label><select name="status"><option value="pending" ${venue.status === 'pending' ? 'selected' : ''}>승인대기</option><option value="approved" ${venue.status === 'approved' ? 'selected' : ''}>사용</option><option value="archived" ${venue.status === 'archived' ? 'selected' : ''}>보관</option></select></div><button class="btn btn-secondary" type="submit">저장</button></form>`).join('') : '<p class="muted">등록된 탁구장이 없습니다.</p>'}</div>
         </div>
@@ -2147,6 +2158,21 @@
       await openAdminPage();
     } catch (error) {
       setFlash(error.message || '탁구장 정보 저장에 실패했습니다.', 'error');
+      render();
+    }
+  }
+
+  async function handleAdminVenueCreate(form) {
+    const formData = Object.fromEntries(new FormData(form).entries());
+    try {
+      await apiRequest('/api/admin/venues', {
+        method: 'POST',
+        body: JSON.stringify(formData),
+      });
+      setFlash('탁구장 정보가 등록되었습니다.', 'success');
+      await openAdminPage();
+    } catch (error) {
+      setFlash(error.message || '탁구장 등록에 실패했습니다.', 'error');
       render();
     }
   }
@@ -3364,6 +3390,11 @@
 
     if (form.dataset.form === 'admin-venue') {
       await handleAdminVenueUpdate(form);
+      return;
+    }
+
+    if (form.dataset.form === 'admin-venue-create') {
+      await handleAdminVenueCreate(form);
       return;
     }
 

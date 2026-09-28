@@ -337,6 +337,33 @@ async function handleApi(req, res, requestPath) {
       return sendJson(res, 200, { venues: result.rows.map((venue) => ({ id: venue.id, name: venue.name, address: venue.address, phone: venue.phone || '', region: venue.region || '', mapUrl: venue.map_url || '', status: venue.status, createdAt: venue.created_at, updatedAt: venue.updated_at })) });
     }
 
+    if (requestPath === '/api/admin/venues' && req.method === 'POST') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      if (user.role !== 'admin') return sendJson(res, 403, { error: '시스템관리자만 탁구장을 등록할 수 있습니다.' });
+      await ensureVenueColumns();
+      const body = await readBody(req);
+      const name = String(body.name || '').trim();
+      const address = String(body.address || '').trim();
+      const phone = String(body.phone || '').trim();
+      const region = String(body.region || '').trim();
+      const mapUrl = String(body.mapUrl || '').trim();
+      if (!name || !address) return sendJson(res, 400, { error: '탁구장명과 주소를 입력해 주세요.' });
+      const result = await pool.query(
+        `insert into public.venues (name, address, phone, region, map_url, status, created_by)
+         values ($1, $2, $3, $4, $5, 'approved', $6)
+         on conflict ((lower(name)), (lower(address))) do update
+           set phone = coalesce(excluded.phone, public.venues.phone),
+               region = coalesce(nullif(excluded.region, ''), public.venues.region),
+               map_url = coalesce(nullif(excluded.map_url, ''), public.venues.map_url),
+               status = 'approved',
+               updated_at = now()
+         returning *`,
+        [name, address, phone || null, region || null, mapUrl || null, user.id]
+      );
+      return sendJson(res, 201, { venue: result.rows[0] });
+    }
+
     if (requestPath === '/api/admin/venues/import-incheon' && req.method === 'POST') {
       const user = await findSession(req);
       if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
