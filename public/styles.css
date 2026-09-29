@@ -2857,8 +2857,7 @@ button {
   scrollbar-width: none;
 }
 
-.operation-menu::after,
-.operation-submenu::after {
+.operation-menu::after {
   position: absolute;
   right: 0;
   bottom: 0;
@@ -2870,6 +2869,12 @@ button {
 
 .operation-menu:has(+ .operation-submenu)::after {
   display: none;
+}
+
+.operation-submenu-divider {
+  height: 2px;
+  margin: 0;
+  background: linear-gradient(90deg, transparent, rgba(118, 240, 196, 0.28) 20%, rgba(118, 240, 196, 0.92) 50%, rgba(118, 240, 196, 0.28) 80%, transparent);
 }
 
 .operation-menu::-webkit-scrollbar {
