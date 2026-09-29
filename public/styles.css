@@ -3214,10 +3214,15 @@ button {
   padding: 16px;
   border-radius: 16px;
   background: rgba(118, 240, 196, 0.07);
+  position: relative;
+  justify-content: center;
+  text-align: center;
 }
 
 .schedule-summary span {
   color: var(--muted);
+  position: absolute;
+  right: 16px;
 }
 
 .schedule-table-wrap {
@@ -3315,6 +3320,35 @@ button {
 .matrix-wrap {
   overflow-x: auto;
   margin-top: 12px;
+}
+
+.public-league-results-stage .matrix-wrap,
+.public-league-results-stage .schedule-results-table-wrap {
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.public-league-results-stage .matrix-wrap::-webkit-scrollbar,
+.public-league-results-stage .schedule-results-table-wrap::-webkit-scrollbar {
+  display: none;
+}
+
+.public-league-results-stage .schedule-results-table,
+.schedule-print-root .schedule-results-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.schedule-print-heading {
+  position: relative;
+  justify-content: center;
+  text-align: center;
+}
+
+.schedule-print-heading span {
+  position: absolute;
+  right: 16px;
 }
 
 .schedule-matrix {
@@ -4702,22 +4736,26 @@ button {
   }
 
   .schedule-results-table .schedule-col-index,
-  .schedule-results-table .schedule-col-round,
   .schedule-results-table .schedule-col-table,
   .schedule-results-table .schedule-col-rule {
     display: none;
   }
 
+  .schedule-results-table .schedule-col-round {
+    display: table-cell;
+    width: 13%;
+  }
+
   .schedule-results-table .schedule-col-match {
-    width: 45%;
+    width: 40%;
   }
 
   .schedule-results-table .schedule-col-score {
-    width: 24%;
+    width: 22%;
   }
 
   .schedule-results-table .schedule-col-winner {
-    width: 31%;
+    width: 25%;
   }
 
   .schedule-results-table .schedule-matchup {
