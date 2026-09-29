@@ -3487,6 +3487,11 @@ button {
   margin-left: auto;
 }
 
+.schedule-panel .schedule-generation-controls--results > .field > label {
+  white-space: nowrap;
+  font-size: 0.84rem;
+}
+
 .schedule-panel--results .schedule-results-table-wrap {
   overflow-x: hidden;
   scrollbar-width: none;
@@ -4884,6 +4889,7 @@ button {
 
   .schedule-panel .schedule-generation-controls--results {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
   }
 
   .schedule-generation-controls:not(.schedule-generation-controls--compact) > .field:first-child {
