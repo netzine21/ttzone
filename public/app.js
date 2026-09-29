@@ -1574,12 +1574,13 @@
 
   function renderTournamentBracket(bracket) {
     syncTournamentBracket(bracket);
-    if (bracket.rounds.length === 1) return wrapTournamentBracket(`<div class="tournament-bracket"><div class="tournament-rounds tournament-rounds--single">${renderTournamentRound(bracket.rounds[0], true, tournamentRoundTitle(bracket, 0, true), bracket.size, 0)}</div><p class="subtle-note">부전승은 자동 진출하며, 경기는 11점 5전 3선승입니다.</p></div>${renderTournamentPodium(bracket)}`);
+    const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소">−</button><span>${Math.round((state.tournamentZoom || 1) * 100)}%</span><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대">+</button><button type="button" class="game-list-action" data-tournament-zoom="reset">전체 보기</button></div>`;
+    if (bracket.rounds.length === 1) return `${controls}${wrapTournamentBracket(`<div class="tournament-bracket"><div class="tournament-rounds tournament-rounds--single">${renderTournamentRound(bracket.rounds[0], true, tournamentRoundTitle(bracket, 0, true), bracket.size, 0)}</div><p class="subtle-note">부전승은 자동 진출하며, 경기는 11점 5전 3선승입니다.</p></div>${renderTournamentPodium(bracket)}`)}`;
     const roundsBeforeFinal = bracket.rounds.slice(0, -1);
     const finalRound = bracket.rounds[bracket.rounds.length - 1];
     const leftRounds = roundsBeforeFinal.map((round) => round.slice(0, Math.ceil(round.length / 2)).map((match, index) => ({ ...match, bracketLocalIndex: index })));
     const rightRounds = roundsBeforeFinal.map((round) => round.slice(Math.ceil(round.length / 2)).reverse().map((match, index) => ({ ...match, bracketLocalIndex: index })));
-    return wrapTournamentBracket(`<div class="tournament-bracket tournament-bracket--split tournament-bracket--size-${bracket.size}"><div class="tournament-side-bracket tournament-side-bracket--left">${leftRounds.map((round, index) => renderTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div><div class="tournament-center-bracket">${renderTournamentRound(finalRound, true, tournamentRoundTitle(bracket, bracket.rounds.length - 1, true), bracket.size, bracket.rounds.length - 1)}</div><div class="tournament-side-bracket tournament-side-bracket--right">${rightRounds.map((round, index) => renderTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div><p class="subtle-note tournament-bracket__note">좌·우측 각 라운드의 승자가 중앙 결승으로 진출합니다. 부전승은 자동 진출하며, 경기는 11점 5전 3선승입니다.</p></div>${renderTournamentPodium(bracket)}`);
+    return `${controls}${wrapTournamentBracket(`<div class="tournament-bracket tournament-bracket--split tournament-bracket--size-${bracket.size}"><div class="tournament-side-bracket tournament-side-bracket--left">${leftRounds.map((round, index) => renderTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div><div class="tournament-center-bracket">${renderTournamentRound(finalRound, true, tournamentRoundTitle(bracket, bracket.rounds.length - 1, true), bracket.size, bracket.rounds.length - 1)}</div><div class="tournament-side-bracket tournament-side-bracket--right">${rightRounds.map((round, index) => renderTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div><p class="subtle-note tournament-bracket__note">좌·우측 각 라운드의 승자가 중앙 결승으로 진출합니다. 부전승은 자동 진출하며, 경기는 11점 5전 3선승입니다.</p></div>${renderTournamentPodium(bracket)}`)}`;
   }
 
   function getTournamentPrintableRound(bracket) {
@@ -2407,8 +2408,11 @@
       if (!stage) return;
       stage.style.transform = 'none';
       viewport.style.height = '';
+      const availableWidth = viewport.clientWidth;
       const naturalWidth = Math.max(stage.scrollWidth, 1);
-      const scale = Math.min(1, viewport.clientWidth / naturalWidth);
+      if (!availableWidth) return;
+      stage.style.width = `${naturalWidth}px`;
+      const scale = Math.min(1, availableWidth / naturalWidth) * (state.tournamentZoom || 1);
       stage.style.transform = `scale(${scale})`;
       viewport.style.height = `${stage.scrollHeight * scale}px`;
     });
@@ -2418,6 +2422,7 @@
       const availableWidth = viewport.clientWidth;
       if (!availableWidth) return;
       const naturalWidth = Math.max(stage.scrollWidth, 1);
+      stage.style.width = `${naturalWidth}px`;
       const scale = Math.min(1, availableWidth / naturalWidth) * (state.tournamentZoom || 1);
       stage.style.transform = `scale(${scale})`;
       viewport.style.height = `${stage.scrollHeight * scale}px`;

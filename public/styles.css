@@ -3883,7 +3883,9 @@ button {
 
 .tournament-bracket-viewport {
   width: 100%;
-  overflow: hidden;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .tournament-bracket-viewport[data-public-tournament-viewport] {
