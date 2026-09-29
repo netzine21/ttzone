@@ -2867,16 +2867,6 @@ button {
   content: '';
 }
 
-.operation-menu:has(+ .operation-submenu)::after {
-  display: none;
-}
-
-.operation-submenu-divider {
-  height: 2px;
-  margin: 0;
-  background: linear-gradient(90deg, transparent, rgba(118, 240, 196, 0.28) 20%, rgba(118, 240, 196, 0.92) 50%, rgba(118, 240, 196, 0.28) 80%, transparent);
-}
-
 .operation-menu::-webkit-scrollbar {
   display: none;
 }
@@ -4897,7 +4887,7 @@ button {
     gap: 6px;
   }
 
-  .schedule-generation-controls:not(.schedule-generation-controls--compact) > .field:first-child {
+  .schedule-generation-controls:not(.schedule-generation-controls--compact):not(.schedule-generation-controls--results) > .field:first-child {
     grid-column: 1 / -1;
   }
 
