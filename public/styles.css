@@ -4756,18 +4756,27 @@ button {
   }
 
   .schedule-panel .schedule-generation-controls {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 10px;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.95fr) auto;
+    gap: 6px;
   }
 
   .schedule-generation-controls > .field:first-child {
-    grid-column: 1 / -1;
+    grid-column: auto;
   }
 
   .schedule-generation-controls > .btn,
   .schedule-generation-controls > .game-list-action {
-    grid-column: 1 / -1;
-    justify-self: center;
+    grid-column: auto;
+    justify-self: stretch;
+    min-width: 0;
+    gap: 3px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
+  .schedule-generation-controls > .game-list-action .game-list-action__icon {
+    width: 13px;
+    height: 13px;
   }
 
   .operation-submenu {
