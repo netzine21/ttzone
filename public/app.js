@@ -18,6 +18,7 @@
     leagueOnly: '리그전만 진행',
     leagueTournament: '예선리그 후 본선 토너먼트',
   };
+  const BROWSER_ROUTE_KEY = 'ttgms:v1:browser-route';
 
   function getFormatIconSvg(format) {
     const icons = {
@@ -100,6 +101,25 @@
 
   function writeJson(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function readSessionJson(key, fallback) {
+    try {
+      const raw = window.sessionStorage.getItem(key);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      return parsed ?? fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function writeSessionJson(key, value) {
+    try {
+      window.sessionStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      // Session storage can be unavailable in privacy-restricted browsers.
+    }
   }
 
   async function apiRequest(path, options = {}) {
@@ -278,6 +298,7 @@
 
   function syncBrowserHistory() {
     const route = getBrowserRoute();
+    writeSessionJson(BROWSER_ROUTE_KEY, route);
     const routeKey = JSON.stringify(route);
     const historyState = { ttgmsRoute: route };
     if (!browserHistoryReady) {
@@ -3744,6 +3765,8 @@
 
   async function init() {
     await loadState();
+    const savedRoute = readSessionJson(BROWSER_ROUTE_KEY, null);
+    if (savedRoute) restoreBrowserRoute(savedRoute);
     wireEvents();
     render();
   }
