@@ -3430,6 +3430,10 @@ button {
   grid-template-columns: minmax(0, 1.5fr) minmax(150px, 1fr) auto;
 }
 
+.schedule-panel .schedule-generation-controls--compact {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .schedule-generation-controls > .field {
   text-align: center;
 }
@@ -3458,8 +3462,23 @@ button {
   font-size: 1.05rem;
 }
 
+.schedule-result-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+.schedule-result-toolbar .public-league-results-controls {
+  justify-content: flex-start;
+  margin: 0;
+}
+
 .schedule-result-print {
   display: inline-grid;
+  grid-auto-flow: column;
+  gap: 5px;
   width: 34px;
   height: 34px;
   place-items: center;
@@ -3469,6 +3488,10 @@ button {
   color: var(--muted);
   background: rgba(165, 190, 214, 0.08);
   cursor: pointer;
+}
+
+.schedule-result-print span {
+  white-space: nowrap;
 }
 
 .schedule-result-print:hover {
@@ -4760,8 +4783,12 @@ button {
     gap: 6px;
   }
 
-  .schedule-generation-controls > .field:first-child {
-    grid-column: auto;
+  .schedule-panel .schedule-generation-controls--compact {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .schedule-generation-controls:not(.schedule-generation-controls--compact) > .field:first-child {
+    grid-column: 1 / -1;
   }
 
   .schedule-generation-controls > .btn,
