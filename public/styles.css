@@ -4232,18 +4232,18 @@ button {
 
 .qualifying-result-divider__marker {
   position: absolute;
-  top: 50%;
+  top: 0;
   left: 50%;
-  width: 34px;
-  height: 20px;
+  width: 38px;
+  height: 25px;
   padding: 0 4px;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -2px);
   background: var(--panel);
   fill: none;
   stroke: rgba(148, 163, 184, 0.82);
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.6;
+  stroke-width: 1.7;
 }
 
 .qualifying-result-guide {
