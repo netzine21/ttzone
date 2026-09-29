@@ -2469,6 +2469,19 @@
       stage.style.transform = `scale(${scale})`;
       viewport.style.height = `${stage.scrollHeight * scale}px`;
     });
+    document.querySelectorAll('.schedule-panel--results .matrix-wrap').forEach((viewport) => {
+      const table = viewport.querySelector('.schedule-matrix');
+      if (!table) return;
+      table.style.transform = 'none';
+      viewport.style.height = '';
+      const availableWidth = viewport.clientWidth;
+      const naturalWidth = Math.max(table.scrollWidth, 1);
+      if (!availableWidth || naturalWidth <= availableWidth) return;
+      const scale = availableWidth / naturalWidth;
+      table.style.transformOrigin = 'top left';
+      table.style.transform = `scale(${scale})`;
+      viewport.style.height = `${table.offsetHeight * scale}px`;
+    });
   }
 
   function render() {
