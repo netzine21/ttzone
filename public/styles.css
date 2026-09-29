@@ -4985,9 +4985,9 @@ button {
   }
 
   .schedule-panel--results .schedule-matrix {
-    width: max-content;
-    min-width: 520px;
-    table-layout: auto;
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
   }
 
   .schedule-panel--results .schedule-matrix th,
