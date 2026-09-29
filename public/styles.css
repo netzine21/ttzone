@@ -3253,6 +3253,15 @@ button {
   font-size: 0.9rem;
 }
 
+.schedule-results-table th,
+.schedule-results-table td {
+  text-align: center;
+}
+
+.schedule-results-table .schedule-matchup {
+  justify-content: center;
+}
+
 .schedule-table tr:last-child td {
   border-bottom: 0;
 }
@@ -3279,6 +3288,9 @@ button {
   display: grid;
   gap: 18px;
   margin-top: 22px;
+  width: min(100%, 980px);
+  margin-right: auto;
+  margin-left: auto;
 }
 
 .schedule-group-block {
@@ -3431,7 +3443,7 @@ button {
 }
 
 .schedule-panel .schedule-generation-controls--compact {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(120px, 0.65fr) minmax(190px, 1.35fr);
 }
 
 .schedule-generation-controls > .field {
@@ -3443,6 +3455,16 @@ button {
   text-align: center;
 }
 
+.schedule-generation-controls--compact .game-list-action {
+  width: 100%;
+  min-height: 48px;
+  justify-content: center;
+  padding: 12px 22px;
+  border: 1px solid rgba(118, 240, 196, 0.42);
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
 .schedule-result-divider {
   height: 2px;
   margin: 28px 0 20px;
@@ -3452,9 +3474,10 @@ button {
 .schedule-result-heading {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 12px;
   margin: 0 0 12px;
+  text-align: center;
 }
 
 .schedule-result-heading h2 {
@@ -3465,9 +3488,11 @@ button {
 .schedule-result-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 10px;
   margin: 0 0 12px;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .schedule-result-toolbar .public-league-results-controls {
@@ -3479,7 +3504,9 @@ button {
   display: inline-grid;
   grid-auto-flow: column;
   gap: 5px;
-  width: 34px;
+  width: auto;
+  min-height: 34px;
+  padding: 0 10px;
   height: 34px;
   place-items: center;
   flex: 0 0 auto;
@@ -4784,7 +4811,7 @@ button {
   }
 
   .schedule-panel .schedule-generation-controls--compact {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(90px, 0.65fr) minmax(150px, 1.35fr);
   }
 
   .schedule-generation-controls:not(.schedule-generation-controls--compact) > .field:first-child {

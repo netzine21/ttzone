@@ -1372,7 +1372,7 @@
           ${isResultsMode ? '' : '<button type="button" class="game-list-action game-list-action--primary" data-generate-schedule><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"></path><circle cx="12" cy="12" r="8"></circle></svg><span>대진표 생성</span></button>'}
 
         </div>
-        <div class="operation-note operation-note--schedule">${isResultsMode ? '생성된 예선 대진표의 경기 결과를 입력하고 저장합니다. 점수는 11점 5전 3선승 기준입니다.' : '조별 단일리그 대진표를 생성합니다. 같은 조의 선수 또는 팀이 서로 한 번씩 경기합니다.'}</div>
+        ${isResultsMode ? '<div class="operation-note operation-note--schedule">생성된 예선 대진표의 경기 결과를 입력하고 저장합니다. 점수는 11점 5전 3선승 기준입니다.</div>' : ''}
         ${!groups.length ? '<div class="empty-state">먼저 조편성을 완료해 주세요.</div>' : !saved ? (isResultsMode ? '<div class="empty-state">먼저 예선 대진표 생성 메뉴에서 대진표를 만들어 주세요.</div>' : '<div class="empty-state">대진표 생성 버튼을 눌러 예선리그 대진을 만들어 주세요.</div>') : savedContent}
       </div>
     `;
