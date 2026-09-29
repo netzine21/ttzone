@@ -3400,6 +3400,15 @@ button {
   gap: 12px;
 }
 
+.qualifying-settings .field,
+.qualifying-settings .field label {
+  text-align: center;
+}
+
+.qualifying-settings .field label {
+  display: block;
+}
+
 .qualifying-generate-action {
   display: flex;
   align-self: center;
@@ -4224,26 +4233,9 @@ button {
 }
 
 .qualifying-result-divider {
-  position: relative;
   height: 2px;
   margin: 28px 0 22px;
   background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.18) 18%, rgba(148, 163, 184, 0.68) 50%, rgba(148, 163, 184, 0.18) 82%, transparent);
-}
-
-.qualifying-result-divider__marker {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 116px;
-  height: 31px;
-  padding: 0 3px;
-  transform: translate(-50%, -2px);
-  background: var(--panel);
-  fill: none;
-  stroke: rgba(148, 163, 184, 0.82);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.7;
 }
 
 .qualifying-result-guide {
