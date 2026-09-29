@@ -3508,6 +3508,28 @@ button {
   margin-left: auto;
 }
 
+.schedule-panel--results .qualifying-standings-overview .group-result-heading {
+  position: relative;
+  justify-content: center;
+  text-align: center;
+}
+
+.schedule-panel--results .qualifying-standings-overview .group-result-heading > div {
+  width: 100%;
+}
+
+.schedule-panel--results .qualifying-standings-overview .group-result-heading h2 {
+  margin: 0;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+}
+
+.schedule-panel--results .qualifying-standings-overview .group-result-heading > .subtle-note {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  font-size: 0.74rem;
+}
+
 .schedule-generation-controls > .field {
   text-align: center;
 }
