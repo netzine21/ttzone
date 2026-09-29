@@ -3427,7 +3427,63 @@ button {
 }
 
 .schedule-panel .schedule-generation-controls {
-  grid-template-columns: minmax(0, 1.5fr) minmax(150px, 1fr) minmax(110px, 0.8fr) auto auto;
+  grid-template-columns: minmax(0, 1.5fr) minmax(150px, 1fr) auto;
+}
+
+.schedule-generation-controls > .field {
+  text-align: center;
+}
+
+.schedule-generation-controls > .field > label {
+  display: block;
+  text-align: center;
+}
+
+.schedule-result-divider {
+  height: 2px;
+  margin: 28px 0 20px;
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.18) 18%, rgba(148, 163, 184, 0.68) 50%, rgba(148, 163, 184, 0.18) 82%, transparent);
+}
+
+.schedule-result-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+.schedule-result-heading h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.schedule-result-print {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--muted);
+  background: rgba(165, 190, 214, 0.08);
+  cursor: pointer;
+}
+
+.schedule-result-print:hover {
+  color: var(--primary);
+  border-color: rgba(118, 240, 196, 0.45);
+}
+
+.schedule-result-print svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
 }
 
 .qualifying-standings-overview {
