@@ -73,7 +73,6 @@
   let browserHistoryReady = false;
   let restoringBrowserHistory = false;
   let lastBrowserRouteKey = '';
-  let groupDragState = null;
   let selectedGroupPlayer = null;
 
   const app = document.getElementById('app');
@@ -1231,10 +1230,11 @@
     const setup = game.qualifyingGroups?.[format];
     if (!setup) return '<div class="empty-state">아직 조편성이 없습니다. 참가자 수에 맞춰 조편성 수를 입력하고 조편성을 생성하세요.</div>';
     const hasSelectedPlayer = selectedGroupPlayer?.format === format;
+    const selectedGroupName = hasSelectedPlayer ? setup.groups.find((group) => group.players.some((player) => player.playerKey === selectedGroupPlayer.playerKey))?.name : null;
     return `<div class="group-list">${setup.groups.map((group) => `
       <section class="qualifying-group ${hasSelectedPlayer ? 'has-group-targets' : ''}" data-group-name="${escapeHtml(group.name)}">
-        <div class="qualifying-group__heading"><h3>${escapeHtml(group.name)}</h3><span>${escapeHtml(String(group.players.length))}명</span><button type="button" class="group-drop-target" data-group-target="${escapeHtml(group.name)}" data-group-format="${escapeHtml(format)}" ${hasSelectedPlayer ? '' : 'disabled'}>여기로 이동</button></div>
-        <div class="group-player-list">${group.players.map((player) => `<div class="group-player-row ${selectedGroupPlayer?.playerKey === player.playerKey && selectedGroupPlayer?.format === format ? 'is-selected' : ''}" data-group-player="${escapeHtml(player.playerKey)}" data-group-format="${escapeHtml(format)}" title="선수 카드를 눌러 선택하거나 드래그하여 이동"><span class="group-player-drag-handle" data-group-drag-handle aria-label="선수 이동"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h.01M8 12h.01M8 19h.01M16 5h.01M16 12h.01M16 19h.01" /></svg></span><span><strong>${escapeHtml(player.label || player.nickname)}${getGroupingRankLabel(player) ? `(${escapeHtml(getGroupingRankLabel(player))})` : ''}</strong>${player.members?.length > 1 ? ` · ${escapeHtml(String(player.members.length))}명` : ''}${player.members?.length > 1 ? `<small>${player.members.map((member) => escapeHtml(member.nickname)).join(', ')}</small>` : ''}</span></div>`).join('')}</div>
+        <div class="qualifying-group__heading"><h3>${escapeHtml(group.name)}(${escapeHtml(String(group.players.length))}명)</h3><button type="button" class="group-drop-target" data-group-target="${escapeHtml(group.name)}" data-group-format="${escapeHtml(format)}" ${hasSelectedPlayer && selectedGroupName !== group.name ? '' : 'hidden'}>여기로 이동</button></div>
+        <div class="group-player-list">${group.players.map((player) => `<div class="group-player-row ${selectedGroupPlayer?.playerKey === player.playerKey && selectedGroupPlayer?.format === format ? 'is-selected' : ''}" data-group-player="${escapeHtml(player.playerKey)}" data-group-format="${escapeHtml(format)}" title="이동할 선수를 선택하세요"><span><strong>${escapeHtml(player.label || player.nickname)}${getGroupingRankLabel(player) ? `(${escapeHtml(getGroupingRankLabel(player))})` : ''}</strong>${player.members?.length > 1 ? ` · ${escapeHtml(String(player.members.length))}명` : ''}${player.members?.length > 1 ? `<small>${player.members.map((member) => escapeHtml(member.nickname)).join(', ')}</small>` : ''}</span></div>`).join('')}</div>
       </section>
     `).join('')}</div>`;
   }
@@ -3079,6 +3079,12 @@
       return;
     }
 
+    const groupPlayer = event.target.closest('[data-group-player]');
+    if (groupPlayer) {
+      selectGroupPlayer(groupPlayer.dataset.groupPlayer, groupPlayer.dataset.groupFormat);
+      return;
+    }
+
     const authAction = event.target.closest('[data-open-auth]');
     if (authAction) {
       openAuthTab(authAction.dataset.openAuth);
@@ -3650,33 +3656,6 @@
     }
   }
 
-  function clearGroupDragState() {
-    groupDragState?.ghost?.remove();
-    document.querySelectorAll('.qualifying-group--drag-over, .group-player-row.is-dragging').forEach((element) => {
-      element.classList.remove('qualifying-group--drag-over', 'is-dragging');
-    });
-    groupDragState = null;
-  }
-
-  function updateGroupDragGhost(event) {
-    if (!groupDragState?.ghost) return;
-    groupDragState.ghost.style.transform = `translate3d(${event.clientX + 12}px, ${event.clientY + 12}px, 0)`;
-  }
-
-  function createGroupDragGhost(event) {
-    if (!groupDragState || groupDragState.ghost) return;
-    const ghost = groupDragState.row.cloneNode(true);
-    const rect = groupDragState.row.getBoundingClientRect();
-    ghost.classList.remove('is-dragging');
-    ghost.classList.add('group-player-drag-ghost');
-    ghost.querySelector('[data-group-drag-handle]')?.remove();
-    ghost.querySelector('select')?.remove();
-    ghost.style.width = `${rect.width}px`;
-    document.body.appendChild(ghost);
-    groupDragState.ghost = ghost;
-    updateGroupDragGhost(event);
-  }
-
   function moveDraggedGroupPlayer(playerKey, format, targetGroupName) {
     const game = state.games.find((item) => item.id === state.operationGameId);
     const setup = game?.qualifyingGroups?.[format];
@@ -3694,44 +3673,25 @@
     render();
   }
 
-  function handleGroupPointerDown(event) {
-    const row = event.target.closest('[data-group-player]');
-    if (!row || event.target.closest('select, option, button')) return;
-    groupDragState = { playerKey: row.dataset.groupPlayer, format: row.dataset.groupFormat, row, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, active: false };
+  function updateGroupSelectionUi() {
+    const selected = selectedGroupPlayer;
+    const game = state.games.find((item) => item.id === state.operationGameId);
+    const setup = selected ? game?.qualifyingGroups?.[selected.format] : null;
+    const selectedGroupName = setup?.groups.find((group) => group.players.some((player) => player.playerKey === selected.playerKey))?.name;
+    document.querySelectorAll('[data-group-player]').forEach((row) => {
+      row.classList.toggle('is-selected', Boolean(selected && row.dataset.groupPlayer === selected.playerKey && row.dataset.groupFormat === selected.format));
+    });
+    document.querySelectorAll('[data-group-target]').forEach((button) => {
+      const matchesFormat = Boolean(selected && button.dataset.groupFormat === selected.format);
+      button.hidden = !matchesFormat || button.dataset.groupTarget === selectedGroupName;
+    });
   }
 
-  function handleGroupPointerMove(event) {
-    if (!groupDragState || groupDragState.pointerId !== event.pointerId) return;
-    const distance = Math.hypot(event.clientX - groupDragState.startX, event.clientY - groupDragState.startY);
-    if (!groupDragState.active && distance < 8) return;
-    groupDragState.active = true;
-    groupDragState.row.classList.add('is-dragging');
-    groupDragState.row.setPointerCapture?.(event.pointerId);
-    createGroupDragGhost(event);
-    event.preventDefault();
-    updateGroupDragGhost(event);
-    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-group-name]');
-    document.querySelectorAll('.qualifying-group--drag-over').forEach((element) => element.classList.remove('qualifying-group--drag-over'));
-    target?.classList.add('qualifying-group--drag-over');
-  }
-
-  function handleGroupPointerUp(event) {
-    if (!groupDragState || groupDragState.pointerId !== event.pointerId) return;
-    const drag = groupDragState;
-    const target = drag.active ? document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-group-name]') : null;
-    clearGroupDragState();
-    if (target) {
-      const game = state.games.find((item) => item.id === state.operationGameId);
-      const setup = game?.qualifyingGroups?.[drag.format];
-      const source = setup?.groups.find((group) => group.players.some((player) => player.playerKey === drag.playerKey));
-      if (source && source.name !== target.dataset.groupName) {
-        moveDraggedGroupPlayer(drag.playerKey, drag.format, target.dataset.groupName);
-        return;
-      }
-    }
-    selectedGroupPlayer = { playerKey: drag.playerKey, format: drag.format };
-    setFlash('선수가 선택되었습니다. 이동할 조의 "여기로 이동"을 눌러 주세요.', 'info');
-    render();
+  function selectGroupPlayer(playerKey, format) {
+    selectedGroupPlayer = selectedGroupPlayer?.playerKey === playerKey && selectedGroupPlayer?.format === format
+      ? null
+      : { playerKey, format };
+    updateGroupSelectionUi();
   }
 
   async function handleStorageChange() {
@@ -3763,10 +3723,6 @@
     app.addEventListener('submit', handleAppSubmit);
     app.addEventListener('change', handleAppChange);
     app.addEventListener('input', handleAppInput);
-    app.addEventListener('pointerdown', handleGroupPointerDown);
-    app.addEventListener('pointermove', handleGroupPointerMove, { passive: false });
-    app.addEventListener('pointerup', handleGroupPointerUp);
-    app.addEventListener('pointercancel', clearGroupDragState);
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('resize', fitTournamentBrackets);
     window.addEventListener('popstate', handleBrowserPopState);
