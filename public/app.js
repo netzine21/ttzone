@@ -73,6 +73,7 @@
   let restoringBrowserHistory = false;
   let lastBrowserRouteKey = '';
   let groupDragState = null;
+  let selectedGroupPlayer = null;
 
   const app = document.getElementById('app');
   const topActions = document.getElementById('topActions');
@@ -1204,10 +1205,11 @@
   function renderOperationGroups(game, format) {
     const setup = game.qualifyingGroups?.[format];
     if (!setup) return '<div class="empty-state">아직 조편성이 없습니다. 참가자 수에 맞춰 조편성 수를 입력하고 조편성을 생성하세요.</div>';
+    const hasSelectedPlayer = selectedGroupPlayer?.format === format;
     return `<div class="group-list">${setup.groups.map((group) => `
-      <section class="qualifying-group" data-group-name="${escapeHtml(group.name)}">
-        <div class="qualifying-group__heading"><h3>${escapeHtml(group.name)}</h3><span>${escapeHtml(String(group.players.length))}명</span></div>
-        <div class="group-player-list">${group.players.map((player) => `<div class="group-player-row" data-group-player="${escapeHtml(player.playerKey)}" data-group-format="${escapeHtml(format)}" title="드래그 핸들을 잡아 다른 조로 이동"><span class="group-player-drag-handle" data-group-drag-handle aria-label="선수 이동"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h.01M8 12h.01M8 19h.01M16 5h.01M16 12h.01M16 19h.01" /></svg></span><span><strong>${escapeHtml(player.label || player.nickname)}</strong>${player.members?.length > 1 ? ` · ${escapeHtml(String(player.members.length))}명` : player.rank ? ` · ${escapeHtml(player.rank)}` : ''}${player.members?.length > 1 ? `<small>${player.members.map((member) => escapeHtml(member.nickname)).join(', ')}</small>` : ''}</span><select data-group-assignment="${escapeHtml(player.playerKey)}" data-group-format="${escapeHtml(format)}"><option value="">조 선택</option>${setup.groups.map((option) => `<option value="${escapeHtml(option.name)}" ${option.name === group.name ? 'selected' : ''}>${escapeHtml(option.name)}</option>`).join('')}</select></div>`).join('')}</div>
+      <section class="qualifying-group ${hasSelectedPlayer ? 'has-group-targets' : ''}" data-group-name="${escapeHtml(group.name)}">
+        <div class="qualifying-group__heading"><h3>${escapeHtml(group.name)}</h3><span>${escapeHtml(String(group.players.length))}명</span>${hasSelectedPlayer ? `<button type="button" class="group-drop-target" data-group-target="${escapeHtml(group.name)}" data-group-format="${escapeHtml(format)}">여기로 이동</button>` : ''}</div>
+        <div class="group-player-list">${group.players.map((player) => `<div class="group-player-row ${selectedGroupPlayer?.playerKey === player.playerKey && selectedGroupPlayer?.format === format ? 'is-selected' : ''}" data-group-player="${escapeHtml(player.playerKey)}" data-group-format="${escapeHtml(format)}" title="드래그 핸들을 잡아 다른 조로 이동"><span class="group-player-drag-handle" data-group-drag-handle aria-label="선수 이동"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h.01M8 12h.01M8 19h.01M16 5h.01M16 12h.01M16 19h.01" /></svg></span><span><strong>${escapeHtml(player.label || player.nickname)}</strong>${player.members?.length > 1 ? ` · ${escapeHtml(String(player.members.length))}명` : player.rank ? ` · ${escapeHtml(player.rank)}` : ''}${player.members?.length > 1 ? `<small>${player.members.map((member) => escapeHtml(member.nickname)).join(', ')}</small>` : ''}</span><select data-group-assignment="${escapeHtml(player.playerKey)}" data-group-format="${escapeHtml(format)}"><option value="">조 선택</option>${setup.groups.map((option) => `<option value="${escapeHtml(option.name)}" ${option.name === group.name ? 'selected' : ''}>${escapeHtml(option.name)}</option>`).join('')}</select></div>`).join('')}</div>
       </section>
     `).join('')}</div>`;
   }
@@ -3046,6 +3048,12 @@
   }
 
   async function handleAppClick(event) {
+    const groupTarget = event.target.closest('[data-group-target]');
+    if (groupTarget && selectedGroupPlayer) {
+      moveDraggedGroupPlayer(selectedGroupPlayer.playerKey, selectedGroupPlayer.format, groupTarget.dataset.groupTarget);
+      return;
+    }
+
     const authAction = event.target.closest('[data-open-auth]');
     if (authAction) {
       openAuthTab(authAction.dataset.openAuth);
@@ -3654,6 +3662,7 @@
     const playerIndex = sourceGroup.players.findIndex((player) => player.playerKey === playerKey);
     const [player] = sourceGroup.players.splice(playerIndex, 1);
     targetGroup.players.push(player);
+    selectedGroupPlayer = null;
     if (game.preliminaryMatches) delete game.preliminaryMatches[format];
     persistGames();
     setFlash(`${targetGroup.name}으로 이동했습니다. 저장 버튼을 눌러 반영해 주세요.`, 'info');
@@ -3686,7 +3695,13 @@
     const drag = groupDragState;
     const target = drag.active ? document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-group-name]') : null;
     clearGroupDragState();
-    if (target) moveDraggedGroupPlayer(drag.playerKey, drag.format, target.dataset.groupName);
+    if (target) {
+      moveDraggedGroupPlayer(drag.playerKey, drag.format, target.dataset.groupName);
+      return;
+    }
+    selectedGroupPlayer = { playerKey: drag.playerKey, format: drag.format };
+    setFlash('선수가 선택되었습니다. 이동할 조의 "여기로 이동"을 눌러 주세요.', 'info');
+    render();
   }
 
   async function handleStorageChange() {

@@ -4265,6 +4265,17 @@ button {
   font-weight: 700;
 }
 
+.group-drop-target {
+  padding: 4px 8px;
+  border: 1px solid var(--primary);
+  border-radius: 7px;
+  color: var(--primary);
+  background: rgba(118, 240, 196, 0.1);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .group-player-list {
   display: grid;
   gap: 4px;
@@ -4304,6 +4315,12 @@ button {
 .group-player-row.is-dragging {
   cursor: grabbing;
   opacity: 0.24;
+}
+
+.group-player-row.is-selected {
+  outline: 2px solid var(--primary);
+  background: rgba(118, 240, 196, 0.14);
+  box-shadow: 0 0 0 3px rgba(118, 240, 196, 0.08);
 }
 
 .group-player-drag-ghost {
