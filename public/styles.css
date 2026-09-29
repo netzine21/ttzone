@@ -5666,4 +5666,41 @@ button {
     min-height: 22px;
     border-bottom: 1px solid #555;
   }
+
+  body.is-printing-schedule .schedule-print-root,
+  body.is-printing-schedule .schedule-print-group,
+  body.is-printing-schedule .schedule-print-group .matrix-wrap,
+  body.is-printing-schedule .schedule-print-group .schedule-table-wrap {
+    width: 100% !important;
+    max-width: none !important;
+    overflow: visible !important;
+  }
+
+  body.is-printing-schedule .schedule-print-group .schedule-matrix,
+  body.is-printing-schedule .schedule-print-group .schedule-results-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: fixed;
+  }
+
+  body.is-printing-schedule .schedule-print-group .schedule-matrix th,
+  body.is-printing-schedule .schedule-print-group .schedule-matrix td {
+    min-width: 0 !important;
+    padding: 5px 3px;
+    font-size: 0.68rem;
+    overflow-wrap: anywhere;
+  }
+
+  body.is-printing-schedule .schedule-print-group .schedule-matrix .record-column,
+  body.is-printing-schedule .schedule-print-group .schedule-matrix .matrix-entry-cell {
+    min-width: 0 !important;
+  }
+
+  body.is-printing-schedule .schedule-print-group .schedule-results-table th,
+  body.is-printing-schedule .schedule-print-group .schedule-results-table td {
+    min-width: 0 !important;
+    padding: 5px 3px;
+    font-size: 0.7rem;
+    overflow-wrap: anywhere;
+  }
 }
