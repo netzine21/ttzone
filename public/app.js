@@ -1922,7 +1922,25 @@
     scheduleResultsSaveTimer = window.setTimeout(() => {
       scheduleResultsSaveTimer = null;
       void handleSaveScheduleResults(true);
-    }, 700);
+    }, 1000);
+  }
+
+  function syncScheduleWinnerFromScore(input) {
+    if (!input.matches('[data-match-score]')) return;
+    const score = input.value.match(/^(\d+)\s*:\s*(\d+)$/);
+    const winnerInput = document.querySelector(`[data-match-winner="${CSS.escape(input.dataset.matchScore)}"]`);
+    if (!winnerInput) return;
+    if (!score || score[1] === score[2]) {
+      winnerInput.value = '';
+      return;
+    }
+    winnerInput.value = Number(score[1]) > Number(score[2]) ? 'A' : 'B';
+  }
+
+  function applySavedGame(game) {
+    if (!game?.id) return;
+    const index = state.games.findIndex((item) => item.id === game.id);
+    if (index >= 0) state.games[index] = game;
   }
 
   async function handleSaveScheduleResults(silent = false) {
@@ -1943,15 +1961,15 @@
     }
     schedule.updatedAt = new Date().toISOString();
     try {
-      await apiRequest(`/api/games/${encodeURIComponent(game.id)}/preliminary-matches`, {
+      const payload = await apiRequest(`/api/games/${encodeURIComponent(game.id)}/preliminary-matches`, {
         method: 'PATCH',
         body: JSON.stringify({ format, schedule }),
       });
-      await loadState();
+      applySavedGame(payload.game);
       if (!silent) setFlash(scheduleComplete ? '예선리그 경기가 종료되었고 최종 결과가 저장되었습니다.' : '예선리그 경기결과가 저장되었습니다.', 'success');
     } catch (error) {
-      if (!silent) setFlash(error.message || '예선리그 경기결과 저장에 실패했습니다.', 'error');
-      await loadState();
+      console.error('예선리그 경기결과 자동 저장 실패:', error);
+      setFlash(error.message || '예선리그 경기결과 자동 저장에 실패했습니다.', 'error');
     }
     render();
   }
@@ -3662,6 +3680,10 @@
       queueScheduleResultsSave();
       return;
     }
+    if (input.matches('[data-match-score]')) {
+      queueScheduleResultsSave();
+      return;
+    }
     if (input.matches('[data-operation-game]')) {
       state.operationGameId = input.value;
       const game = state.games.find((item) => item.id === input.value);
@@ -3703,7 +3725,10 @@
     if (input.matches('[data-match-score], [data-tournament-score]')) {
       const digits = input.value.replace(/\D/g, '').slice(0, 2);
       input.value = digits.length > 1 ? `${digits[0]}:${digits[1]}` : digits;
-      if (input.matches('[data-match-score]')) queueScheduleResultsSave();
+      if (input.matches('[data-match-score]')) {
+        syncScheduleWinnerFromScore(input);
+        queueScheduleResultsSave();
+      }
       return;
     }
     if (input.matches('[data-venue-search]')) {
