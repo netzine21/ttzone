@@ -70,6 +70,7 @@
   let flashTimer = null;
   let liveRefreshTimer = null;
   let liveRefreshInFlight = false;
+  let scheduleResultsSaveTimer = null;
   let browserHistoryReady = false;
   let restoringBrowserHistory = false;
   let lastBrowserRouteKey = '';
@@ -1916,7 +1917,15 @@
     }
   }
 
-  async function handleSaveScheduleResults() {
+  function queueScheduleResultsSave() {
+    window.clearTimeout(scheduleResultsSaveTimer);
+    scheduleResultsSaveTimer = window.setTimeout(() => {
+      scheduleResultsSaveTimer = null;
+      void handleSaveScheduleResults(true);
+    }, 700);
+  }
+
+  async function handleSaveScheduleResults(silent = false) {
     const currentUser = getCurrentUser();
     const game = state.games.find((item) => item.id === state.operationGameId);
     const format = state.operationFormat;
@@ -1939,9 +1948,9 @@
         body: JSON.stringify({ format, schedule }),
       });
       await loadState();
-      setFlash(scheduleComplete ? '예선리그 경기가 종료되었고 최종 결과가 저장되었습니다.' : '예선리그 경기결과가 저장되었습니다.', 'success');
+      if (!silent) setFlash(scheduleComplete ? '예선리그 경기가 종료되었고 최종 결과가 저장되었습니다.' : '예선리그 경기결과가 저장되었습니다.', 'success');
     } catch (error) {
-      setFlash(error.message || '예선리그 경기결과 저장에 실패했습니다.', 'error');
+      if (!silent) setFlash(error.message || '예선리그 경기결과 저장에 실패했습니다.', 'error');
       await loadState();
     }
     render();
@@ -3649,6 +3658,10 @@
       await handleTournamentMatchChange(input.dataset.tournamentScore || input.dataset.tournamentWinner);
       return;
     }
+    if (input.matches('[data-match-winner]')) {
+      queueScheduleResultsSave();
+      return;
+    }
     if (input.matches('[data-operation-game]')) {
       state.operationGameId = input.value;
       const game = state.games.find((item) => item.id === input.value);
@@ -3690,6 +3703,7 @@
     if (input.matches('[data-match-score], [data-tournament-score]')) {
       const digits = input.value.replace(/\D/g, '').slice(0, 2);
       input.value = digits.length > 1 ? `${digits[0]}:${digits[1]}` : digits;
+      if (input.matches('[data-match-score]')) queueScheduleResultsSave();
       return;
     }
     if (input.matches('[data-venue-search]')) {
