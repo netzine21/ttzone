@@ -1306,7 +1306,12 @@
 
   function renderScheduleMatrix(group, matches) {
     const units = group.players || [];
-    const label = (unit) => unit.label || unit.nickname || '미정';
+    const rawLabel = (unit) => unit.label || unit.nickname || '미정';
+    const label = (unit) => {
+      const name = rawLabel(unit);
+      const rank = unit.members?.length === 1 ? unit.members[0]?.rank || unit.rank || '' : '';
+      return rank ? `${name}(${rank})` : name;
+    };
     const standings = new Map(units.map((unit) => [unit.playerKey, { wins: 0, losses: 0 }]));
     matches.forEach((match) => {
       if (!match.result?.winner) return;
@@ -1317,7 +1322,7 @@
     });
     const ranking = [...standings.entries()].sort((left, right) => right[1].wins - left[1].wins);
     ranking.forEach(([playerKey, record], index) => { record.rank = record.wins || record.losses ? index + 1 : ''; });
-    const findMatch = (left, right) => matches.find((match) => (match.sideAKey === left.playerKey && match.sideBKey === right.playerKey) || (match.sideAKey === right.playerKey && match.sideBKey === left.playerKey) || (!match.sideAKey && ((match.sideA === label(left) && match.sideB === label(right)) || (match.sideA === label(right) && match.sideB === label(left)))));
+    const findMatch = (left, right) => matches.find((match) => (match.sideAKey === left.playerKey && match.sideBKey === right.playerKey) || (match.sideAKey === right.playerKey && match.sideBKey === left.playerKey) || (!match.sideAKey && ((match.sideA === rawLabel(left) && match.sideB === rawLabel(right)) || (match.sideA === rawLabel(right) && match.sideB === rawLabel(left)))));
     const scoreForRow = (match, rowKey) => {
       const scoreParts = String(match.result?.score || '').match(/^(\d+)\s*[-:]\s*(\d+)$/);
       if (!scoreParts) return '';
@@ -1326,7 +1331,7 @@
     const isWinningScore = (match, row) => {
       if (!match?.result?.winner) return false;
       if (match.sideAKey || match.sideBKey) return match.result.winner === 'A' ? row.playerKey === match.sideAKey : row.playerKey === match.sideBKey;
-      const rowLabel = label(row);
+      const rowLabel = rawLabel(row);
       return match.result.winner === 'A' ? rowLabel === match.sideA : rowLabel === match.sideB;
     };
     return `<div class="matrix-wrap"><table class="schedule-matrix"><thead><tr><th>대진</th>${units.map((unit) => `<th>${escapeHtml(label(unit))}</th>`).join('')}<th class="record-column">승</th><th class="record-column">패</th><th class="record-column">순위</th></tr></thead><tbody>${units.map((row) => { const record = standings.get(row.playerKey) || { wins: 0, losses: 0, rank: '' }; return `<tr><th>${escapeHtml(label(row))}</th>${units.map((column) => { if (row.playerKey === column.playerKey) return '<td class="matrix-diagonal">-</td>'; const match = findMatch(row, column); const score = match ? scoreForRow(match, row.playerKey) : ''; const winnerClass = match && isWinningScore(match, row) ? ' matrix-score--winner' : ''; return `<td>${score ? `<strong class="matrix-score${winnerClass}">${escapeHtml(score)}</strong>` : '<span class="muted">&nbsp;</span>'}</td>`; }).join('')}<td class="matrix-entry-cell">${record.wins || record.losses ? record.wins : '&nbsp;'}</td><td class="matrix-entry-cell">${record.wins || record.losses ? record.losses : '&nbsp;'}</td><td class="matrix-entry-cell">${record.rank || '&nbsp;'}</td></tr>`; }).join('')}</tbody></table></div>`;
