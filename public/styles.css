@@ -3492,6 +3492,15 @@ button {
   scrollbar-width: none;
 }
 
+.schedule-panel--results .public-league-results-viewport--operator {
+  overflow: hidden;
+  scrollbar-width: none;
+}
+
+.schedule-panel--results .public-league-results-viewport--operator::-webkit-scrollbar {
+  display: none;
+}
+
 .schedule-panel--results .schedule-results-table-wrap::-webkit-scrollbar {
   display: none;
 }
