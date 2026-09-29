@@ -3443,7 +3443,7 @@ button {
 }
 
 .schedule-panel .schedule-generation-controls--compact {
-  grid-template-columns: minmax(120px, 0.65fr) minmax(190px, 1.35fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(120px, 0.65fr);
 }
 
 .schedule-generation-controls > .field {
@@ -3459,7 +3459,7 @@ button {
   width: 100%;
   min-height: 48px;
   justify-content: center;
-  padding: 12px 22px;
+  padding: 12px 14px;
   border: 1px solid rgba(118, 240, 196, 0.42);
   border-radius: 10px;
   font-size: 1rem;
@@ -3505,15 +3505,17 @@ button {
   grid-auto-flow: column;
   gap: 5px;
   width: auto;
-  min-height: 34px;
-  padding: 0 10px;
-  height: 34px;
+  min-height: 30px;
+  padding: 4px 8px;
+  height: 30px;
   place-items: center;
   flex: 0 0 auto;
-  border: 1px solid var(--border);
-  border-radius: 9px;
+  border: 0;
+  border-radius: 0;
   color: var(--muted);
-  background: rgba(165, 190, 214, 0.08);
+  background: transparent;
+  font-size: 0.76rem;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -3523,7 +3525,6 @@ button {
 
 .schedule-result-print:hover {
   color: var(--primary);
-  border-color: rgba(118, 240, 196, 0.45);
 }
 
 .schedule-result-print svg {
@@ -4811,7 +4812,7 @@ button {
   }
 
   .schedule-panel .schedule-generation-controls--compact {
-    grid-template-columns: minmax(90px, 0.65fr) minmax(150px, 1.35fr);
+    grid-template-columns: minmax(0, 1.35fr) minmax(110px, 0.65fr);
   }
 
   .schedule-generation-controls:not(.schedule-generation-controls--compact) > .field:first-child {
