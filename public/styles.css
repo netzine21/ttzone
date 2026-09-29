@@ -4276,6 +4276,14 @@ button {
   cursor: pointer;
 }
 
+.group-drop-target:disabled {
+  border-color: rgba(165, 190, 214, 0.18);
+  color: var(--muted-2);
+  background: transparent;
+  cursor: default;
+  opacity: 0.7;
+}
+
 .group-player-list {
   display: grid;
   gap: 4px;

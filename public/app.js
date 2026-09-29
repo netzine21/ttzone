@@ -1229,7 +1229,7 @@
     const hasSelectedPlayer = selectedGroupPlayer?.format === format;
     return `<div class="group-list">${setup.groups.map((group) => `
       <section class="qualifying-group ${hasSelectedPlayer ? 'has-group-targets' : ''}" data-group-name="${escapeHtml(group.name)}">
-        <div class="qualifying-group__heading"><h3>${escapeHtml(group.name)}</h3><span>${escapeHtml(String(group.players.length))}명</span>${hasSelectedPlayer ? `<button type="button" class="group-drop-target" data-group-target="${escapeHtml(group.name)}" data-group-format="${escapeHtml(format)}">여기로 이동</button>` : ''}</div>
+        <div class="qualifying-group__heading"><h3>${escapeHtml(group.name)}</h3><span>${escapeHtml(String(group.players.length))}명</span><button type="button" class="group-drop-target" data-group-target="${escapeHtml(group.name)}" data-group-format="${escapeHtml(format)}" ${hasSelectedPlayer ? '' : 'disabled'}>여기로 이동</button></div>
         <div class="group-player-list">${group.players.map((player) => `<div class="group-player-row ${selectedGroupPlayer?.playerKey === player.playerKey && selectedGroupPlayer?.format === format ? 'is-selected' : ''}" data-group-player="${escapeHtml(player.playerKey)}" data-group-format="${escapeHtml(format)}" title="드래그 핸들을 잡아 다른 조로 이동"><span class="group-player-drag-handle" data-group-drag-handle aria-label="선수 이동"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h.01M8 12h.01M8 19h.01M16 5h.01M16 12h.01M16 19h.01" /></svg></span><span><strong>${escapeHtml(player.label || player.nickname)}</strong>${player.members?.length > 1 ? ` · ${escapeHtml(String(player.members.length))}명` : player.rank ? ` · ${escapeHtml(player.rank)}` : ''}${player.members?.length > 1 ? `<small>${player.members.map((member) => escapeHtml(member.nickname)).join(', ')}</small>` : ''}</span><select data-group-assignment="${escapeHtml(player.playerKey)}" data-group-format="${escapeHtml(format)}"><option value="">조 선택</option>${setup.groups.map((option) => `<option value="${escapeHtml(option.name)}" ${option.name === group.name ? 'selected' : ''}>${escapeHtml(option.name)}</option>`).join('')}</select></div>`).join('')}</div>
       </section>
     `).join('')}</div>`;
@@ -3692,7 +3692,7 @@
 
   function handleGroupPointerDown(event) {
     const row = event.target.closest('[data-group-player]');
-    if (!row || !event.target.closest('[data-group-drag-handle]')) return;
+    if (!row || event.target.closest('select, option, button')) return;
     groupDragState = { playerKey: row.dataset.groupPlayer, format: row.dataset.groupFormat, row, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, active: false };
   }
 
