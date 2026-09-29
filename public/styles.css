@@ -3548,6 +3548,10 @@ button {
   font-size: 0.68rem;
 }
 
+.schedule-panel--results .qualifying-standing-row strong {
+  font-size: 0.9rem;
+}
+
 .schedule-generation-controls > .field {
   text-align: center;
 }
