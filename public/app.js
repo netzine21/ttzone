@@ -3670,6 +3670,11 @@
   function handleAppInput(event) {
     const input = event.target;
     if (!(input instanceof HTMLInputElement)) return;
+    if (input.matches('[data-match-score], [data-tournament-score]')) {
+      const digits = input.value.replace(/\D/g, '').slice(0, 2);
+      input.value = digits.length > 1 ? `${digits[0]}:${digits[1]}` : digits;
+      return;
+    }
     if (input.matches('[data-venue-search]')) {
       state.venueSearch = input.value;
       render();

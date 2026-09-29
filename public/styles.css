@@ -3502,6 +3502,36 @@ button {
   table-layout: fixed;
 }
 
+.schedule-panel--results .matrix-wrap {
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.schedule-panel--results .matrix-wrap::-webkit-scrollbar {
+  display: none;
+}
+
+.schedule-panel--results .schedule-matrix {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.schedule-panel--results .schedule-matrix th,
+.schedule-panel--results .schedule-matrix td {
+  min-width: 0;
+  padding: 6px 3px;
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
+.schedule-panel--results .schedule-results-table .schedule-result-input,
+.schedule-panel--results .schedule-results-table select {
+  min-width: 0;
+  padding: 6px 4px;
+  font-size: 0.74rem;
+}
+
 .schedule-panel--results .schedule-group-matrices,
 .schedule-panel--results .qualifying-standings-overview {
   margin-right: auto;
