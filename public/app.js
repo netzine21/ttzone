@@ -1364,9 +1364,8 @@
       savedContent = `<div class="schedule-result-divider" aria-hidden="true"></div><div class="schedule-result-heading"><h2>[${escapeHtml(FORMAT_LABELS[format])}] 리그전 대진표</h2></div><div class="schedule-result-toolbar">${controls}${printButton}</div><div class="public-league-results-viewport" data-public-league-viewport><div class="public-league-results-stage" data-public-league-stage>${savedContent}</div></div>`;
     }
     return `
-      <div class="schedule-panel">
-        <div class="operation-controls schedule-generation-controls${isResultsMode ? '' : ' schedule-generation-controls--compact'}">
-          ${isResultsMode ? `<div class="field"><label for="operationScheduleGame">게임</label><select id="operationScheduleGame" data-operation-game>${games.map((item) => `<option value="${escapeHtml(item.id)}" ${item.id === game.id ? 'selected' : ''}>${escapeHtml(item.title)}</option>`).join('')}</select></div>` : ''}
+      <div class="schedule-panel${isResultsMode ? ' schedule-panel--results' : ''}">
+        <div class="operation-controls schedule-generation-controls${isResultsMode ? ' schedule-generation-controls--results' : ' schedule-generation-controls--compact'}">
           <div class="field"><label for="operationScheduleFormat">경기종목</label><select id="operationScheduleFormat" data-operation-format>${formats.map((item) => `<option value="${escapeHtml(item)}" ${item === format ? 'selected' : ''}>${escapeHtml(FORMAT_LABELS[item])}</option>`).join('')}</select></div>
           ${isResultsMode && groups.length ? `<div class="field"><label for="operationScheduleGroup">경기결과 입력 조</label><select id="operationScheduleGroup" data-schedule-group><option value="__all__" ${showAllGroups ? 'selected' : ''}>전체</option>${groups.map((group) => `<option value="${escapeHtml(group.name)}" ${!showAllGroups && group.name === selectedGroup?.name ? 'selected' : ''}>${escapeHtml(group.name)}</option>`).join('')}</select></div>` : ''}
           ${isResultsMode ? '' : '<button type="button" class="game-list-action game-list-action--primary" data-generate-schedule><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"></path><circle cx="12" cy="12" r="8"></circle></svg><span>대진표 생성</span></button>'}

@@ -3480,6 +3480,34 @@ button {
   grid-template-columns: minmax(0, 1.35fr) minmax(120px, 0.65fr);
 }
 
+.schedule-panel .schedule-generation-controls--results {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(100%, 720px);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.schedule-panel--results .schedule-results-table-wrap {
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.schedule-panel--results .schedule-results-table-wrap::-webkit-scrollbar {
+  display: none;
+}
+
+.schedule-panel--results .schedule-results-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.schedule-panel--results .schedule-group-matrices,
+.schedule-panel--results .qualifying-standings-overview {
+  margin-right: auto;
+  margin-left: auto;
+}
+
 .schedule-generation-controls > .field {
   text-align: center;
 }
@@ -4852,6 +4880,10 @@ button {
 
   .schedule-panel .schedule-generation-controls--compact {
     grid-template-columns: minmax(0, 1.35fr) minmax(110px, 0.65fr);
+  }
+
+  .schedule-panel .schedule-generation-controls--results {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .schedule-generation-controls:not(.schedule-generation-controls--compact) > .field:first-child {
