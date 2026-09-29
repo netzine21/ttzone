@@ -4223,6 +4223,12 @@ button {
   bottom: 0;
 }
 
+.qualifying-result-divider {
+  height: 2px;
+  margin: 28px 0 22px;
+  background: linear-gradient(90deg, transparent, rgba(118, 240, 196, 0.3) 18%, rgba(118, 240, 196, 0.95) 50%, rgba(118, 240, 196, 0.3) 82%, transparent);
+}
+
 .qualifying-result-guide {
   margin: 7px 0 0;
   color: var(--muted);

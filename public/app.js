@@ -1647,9 +1647,8 @@
     const participantCount = getGroupingUnits(game, format).length;
     const defaultGroupCount = saved?.groupCount || Math.max(1, Math.ceil(participantCount / 4));
     const groupingBasis = saved?.groupingBasis || 'balanced';
-    const calculatedSizes = saved?.groups?.map((group) => group.players.length) || [];
-    const calculatedSizeText = calculatedSizes.length ? calculatedSizes.join('명, ') + '명' : '조편성 수를 정하면 자동 계산';
     const tournamentEnabled = getFormatMode(game, format) !== 'leagueOnly';
+    const qualifyingResultTitle = tournamentEnabled ? `[${FORMAT_LABELS[format]}] 예선리그 조편성` : `[${FORMAT_LABELS[format]}] 리그전 조편성`;
     const activeOperationSubmenu = tournamentEnabled ? state.operationSubmenu : 'qualifying';
     const operationTitle = { roster: '선수등록', groups: '예선리그 조편성', print: '대진표 출력', results: '경기결과 입력' }[state.operationMenu] || '예선리그 조편성';
     return `
@@ -1668,7 +1667,8 @@
           <div class="field"><label for="groupingBasis">조편성 기준</label><select id="groupingBasis" data-grouping-basis><option value="balanced" ${groupingBasis === 'balanced' ? 'selected' : ''}>부수균등배치</option><option value="similar" ${groupingBasis === 'similar' ? 'selected' : ''}>동일부수배치</option></select></div></div>
           <button type="button" class="game-list-action game-list-action--primary qualifying-generate-action" data-generate-groups><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"></path><circle cx="12" cy="12" r="8"></circle></svg><span>조편성 생성</span></button>
         </div>
-        <div class="group-result-heading qualifying-result-heading"><div><p class="section-kicker">조편성 결과</p><h2>${escapeHtml(FORMAT_LABELS[format])} 예선리그</h2><p class="qualifying-result-guide">자동 조편성 후 운영자는 조를 수정할 수 있습니다. 이동할 선수를 선택한 뒤 민트색으로 강조된 조 제목을 선택하면 해당 조로 이동합니다. 현재 계산 결과: ${escapeHtml(calculatedSizeText)}</p></div>${saved ? '<span class="subtle-note">생성 후 선수별 조 이동 가능</span>' : ''}</div>
+        <div class="qualifying-result-divider" aria-hidden="true"></div>
+        <div class="group-result-heading qualifying-result-heading"><div><h2>${escapeHtml(qualifyingResultTitle)}</h2><p class="qualifying-result-guide">자동 조편성 후 운영자는 조를 수정할 수 있습니다.<br />이동할 선수를 선택한 뒤 민트색으로 강조된 조 제목을 선택하면 해당 조로 이동합니다.</p></div></div>
         ${renderOperationGroups(game, format)}
         ${saved ? `<div class="button-row group-save-row"><span class="group-visibility-status ${saved.isPublic ? 'is-public' : ''}">${saved.isPublic ? '회원 공개 중' : '현재 비공개'}</span><button type="button" class="game-list-action" data-save-groups><span>수정한 조편성 저장</span></button><button type="button" class="game-list-action game-list-action--primary" data-toggle-group-visibility="${escapeHtml(game.id)}"><span>${saved.isPublic ? '회원 공개 취소' : '회원 공개'}</span></button></div>` : ''}`}
       </section>
