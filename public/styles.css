@@ -4257,8 +4257,12 @@ button {
   margin: 0;
 }
 
-.qualifying-group.is-move-target {
-  border-color: var(--primary);
+.qualifying-group__heading.is-move-target {
+  margin-right: -4px;
+  margin-left: -4px;
+  padding: 5px 8px;
+  border: 1px solid var(--primary);
+  border-radius: 9px;
   background: rgba(118, 240, 196, 0.1);
   box-shadow: 0 0 0 2px rgba(118, 240, 196, 0.14);
   cursor: pointer;
