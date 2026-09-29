@@ -4226,7 +4226,7 @@ button {
 .qualifying-result-divider {
   height: 2px;
   margin: 28px 0 22px;
-  background: linear-gradient(90deg, transparent, rgba(118, 240, 196, 0.3) 18%, rgba(118, 240, 196, 0.95) 50%, rgba(118, 240, 196, 0.3) 82%, transparent);
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.18) 18%, rgba(148, 163, 184, 0.68) 50%, rgba(148, 163, 184, 0.18) 82%, transparent);
 }
 
 .qualifying-result-guide {
