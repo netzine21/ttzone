@@ -1677,7 +1677,8 @@
 
   function getOperationStartMenu(game, format) {
     if (getGameFormats(game).some((item) => !isRegistrationClosed(game, item))) return 'roster';
-    if (!game.qualifyingGroups?.[format]?.groups?.length) return 'groups';
+    const qualifyingGroups = game.qualifyingGroups?.[format];
+    if (!qualifyingGroups?.groups?.length || qualifyingGroups.isPublic !== true) return 'groups';
     if (!game.preliminaryMatches?.[format]?.matches?.length) return 'print';
     return 'results';
   }
