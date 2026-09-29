@@ -3490,13 +3490,14 @@ button {
 }
 
 .schedule-generation-controls--compact .game-list-action {
-  width: 100%;
+  width: calc(100% - 8px);
   min-height: 48px;
   justify-content: center;
   padding: 12px 14px;
   border: 1px solid rgba(118, 240, 196, 0.42);
   border-radius: 10px;
   font-size: 1rem;
+  justify-self: end;
 }
 
 .schedule-result-divider {
