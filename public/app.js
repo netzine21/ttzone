@@ -1190,6 +1190,10 @@
     return rankValues.length ? rankValues.reduce((sum, value) => sum + value, 0) / rankValues.length : Number.POSITIVE_INFINITY;
   }
 
+  function getGroupingRankLabel(unit) {
+    return [...new Set([unit.rank, ...(unit.members || []).map((member) => member.rank)].map((rank) => trimValue(rank)).filter(Boolean))].join(', ');
+  }
+
   function buildQualifyingGroups(game, format, groupCount, groupingBasis = 'balanced') {
     const units = getGroupingUnits(game, format);
     const count = Math.max(1, Math.min(groupCount, units.length));
@@ -1230,7 +1234,7 @@
     return `<div class="group-list">${setup.groups.map((group) => `
       <section class="qualifying-group ${hasSelectedPlayer ? 'has-group-targets' : ''}" data-group-name="${escapeHtml(group.name)}">
         <div class="qualifying-group__heading"><h3>${escapeHtml(group.name)}</h3><span>${escapeHtml(String(group.players.length))}명</span><button type="button" class="group-drop-target" data-group-target="${escapeHtml(group.name)}" data-group-format="${escapeHtml(format)}" ${hasSelectedPlayer ? '' : 'disabled'}>여기로 이동</button></div>
-        <div class="group-player-list">${group.players.map((player) => `<div class="group-player-row ${selectedGroupPlayer?.playerKey === player.playerKey && selectedGroupPlayer?.format === format ? 'is-selected' : ''}" data-group-player="${escapeHtml(player.playerKey)}" data-group-format="${escapeHtml(format)}" title="드래그 핸들을 잡아 다른 조로 이동"><span class="group-player-drag-handle" data-group-drag-handle aria-label="선수 이동"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h.01M8 12h.01M8 19h.01M16 5h.01M16 12h.01M16 19h.01" /></svg></span><span><strong>${escapeHtml(player.label || player.nickname)}</strong>${player.members?.length > 1 ? ` · ${escapeHtml(String(player.members.length))}명` : player.rank ? ` · ${escapeHtml(player.rank)}` : ''}${player.members?.length > 1 ? `<small>${player.members.map((member) => escapeHtml(member.nickname)).join(', ')}</small>` : ''}</span><select data-group-assignment="${escapeHtml(player.playerKey)}" data-group-format="${escapeHtml(format)}"><option value="">조 선택</option>${setup.groups.map((option) => `<option value="${escapeHtml(option.name)}" ${option.name === group.name ? 'selected' : ''}>${escapeHtml(option.name)}</option>`).join('')}</select></div>`).join('')}</div>
+        <div class="group-player-list">${group.players.map((player) => `<div class="group-player-row ${selectedGroupPlayer?.playerKey === player.playerKey && selectedGroupPlayer?.format === format ? 'is-selected' : ''}" data-group-player="${escapeHtml(player.playerKey)}" data-group-format="${escapeHtml(format)}" title="선수 카드를 눌러 선택하거나 드래그하여 이동"><span class="group-player-drag-handle" data-group-drag-handle aria-label="선수 이동"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h.01M8 12h.01M8 19h.01M16 5h.01M16 12h.01M16 19h.01" /></svg></span><span><strong>${escapeHtml(player.label || player.nickname)}${getGroupingRankLabel(player) ? `(${escapeHtml(getGroupingRankLabel(player))})` : ''}</strong>${player.members?.length > 1 ? ` · ${escapeHtml(String(player.members.length))}명` : ''}${player.members?.length > 1 ? `<small>${player.members.map((member) => escapeHtml(member.nickname)).join(', ')}</small>` : ''}</span></div>`).join('')}</div>
       </section>
     `).join('')}</div>`;
   }
@@ -3717,8 +3721,13 @@
     const target = drag.active ? document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-group-name]') : null;
     clearGroupDragState();
     if (target) {
-      moveDraggedGroupPlayer(drag.playerKey, drag.format, target.dataset.groupName);
-      return;
+      const game = state.games.find((item) => item.id === state.operationGameId);
+      const setup = game?.qualifyingGroups?.[drag.format];
+      const source = setup?.groups.find((group) => group.players.some((player) => player.playerKey === drag.playerKey));
+      if (source && source.name !== target.dataset.groupName) {
+        moveDraggedGroupPlayer(drag.playerKey, drag.format, target.dataset.groupName);
+        return;
+      }
     }
     selectedGroupPlayer = { playerKey: drag.playerKey, format: drag.format };
     setFlash('선수가 선택되었습니다. 이동할 조의 "여기로 이동"을 눌러 주세요.', 'info');
