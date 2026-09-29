@@ -3530,6 +3530,24 @@ button {
   font-size: 0.74rem;
 }
 
+.schedule-panel--results .qualifying-standings-card__heading {
+  position: relative;
+  justify-content: center;
+  text-align: center;
+}
+
+.schedule-panel--results .qualifying-standings-card__heading h3 {
+  width: 100%;
+  margin: 0;
+  font-size: 0.96rem;
+}
+
+.schedule-panel--results .qualifying-standings-card__heading span {
+  position: absolute;
+  right: 0;
+  font-size: 0.68rem;
+}
+
 .schedule-generation-controls > .field {
   text-align: center;
 }
