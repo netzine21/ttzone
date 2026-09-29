@@ -3634,6 +3634,20 @@ button {
   margin-top: 22px;
 }
 
+.tournament-print-viewport {
+  width: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.tournament-print-stage {
+  width: 100%;
+  min-width: 760px;
+  transform-origin: top left;
+  will-change: transform;
+}
+
 .tournament-print-panel .operation-controls {
   grid-template-columns: 1.1fr 0.85fr 0.7fr 0.7fr auto;
 }
