@@ -4257,25 +4257,11 @@ button {
   margin: 0;
 }
 
-.group-drop-target {
-  position: absolute;
-  right: 0;
-  padding: 4px 8px;
-  border: 1px solid var(--primary);
-  border-radius: 7px;
-  color: var(--primary);
+.qualifying-group.is-move-target {
+  border-color: var(--primary);
   background: rgba(118, 240, 196, 0.1);
-  font-size: 0.72rem;
-  font-weight: 700;
+  box-shadow: 0 0 0 2px rgba(118, 240, 196, 0.14);
   cursor: pointer;
-}
-
-.group-drop-target:disabled {
-  border-color: rgba(165, 190, 214, 0.18);
-  color: var(--muted-2);
-  background: transparent;
-  cursor: default;
-  opacity: 0.7;
 }
 
 .group-player-list {

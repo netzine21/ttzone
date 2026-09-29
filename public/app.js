@@ -1232,8 +1232,8 @@
     const hasSelectedPlayer = selectedGroupPlayer?.format === format;
     const selectedGroupName = hasSelectedPlayer ? setup.groups.find((group) => group.players.some((player) => player.playerKey === selectedGroupPlayer.playerKey))?.name : null;
     return `<div class="group-list">${setup.groups.map((group) => `
-      <section class="qualifying-group ${hasSelectedPlayer ? 'has-group-targets' : ''}" data-group-name="${escapeHtml(group.name)}">
-        <div class="qualifying-group__heading"><h3>${escapeHtml(group.name)}(${escapeHtml(String(group.players.length))}명)</h3><button type="button" class="group-drop-target" data-group-target="${escapeHtml(group.name)}" data-group-format="${escapeHtml(format)}" ${hasSelectedPlayer && selectedGroupName !== group.name ? '' : 'hidden'}>여기로 이동</button></div>
+      <section class="qualifying-group ${hasSelectedPlayer && selectedGroupName !== group.name ? 'is-move-target' : ''}" data-group-name="${escapeHtml(group.name)}" data-group-format="${escapeHtml(format)}">
+        <div class="qualifying-group__heading"><h3>${escapeHtml(group.name)}(${escapeHtml(String(group.players.length))}명)</h3></div>
         <div class="group-player-list">${group.players.map((player) => `<div class="group-player-row ${selectedGroupPlayer?.playerKey === player.playerKey && selectedGroupPlayer?.format === format ? 'is-selected' : ''}" data-group-player="${escapeHtml(player.playerKey)}" data-group-format="${escapeHtml(format)}" title="이동할 선수를 선택하세요"><span><strong>${escapeHtml(player.label || player.nickname)}${getGroupingRankLabel(player) ? `(${escapeHtml(getGroupingRankLabel(player))})` : ''}</strong>${player.members?.length > 1 ? ` · ${escapeHtml(String(player.members.length))}명` : ''}${player.members?.length > 1 ? `<small>${player.members.map((member) => escapeHtml(member.nickname)).join(', ')}</small>` : ''}</span></div>`).join('')}</div>
       </section>
     `).join('')}</div>`;
@@ -3079,6 +3079,13 @@
       return;
     }
 
+    const groupHeading = event.target.closest('.qualifying-group__heading');
+    const targetGroup = groupHeading?.closest('[data-group-name]');
+    if (targetGroup && selectedGroupPlayer) {
+      moveDraggedGroupPlayer(selectedGroupPlayer.playerKey, selectedGroupPlayer.format, targetGroup.dataset.groupName);
+      return;
+    }
+
     const groupPlayer = event.target.closest('[data-group-player]');
     if (groupPlayer) {
       selectGroupPlayer(groupPlayer.dataset.groupPlayer, groupPlayer.dataset.groupFormat);
@@ -3681,9 +3688,9 @@
     document.querySelectorAll('[data-group-player]').forEach((row) => {
       row.classList.toggle('is-selected', Boolean(selected && row.dataset.groupPlayer === selected.playerKey && row.dataset.groupFormat === selected.format));
     });
-    document.querySelectorAll('[data-group-target]').forEach((button) => {
-      const matchesFormat = Boolean(selected && button.dataset.groupFormat === selected.format);
-      button.hidden = !matchesFormat || button.dataset.groupTarget === selectedGroupName;
+    document.querySelectorAll('[data-group-name]').forEach((group) => {
+      const matchesFormat = Boolean(selected && group.dataset.groupFormat === selected.format);
+      group.classList.toggle('is-move-target', matchesFormat && group.dataset.groupName !== selectedGroupName);
     });
   }
 
