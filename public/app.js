@@ -2419,8 +2419,8 @@
           <div class="section-heading admin-panel-heading"><div><p class="section-kicker">회원정보</p><h2>회원정보관리</h2></div></div>
         <div class="admin-users-table-wrap">
           <table class="admin-users-table">
-            <thead><tr><th>회원명</th><th>아이디</th><th>연락처</th><th>권한</th><th>가입일</th></tr></thead>
-            <tbody>${state.adminUserLoadError ? `<tr><td colspan="5">${escapeHtml(state.adminUserLoadError)}</td></tr>` : users.length ? users.map((user) => `<tr><td>${escapeHtml(user.nickname)}</td><td>${escapeHtml(user.memberId)}</td><td>${escapeHtml(user.phone || '미입력')}</td><td><span class="admin-role-badge admin-role-badge--${escapeHtml(user.role || 'user')}">${getRoleLabel(user.role)}</span></td><td>${escapeHtml(formatDateTime(user.createdAt))}</td></tr>`).join('') : '<tr><td colspan="5">등록된 회원이 없습니다.</td></tr>'}</tbody>
+            <thead><tr><th>회원명</th><th>아이디</th><th>활동지역</th><th>연락처</th><th>권한</th><th>가입일</th></tr></thead>
+            <tbody>${state.adminUserLoadError ? `<tr><td colspan="6">${escapeHtml(state.adminUserLoadError)}</td></tr>` : users.length ? users.map((user) => `<tr><td>${escapeHtml(user.nickname)}</td><td>${escapeHtml(user.memberId)}</td><td>${escapeHtml(regionLabel(user.regionSido, user.regionSigungu) || user.region || '미입력')}</td><td>${escapeHtml(user.phone || '미입력')}</td><td><span class="admin-role-badge admin-role-badge--${escapeHtml(user.role || 'user')}">${getRoleLabel(user.role)}</span></td><td>${escapeHtml(formatDateTime(user.createdAt))}</td></tr>`).join('') : '<tr><td colspan="6">등록된 회원이 없습니다.</td></tr>'}</tbody>
           </table>
         </div>
         </div>
