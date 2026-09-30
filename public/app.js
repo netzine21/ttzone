@@ -1461,7 +1461,7 @@
 
   function renderPublicTournamentMatch(match) {
     const isBye = match.round === 1 && Boolean(match.sideA) !== Boolean(match.sideB);
-    return `<div class="tournament-match"><div class="tournament-side ${match.result?.winner === 'A' ? 'is-winner' : ''}">${renderTournamentPlayerLabel(match.sideA, isBye && !match.sideA ? 'BYE' : '대기')}<strong>${escapeHtml(String(match.result?.score || '').split(/[-:]/)[0] || '')}</strong></div><div class="tournament-side ${match.result?.winner === 'B' ? 'is-winner' : ''}">${renderTournamentPlayerLabel(match.sideB, isBye && !match.sideB ? 'BYE' : '대기')}<strong>${escapeHtml(String(match.result?.score || '').split(/[-:]/)[1] || '')}</strong></div></div>`;
+    return `<div class="tournament-match" data-tournament-match="${escapeHtml(match.id)}" data-tournament-round="${match.round}"><div class="tournament-side ${match.result?.winner === 'A' ? 'is-winner' : ''}">${renderTournamentPlayerLabel(match.sideA, isBye && !match.sideA ? 'BYE' : '대기')}<strong>${escapeHtml(String(match.result?.score || '').split(/[-:]/)[0] || '')}</strong></div><div class="tournament-side ${match.result?.winner === 'B' ? 'is-winner' : ''}">${renderTournamentPlayerLabel(match.sideB, isBye && !match.sideB ? 'BYE' : '대기')}<strong>${escapeHtml(String(match.result?.score || '').split(/[-:]/)[1] || '')}</strong></div></div>`;
   }
 
   function buildTournamentBracket(entries, league, format) {
@@ -1600,7 +1600,7 @@
     const playable = match.sideA && match.sideB;
     const scoreParts = String(match.result?.score || '').match(/^(\d+)\s*[-:]\s*(\d+)$/);
     const isBye = match.round === 1 && Boolean(match.sideA) !== Boolean(match.sideB);
-    return `<div class="tournament-match"><div class="tournament-side ${match.result?.winner === 'A' ? 'is-winner' : ''}">${renderTournamentPlayerLabel(match.sideA, isBye && !match.sideA ? 'BYE' : '대기')}<strong>${scoreParts ? scoreParts[1] : ''}</strong></div><div class="tournament-side ${match.result?.winner === 'B' ? 'is-winner' : ''}">${renderTournamentPlayerLabel(match.sideB, isBye && !match.sideB ? 'BYE' : '대기')}<strong>${scoreParts ? scoreParts[2] : ''}</strong></div>${playable ? `<div class="tournament-match__input"><input class="schedule-result-input" data-tournament-score="${escapeHtml(match.id)}" value="${escapeHtml(match.result?.score || '')}" placeholder="세트 스코어" /><select data-tournament-winner="${escapeHtml(match.id)}"><option value="">승자 선택</option><option value="A" ${match.result?.winner === 'A' ? 'selected' : ''}>${escapeHtml(labelA)}</option><option value="B" ${match.result?.winner === 'B' ? 'selected' : ''}>${escapeHtml(labelB)}</option></select></div>` : `<small class="tournament-bye-note">${match.sideA || match.sideB ? '부전승' : '진출 대기'}</small>`}</div>`;
+    return `<div class="tournament-match" data-tournament-match="${escapeHtml(match.id)}" data-tournament-round="${match.round}"><div class="tournament-side ${match.result?.winner === 'A' ? 'is-winner' : ''}">${renderTournamentPlayerLabel(match.sideA, isBye && !match.sideA ? 'BYE' : '대기')}<strong>${scoreParts ? scoreParts[1] : ''}</strong></div><div class="tournament-side ${match.result?.winner === 'B' ? 'is-winner' : ''}">${renderTournamentPlayerLabel(match.sideB, isBye && !match.sideB ? 'BYE' : '대기')}<strong>${scoreParts ? scoreParts[2] : ''}</strong></div>${playable ? `<div class="tournament-match__input"><input class="schedule-result-input" data-tournament-score="${escapeHtml(match.id)}" value="${escapeHtml(match.result?.score || '')}" placeholder="세트 스코어" /><select data-tournament-winner="${escapeHtml(match.id)}"><option value="">승자 선택</option><option value="A" ${match.result?.winner === 'A' ? 'selected' : ''}>${escapeHtml(labelA)}</option><option value="B" ${match.result?.winner === 'B' ? 'selected' : ''}>${escapeHtml(labelB)}</option></select></div>` : `<small class="tournament-bye-note">${match.sideA || match.sideB ? '부전승' : '진출 대기'}</small>`}</div>`;
   }
 
   function renderTournamentRound(round, isFinal = false, title = '', bracketSize = 2, roundIndex = 0) {
@@ -2626,6 +2626,77 @@
     });
   }
 
+  function drawTournamentConnectors() {
+    document.querySelectorAll('.tournament-bracket--split').forEach((bracket) => {
+      const existingLayer = bracket.querySelector('.tournament-connector-layer');
+      existingLayer?.remove();
+      const rootRect = bracket.getBoundingClientRect();
+      const rootWidth = bracket.offsetWidth;
+      const rootHeight = bracket.offsetHeight;
+      if (!rootWidth || !rootHeight) return;
+      const scaleX = rootRect.width / rootWidth || 1;
+      const scaleY = rootRect.height / rootHeight || 1;
+      const point = (element, side = 'center') => {
+        const rect = element.getBoundingClientRect();
+        const left = (rect.left - rootRect.left) / scaleX;
+        const right = (rect.right - rootRect.left) / scaleX;
+        const top = (rect.top - rootRect.top) / scaleY;
+        const bottom = (rect.bottom - rootRect.top) / scaleY;
+        return { left, right, centerY: (top + bottom) / 2 };
+      };
+      const path = (svg, commands) => {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        line.setAttribute('d', commands);
+        line.setAttribute('fill', 'none');
+        line.setAttribute('stroke', 'rgba(118, 240, 196, 0.55)');
+        line.setAttribute('stroke-width', '1');
+        line.setAttribute('vector-effect', 'non-scaling-stroke');
+        line.setAttribute('stroke-linecap', 'square');
+        svg.appendChild(line);
+      };
+      const connectRoundPair = (svg, currentRound, nextRound, direction) => {
+        const currentMatches = [...currentRound.querySelectorAll(':scope > .tournament-round__matches > .tournament-match')];
+        const nextMatches = [...nextRound.querySelectorAll(':scope > .tournament-round__matches > .tournament-match')];
+        currentMatches.forEach((match, index) => {
+          const parent = nextMatches[Math.floor(index / 2)];
+          if (!parent) return;
+          const source = point(match);
+          const target = point(parent);
+          const sourceX = direction === 'left' ? source.right : source.left;
+          const targetX = direction === 'left' ? target.left : target.right;
+          const elbowX = sourceX + (targetX - sourceX) / 2;
+          path(svg, `M ${sourceX} ${source.centerY} H ${elbowX} V ${target.centerY} H ${targetX}`);
+        });
+      };
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.classList.add('tournament-connector-layer');
+      svg.setAttribute('viewBox', `0 0 ${rootWidth} ${rootHeight}`);
+      svg.setAttribute('width', String(rootWidth));
+      svg.setAttribute('height', String(rootHeight));
+      svg.setAttribute('aria-hidden', 'true');
+      const sides = [
+        { selector: '.tournament-side-bracket--left', direction: 'left' },
+        { selector: '.tournament-side-bracket--right', direction: 'right' },
+      ];
+      sides.forEach(({ selector, direction }) => {
+        const side = bracket.querySelector(selector);
+        const rounds = side ? [...side.querySelectorAll(':scope > .tournament-round')] : [];
+        rounds.slice(0, -1).forEach((round, index) => connectRoundPair(svg, round, rounds[index + 1], direction));
+        const semifinal = rounds.at(-1)?.querySelector(':scope > .tournament-round__matches > .tournament-match');
+        const finalMatch = bracket.querySelector('.tournament-center-bracket .tournament-round--final .tournament-match');
+        if (!semifinal || !finalMatch) return;
+        const source = point(semifinal);
+        const finalSides = finalMatch.querySelectorAll(':scope > .tournament-side');
+        const target = point(finalSides[direction === 'left' ? 0 : 1] || finalMatch);
+        const sourceX = direction === 'left' ? source.right : source.left;
+        const targetX = direction === 'left' ? target.left : target.right;
+        const elbowX = sourceX + (targetX - sourceX) / 2;
+        path(svg, `M ${sourceX} ${source.centerY} H ${elbowX} V ${target.centerY} H ${targetX}`);
+      });
+      bracket.prepend(svg);
+    });
+  }
+
   function render() {
     const currentUser = getCurrentUser();
     updateTopActions(currentUser);
@@ -2638,7 +2709,9 @@
     app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : state.page === 'venues' ? renderVenueFinderPage(currentUser) : showPublicHome ? renderPublicGamesPage() : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : state.page === 'auth' ? renderAuthPage() : publicGame ? renderPublicGameDetail(publicGame) : renderPublicGamesPage()}`;
     window.requestAnimationFrame(() => {
       fitTournamentBrackets();
+      drawTournamentConnectors();
       window.requestAnimationFrame(fitTournamentBrackets);
+      window.requestAnimationFrame(drawTournamentConnectors);
     });
     syncLiveRefresh();
     syncBrowserHistory();
@@ -3946,7 +4019,10 @@
     app.addEventListener('change', handleAppChange);
     app.addEventListener('input', handleAppInput);
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('resize', fitTournamentBrackets);
+    window.addEventListener('resize', () => {
+      fitTournamentBrackets();
+      window.requestAnimationFrame(drawTournamentConnectors);
+    });
     window.addEventListener('popstate', handleBrowserPopState);
   }
 
