@@ -4689,6 +4689,27 @@ button {
   font-weight: 500;
 }
 
+.tournament-bracket--split .tournament-side .tournament-player-label {
+  width: 100%;
+  max-width: calc(100% - 24px);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tournament-bracket--split .tournament-side .tournament-player-label strong,
+.tournament-bracket--split .tournament-side .tournament-player-label small {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tournament-bracket--split .tournament-side .tournament-player-label small {
+  font-size: clamp(0.48rem, 0.75vw, 0.62rem);
+  line-height: 1.15;
+}
+
 .tournament-side.is-winner {
   color: var(--primary);
   font-weight: 800;
