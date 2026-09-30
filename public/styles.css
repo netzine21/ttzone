@@ -4564,6 +4564,26 @@ button {
   border-top: 1px solid rgba(118, 240, 196, 0.55);
 }
 
+/* Bridge the final gap between each semifinal and the centered final match. */
+.tournament-bracket--split .tournament-center-bracket .tournament-round--final .tournament-match::before,
+.tournament-bracket--split .tournament-center-bracket .tournament-round--final .tournament-match::after {
+  display: block;
+  content: "";
+  position: absolute;
+  top: 25%;
+  width: 30px;
+  border-top: 1px solid rgba(118, 240, 196, 0.55);
+}
+
+.tournament-bracket--split .tournament-center-bracket .tournament-round--final .tournament-match::before {
+  left: -30px;
+}
+
+.tournament-bracket--split .tournament-center-bracket .tournament-round--final .tournament-match::after {
+  top: 75%;
+  right: -30px;
+}
+
 .tournament-bracket--split .tournament-side {
   min-width: 0;
   padding-left: 6px;
