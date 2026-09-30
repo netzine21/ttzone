@@ -364,6 +364,9 @@ async function handleApi(req, res, requestPath) {
     } catch (error) {
       console.error('방문자 접속 기록 저장 실패:', error);
     }
+    if (requestPath === '/api/access-heartbeat' && req.method === 'GET') {
+      return sendJson(res, 200, { ok: true });
+    }
     if (requestPath === '/api/auth/me' && req.method === 'GET') {
       return sendJson(res, 200, { user: publicUser(await findSession(req)) });
     }

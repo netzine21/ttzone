@@ -1,4 +1,5 @@
 (() => {
+  let accessHeartbeatTimer = null;
   const STORAGE_KEYS = {
     users: 'ttgms:v1:users',
     games: 'ttgms:v1:games',
@@ -162,6 +163,13 @@
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.error || '서버 요청에 실패했습니다.');
     return payload;
+  }
+
+  function startAccessHeartbeat() {
+    if (accessHeartbeatTimer) return;
+    const sendHeartbeat = () => { void apiRequest('/api/access-heartbeat').catch(() => {}); };
+    sendHeartbeat();
+    accessHeartbeatTimer = window.setInterval(sendHeartbeat, 30000);
   }
 
   function normalizeId(value) {
@@ -4274,6 +4282,7 @@
     const savedRoute = readSessionJson(BROWSER_ROUTE_KEY, null);
     if (savedRoute) restoreBrowserRoute(savedRoute);
     wireEvents();
+    startAccessHeartbeat();
     render();
   }
 
