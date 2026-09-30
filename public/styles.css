@@ -4593,7 +4593,8 @@ button {
 .tournament-bracket--split {
   --tournament-box-width: 132px;
   position: relative;
-  grid-template-columns: minmax(0, 1fr) var(--tournament-box-width) minmax(0, 1fr);
+  grid-template-columns: max-content var(--tournament-box-width) max-content;
+  justify-content: center;
 }
 
 .tournament-connector-layer {
@@ -4629,7 +4630,13 @@ button {
   width: var(--tournament-box-width);
 }
 
+.tournament-bracket--split .tournament-side-bracket {
+  width: max-content;
+  max-width: none;
+}
+
 .tournament-bracket--split .tournament-center-bracket {
+  flex: 0 0 var(--tournament-box-width);
   width: var(--tournament-box-width);
   justify-content: center;
 }
