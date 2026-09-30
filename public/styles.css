@@ -5234,6 +5234,12 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .tournament-panel .operation-controls.tournament-qualification-controls,
+  .tournament-print-panel .operation-controls.tournament-qualification-controls {
+    grid-template-columns: minmax(70px, 0.7fr) minmax(92px, 1fr) minmax(112px, 1.2fr) auto;
+    gap: 7px;
+  }
+
   .tournament-print-sheet__players > div {
     min-height: 78px;
     padding: 10px 6px;
@@ -5324,9 +5330,20 @@ button {
     align-items: end;
   }
 
+  .tournament-panel .operation-controls.tournament-qualification-controls,
+  .tournament-print-panel .operation-controls.tournament-qualification-controls {
+    grid-template-columns: minmax(58px, 0.62fr) minmax(76px, 0.86fr) minmax(96px, 1.15fr) auto;
+  }
+
   .tournament-qualification-controls .field label {
     font-size: 0.68rem;
     white-space: nowrap;
+  }
+
+  .tournament-qualification-controls .field select {
+    min-width: 0;
+    padding: 8px 7px;
+    font-size: 0.76rem;
   }
 
   .tournament-qualification-controls .check-line {
