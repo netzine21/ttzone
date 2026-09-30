@@ -4591,7 +4591,27 @@ button {
 }
 
 .tournament-bracket--split {
+  --tournament-box-width: 150px;
+  --tournament-side-width: 150px;
   position: relative;
+  width: max-content;
+  grid-template-columns: var(--tournament-side-width) var(--tournament-box-width) var(--tournament-side-width);
+}
+
+.tournament-bracket--size-4 {
+  --tournament-side-width: 150px;
+}
+
+.tournament-bracket--size-8 {
+  --tournament-side-width: 308px;
+}
+
+.tournament-bracket--size-16 {
+  --tournament-side-width: 466px;
+}
+
+.tournament-bracket--size-32 {
+  --tournament-side-width: 624px;
 }
 
 .tournament-connector-layer {
@@ -4615,13 +4635,33 @@ button {
 
 .tournament-bracket--split .tournament-side {
   min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
   padding-left: 6px;
   padding-right: 6px;
   font-size: clamp(0.62rem, 1.2vw, 0.82rem);
 }
 
+.tournament-bracket--split .tournament-round {
+  flex: 0 0 var(--tournament-box-width);
+  width: var(--tournament-box-width);
+}
+
+.tournament-bracket--split .tournament-side-bracket {
+  flex: 0 0 var(--tournament-side-width);
+  width: var(--tournament-side-width);
+}
+
 .tournament-bracket--split .tournament-center-bracket {
-  min-width: 0;
+  flex: 0 0 var(--tournament-box-width);
+  width: var(--tournament-box-width);
+  justify-content: center;
+}
+
+.tournament-bracket--split .tournament-center-bracket .tournament-round,
+.tournament-bracket--split .tournament-center-bracket .tournament-match {
+  width: var(--tournament-box-width);
+  box-sizing: border-box;
 }
 
 .tournament-bracket--split .tournament-side span {
@@ -4694,20 +4734,20 @@ button {
 }
 
 .tournament-bracket--split .tournament-side .tournament-player-label {
-  width: 100%;
-  max-width: calc(100% - 24px);
+  width: auto;
+  max-width: none;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .tournament-bracket--split .tournament-side .tournament-player-label strong,
 .tournament-bracket--split .tournament-side .tournament-player-label small {
   display: block;
-  max-width: 100%;
+  max-width: none;
   overflow: visible;
   text-overflow: clip;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 
 .tournament-bracket--split .tournament-side .tournament-player-label small {
