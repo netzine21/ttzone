@@ -3788,6 +3788,120 @@ button {
   margin-top: 22px;
 }
 
+.tournament-result-league {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(165, 190, 214, 0.18);
+}
+
+.tournament-result-live-heading {
+  margin: 18px auto 8px;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.tournament-result-input-panel {
+  width: min(100%, 920px);
+  margin: 22px auto 0;
+  padding: 16px;
+  border: 1px solid rgba(165, 190, 214, 0.16);
+  border-radius: 14px;
+  background: rgba(6, 13, 24, 0.38);
+}
+
+.tournament-result-input-panel .group-result-heading {
+  margin: 0 0 10px;
+}
+
+.tournament-result-input-panel .group-result-heading h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.tournament-result-input-panel .group-result-heading span {
+  color: var(--muted-2);
+  font-size: 0.72rem;
+}
+
+.tournament-result-input-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tournament-result-input-table {
+  width: 100%;
+  min-width: 640px;
+  table-layout: fixed;
+}
+
+.tournament-result-input-table th,
+.tournament-result-input-table td {
+  padding: 8px 7px;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.tournament-result-input-table th:nth-child(1),
+.tournament-result-input-table td:nth-child(1) {
+  width: 12%;
+}
+
+.tournament-result-input-table th:nth-child(2),
+.tournament-result-input-table td:nth-child(2) {
+  width: 32%;
+}
+
+.tournament-result-input-table th:nth-child(3),
+.tournament-result-input-table td:nth-child(3) {
+  width: 21%;
+}
+
+.tournament-result-input-table th:nth-child(4),
+.tournament-result-input-table td:nth-child(4) {
+  width: 23%;
+}
+
+.tournament-result-input-table th:nth-child(5),
+.tournament-result-input-table td:nth-child(5) {
+  width: 12%;
+}
+
+.tournament-result-input-table td:nth-child(2) {
+  white-space: nowrap;
+}
+
+.tournament-result-input-table td:nth-child(2) small {
+  display: inline-block;
+  margin: 0 5px;
+  color: var(--muted-2);
+  font-size: 0.68rem;
+}
+
+.tournament-result-input-table td input,
+.tournament-result-input-table td select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.tournament-result-input-table tr.is-disabled {
+  opacity: 0.62;
+}
+
+.tournament-result-status {
+  display: inline-block;
+  color: var(--muted);
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.tournament-result-status--ready {
+  color: var(--primary);
+}
+
 .tournament-qualification-card {
   margin: 0 auto 22px;
   padding: 18px 20px 20px;

@@ -1618,6 +1618,27 @@
     return `${controls}${wrapTournamentBracket(`<div class="tournament-bracket tournament-bracket--split tournament-bracket--size-${bracket.size}"><div class="tournament-side-bracket tournament-side-bracket--left">${leftRounds.map((round, index) => renderTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div><div class="tournament-center-bracket">${renderTournamentRound(finalRound, true, tournamentRoundTitle(bracket, bracket.rounds.length - 1, true), bracket.size, bracket.rounds.length - 1)}</div><div class="tournament-side-bracket tournament-side-bracket--right">${rightRounds.map((round, index) => renderTournamentRound(round, false, tournamentRoundTitle(bracket, index), bracket.size, index)).join('')}</div><p class="subtle-note tournament-bracket__note">좌·우측 각 라운드의 승자가 중앙 결승으로 진출합니다. 부전승은 자동 진출하며, 경기는 11점 5전 3선승입니다.</p></div>${renderTournamentPodium(bracket)}`)}`;
   }
 
+  function renderTournamentResultInputPanel(bracket) {
+    if (!bracket?.rounds?.length) return '<div class="empty-state">생성된 토너먼트 경기가 없습니다.</div>';
+    syncTournamentBracket(bracket);
+    const rows = bracket.rounds.flatMap((round, roundIndex) => round.map((match) => {
+      const labelA = tournamentDisplayLabel(match.sideA);
+      const labelB = tournamentDisplayLabel(match.sideB);
+      const playable = Boolean(match.sideA && match.sideB);
+      const score = String(match.result?.score || '');
+      const winner = match.result?.winner || '';
+      const status = match.round === 1 && Boolean(match.sideA) !== Boolean(match.sideB)
+        ? 'BYE'
+        : !playable
+          ? '대기'
+          : winner
+            ? '입력완료'
+            : '입력대기';
+      return `<tr class="${playable ? '' : 'is-disabled'}"><td>${escapeHtml(tournamentRoundTitle(bracket, roundIndex, roundIndex === bracket.rounds.length - 1))}</td><td><strong>${escapeHtml(labelA)}</strong><small>vs</small><strong>${escapeHtml(labelB)}</strong></td><td><input class="schedule-result-input" data-tournament-score="${escapeHtml(match.id)}" value="${escapeHtml(score)}" placeholder="세트 스코어" inputmode="numeric" ${playable ? '' : 'disabled'} /></td><td><select data-tournament-winner="${escapeHtml(match.id)}" ${playable ? '' : 'disabled'}><option value="">승자 선택</option><option value="A" ${winner === 'A' ? 'selected' : ''}>${escapeHtml(labelA)}</option><option value="B" ${winner === 'B' ? 'selected' : ''}>${escapeHtml(labelB)}</option></select></td><td><span class="tournament-result-status tournament-result-status--${playable ? 'ready' : 'pending'}">${status}</span></td></tr>`;
+    })).join('');
+    return `<section class="tournament-result-input-panel"><div class="group-result-heading"><h3>경기결과 입력</h3><span>생성된 대진표 기준</span></div><div class="schedule-table-wrap tournament-result-input-wrap"><table class="public-data-table tournament-result-input-table"><thead><tr><th>라운드</th><th>대진</th><th>세트 스코어</th><th>승자</th><th>상태</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+  }
+
   function getTournamentPrintableRound(bracket) {
     if (!bracket?.rounds?.length) return null;
     syncTournamentBracket(bracket);
@@ -1709,7 +1730,7 @@
     if (!config || (!upper && !lower)) {
       return `<div class="tournament-panel"><div class="empty-state"><strong>본선 토너먼트 대진표가 아직 생성되지 않았습니다.</strong><p>대진표 메뉴에서 본선 진출자를 결정한 뒤 대진표를 생성해 주세요.</p></div></div>`;
     }
-    return `<div class="tournament-panel"><div class="operation-controls tournament-controls tournament-results-format-control"><div class="field"><label for="operationTournamentResultFormat">경기종목</label><select id="operationTournamentResultFormat" data-operation-format>${formats.map((item) => `<option value="${escapeHtml(item)}" ${item === format ? 'selected' : ''}>${escapeHtml(FORMAT_LABELS[item])}</option>`).join('')}</select></div></div>${upper ? `<section class="tournament-league"><div class="group-result-heading"><div><p class="section-kicker">상위리그 토너먼트 경기결과 입력</p><h2>${escapeHtml(String(upper.entries.length))}명/팀</h2></div><span class="subtle-note">${escapeHtml(String(upper.size))}강</span></div>${renderTournamentBracket(upper)}<div class="button-row group-save-row"><button type="button" class="btn btn-secondary" data-save-tournament="upper">${completionLabel || '상위리그 경기결과 저장'}</button></div></section>` : ''}${lower ? `<section class="tournament-league"><div class="group-result-heading"><div><p class="section-kicker">하위리그 토너먼트 경기결과 입력</p><h2>${escapeHtml(String(lower.entries.length))}명/팀</h2></div><span class="subtle-note">${escapeHtml(String(lower.size))}강</span></div>${renderTournamentBracket(lower)}<div class="button-row group-save-row"><button type="button" class="btn btn-secondary" data-save-tournament="lower">${completionLabel || '하위리그 경기결과 저장'}</button></div></section>` : ''}</div>`;
+    return `<div class="tournament-panel"><div class="operation-controls tournament-controls tournament-results-format-control"><div class="field"><label for="operationTournamentResultFormat">경기종목</label><select id="operationTournamentResultFormat" data-operation-format>${formats.map((item) => `<option value="${escapeHtml(item)}" ${item === format ? 'selected' : ''}>${escapeHtml(FORMAT_LABELS[item])}</option>`).join('')}</select></div></div>${upper ? `<section class="tournament-league tournament-result-league"><div class="group-result-heading"><div><p class="section-kicker">상위리그 본선 토너먼트 경기결과</p><h2>${escapeHtml(String(upper.entries.length))}명/팀</h2></div><span class="subtle-note">${escapeHtml(String(upper.size))}강</span></div><div class="tournament-result-live-heading">전체 토너먼트 대진표</div>${renderPublicTournamentBracket(upper)}${renderTournamentResultInputPanel(upper)}<div class="button-row group-save-row"><button type="button" class="btn btn-secondary" data-save-tournament="upper">${completionLabel || '상위리그 경기결과 저장'}</button></div></section>` : ''}${lower ? `<section class="tournament-league tournament-result-league"><div class="group-result-heading"><div><p class="section-kicker">하위리그 본선 토너먼트 경기결과</p><h2>${escapeHtml(String(lower.entries.length))}명/팀</h2></div><span class="subtle-note">${escapeHtml(String(lower.size))}강</span></div><div class="tournament-result-live-heading">전체 토너먼트 대진표</div>${renderPublicTournamentBracket(lower)}${renderTournamentResultInputPanel(lower)}<div class="button-row group-save-row"><button type="button" class="btn btn-secondary" data-save-tournament="lower">${completionLabel || '하위리그 경기결과 저장'}</button></div></section>` : ''}</div>`;
   }
 
   function renderOperationsPage(currentUser, embedded = false) {
