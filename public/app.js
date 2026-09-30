@@ -1985,6 +1985,7 @@
       bracket.rounds.flat().forEach((match) => {
         const scoreInput = document.querySelector(`[data-tournament-score="${CSS.escape(match.id)}"]`);
         const winnerInput = document.querySelector(`[data-tournament-winner="${CSS.escape(match.id)}"]`);
+        if (scoreInput) syncTournamentWinnerFromScore(scoreInput);
         if (scoreInput || winnerInput) match.result = { score: trimValue(scoreInput?.value), winner: winnerInput?.value || '' };
       });
       syncTournamentBracket(bracket);
@@ -2034,6 +2035,7 @@
     if (!targetMatch || tournaments[targetLeague]?.completed) return;
     const scoreInput = document.querySelector(`[data-tournament-score="${CSS.escape(matchId)}"]`);
     const winnerInput = document.querySelector(`[data-tournament-winner="${CSS.escape(matchId)}"]`);
+    if (scoreInput) syncTournamentWinnerFromScore(scoreInput);
     targetMatch.result = { score: trimValue(scoreInput?.value), winner: winnerInput?.value || '' };
     ['upper', 'lower'].forEach((league) => {
       if (tournaments[league]) syncTournamentBracket(tournaments[league]);
@@ -2064,6 +2066,18 @@
     if (!input.matches('[data-match-score]')) return;
     const score = input.value.match(/^(\d+)\s*:\s*(\d+)$/);
     const winnerInput = document.querySelector(`[data-match-winner="${CSS.escape(input.dataset.matchScore)}"]`);
+    if (!winnerInput) return;
+    if (!score || score[1] === score[2]) {
+      winnerInput.value = '';
+      return;
+    }
+    winnerInput.value = Number(score[1]) > Number(score[2]) ? 'A' : 'B';
+  }
+
+  function syncTournamentWinnerFromScore(input) {
+    if (!input.matches('[data-tournament-score]')) return;
+    const score = input.value.match(/^(\d+)\s*:\s*(\d+)$/);
+    const winnerInput = document.querySelector(`[data-tournament-winner="${CSS.escape(input.dataset.tournamentScore)}"]`);
     if (!winnerInput) return;
     if (!score || score[1] === score[2]) {
       winnerInput.value = '';
@@ -3943,6 +3957,8 @@
       if (input.matches('[data-match-score]')) {
         syncScheduleWinnerFromScore(input);
         queueScheduleResultsSave();
+      } else if (input.matches('[data-tournament-score]')) {
+        syncTournamentWinnerFromScore(input);
       }
       return;
     }
