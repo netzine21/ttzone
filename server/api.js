@@ -7,6 +7,7 @@ const SESSION_COOKIE = 'ttgms_session';
 const SESSION_DAYS = 30;
 let gameStateColumnsPromise = null;
 let accessColumnsPromise = null;
+let regionColumnsPromise = null;
 let venueColumnsPromise = null;
 
 async function ensureVenueColumns() {
@@ -27,9 +28,7 @@ async function ensureVenueColumns() {
        create unique index if not exists venues_name_address_key
          on public.venues (lower(name), lower(address));
        alter table public.venues
-         add column if not exists phone text,
-         add column if not exists region_sido text,
-         add column if not exists region_sigungu text;
+         add column if not exists phone text;
        alter table public.games
          add column if not exists venue_id uuid references public.venues(id) on delete set null,
          add column if not exists venue_name text,
@@ -44,15 +43,24 @@ async function ensureAccessColumns() {
   if (!accessColumnsPromise) {
     accessColumnsPromise = getPool().query(
       `alter table public.users
-         add column if not exists role text not null default 'user',
-         add column if not exists region_sido text,
-         add column if not exists region_sigungu text;
+         add column if not exists role text not null default 'user';
        alter table public.games
          add column if not exists deleted_at timestamptz,
          add column if not exists deleted_by uuid references public.users(id) on delete set null`
     );
   }
   return accessColumnsPromise;
+}
+
+async function ensureRegionColumns() {
+  if (!regionColumnsPromise) {
+    regionColumnsPromise = getPool().query(
+      `alter table public.users
+         add column if not exists region_sido text,
+         add column if not exists region_sigungu text`
+    );
+  }
+  return regionColumnsPromise;
 }
 
 async function ensureGameStateColumns() {
@@ -499,7 +507,7 @@ async function handleApi(req, res, requestPath) {
     }
 
     if (requestPath === '/api/auth/signup' && req.method === 'POST') {
-      await ensureAccessColumns();
+      await ensureRegionColumns();
       const body = await readBody(req);
       const nickname = String(body.nickname || '').trim();
       const memberId = String(body.memberId || '').trim().toLowerCase();
@@ -544,7 +552,7 @@ async function handleApi(req, res, requestPath) {
     }
 
     if (requestPath === '/api/auth/profile' && req.method === 'PATCH') {
-      await ensureAccessColumns();
+      await ensureRegionColumns();
       const user = await findSession(req);
       if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
       const body = await readBody(req);
