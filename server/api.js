@@ -7,6 +7,8 @@ const SESSION_COOKIE = 'ttgms_session';
 const SESSION_DAYS = 30;
 let gameStateColumnsPromise = null;
 let accessColumnsPromise = null;
+let gameAccessColumnsPromise = null;
+let gameVenueColumnsPromise = null;
 let regionColumnsPromise = null;
 let venueColumnsPromise = null;
 
@@ -28,28 +30,44 @@ async function ensureVenueColumns() {
        create unique index if not exists venues_name_address_key
          on public.venues (lower(name), lower(address));
        alter table public.venues
-         add column if not exists phone text;
-       alter table public.games
+         add column if not exists phone text`
+    );
+  }
+  return venueColumnsPromise;
+}
+
+async function ensureGameVenueColumns() {
+  if (!gameVenueColumnsPromise) {
+    gameVenueColumnsPromise = getPool().query(
+      `alter table public.games
          add column if not exists venue_id uuid references public.venues(id) on delete set null,
          add column if not exists venue_name text,
          add column if not exists venue_address text,
          add column if not exists venue_phone text`
     );
   }
-  return venueColumnsPromise;
+  return gameVenueColumnsPromise;
 }
 
 async function ensureAccessColumns() {
   if (!accessColumnsPromise) {
     accessColumnsPromise = getPool().query(
       `alter table public.users
-         add column if not exists role text not null default 'user';
-       alter table public.games
+         add column if not exists role text not null default 'user'`
+    );
+  }
+  return accessColumnsPromise;
+}
+
+async function ensureGameAccessColumns() {
+  if (!gameAccessColumnsPromise) {
+    gameAccessColumnsPromise = getPool().query(
+      `alter table public.games
          add column if not exists deleted_at timestamptz,
          add column if not exists deleted_by uuid references public.users(id) on delete set null`
     );
   }
-  return accessColumnsPromise;
+  return gameAccessColumnsPromise;
 }
 
 async function ensureRegionColumns() {
@@ -244,8 +262,10 @@ function requirePool() {
 async function getGames(viewerId = null) {
   const pool = requirePool();
   await ensureAccessColumns();
+  await ensureGameAccessColumns();
   await ensureGameStateColumns();
   await ensureVenueColumns();
+  await ensureGameVenueColumns();
   const games = await pool.query(
     `select g.*, u.nickname as operator_nickname, u.phone as operator_phone
        from public.games g
@@ -591,6 +611,7 @@ async function handleApi(req, res, requestPath) {
 
     if (requestPath === '/api/games' && req.method === 'POST') {
       await ensureVenueColumns();
+      await ensureGameVenueColumns();
       const user = await findSession(req);
       if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
       const body = await readBody(req);
@@ -637,6 +658,7 @@ async function handleApi(req, res, requestPath) {
     const gameUpdateMatch = requestPath.match(/^\/api\/games\/([^/]+)$/);
     if (gameUpdateMatch && ['PATCH', 'PUT'].includes(req.method)) {
       await ensureVenueColumns();
+      await ensureGameVenueColumns();
       const user = await findSession(req);
       if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
       const body = await readBody(req);
@@ -1045,6 +1067,7 @@ async function handleApi(req, res, requestPath) {
     }
 
     if (gameUpdateMatch && req.method === 'DELETE') {
+      await ensureGameAccessColumns();
       const user = await findSession(req);
       if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
       const gameId = gameUpdateMatch[1];
