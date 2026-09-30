@@ -5876,6 +5876,7 @@ button {
     display: block !important;
     visibility: visible !important;
     width: 100%;
+    padding-top: 12mm;
     margin: 0;
     color: #111;
   }
@@ -5983,16 +5984,19 @@ button {
   body.is-printing-tournament .tournament-print-sheet__title,
   body.is-printing-tournament .tournament-print-sheet__result-title {
     border-color: #222;
+    border-width: 1px;
     color: #111;
   }
 
   body.is-printing-tournament .tournament-print-sheet__result-row > div {
     border-color: #222;
+    border-width: 1px;
     color: #111;
   }
 
   body.is-printing-tournament .tournament-print-sheet__players > div {
     border-color: #222;
+    border-width: 1px;
   }
 
   body.is-printing-tournament .tournament-print-sheet__players span,
@@ -6002,7 +6006,8 @@ button {
 
   body.is-printing-tournament .tournament-print-score-table th,
   body.is-printing-tournament .tournament-print-score-table td {
-    border-color: #555;
+    border-color: #222;
+    border-width: 1px;
     color: #111;
   }
 
