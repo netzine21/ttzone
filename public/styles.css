@@ -4591,10 +4591,7 @@ button {
 }
 
 .tournament-bracket--split {
-  --tournament-box-width: 132px;
   position: relative;
-  grid-template-columns: max-content var(--tournament-box-width) max-content;
-  justify-content: center;
 }
 
 .tournament-connector-layer {
@@ -4618,33 +4615,13 @@ button {
 
 .tournament-bracket--split .tournament-side {
   min-width: 0;
-  width: var(--tournament-box-width);
-  box-sizing: border-box;
   padding-left: 6px;
   padding-right: 6px;
   font-size: clamp(0.62rem, 1.2vw, 0.82rem);
 }
 
-.tournament-bracket--split .tournament-round {
-  flex: 0 0 var(--tournament-box-width);
-  width: var(--tournament-box-width);
-}
-
-.tournament-bracket--split .tournament-side-bracket {
-  width: max-content;
-  max-width: none;
-}
-
 .tournament-bracket--split .tournament-center-bracket {
-  flex: 0 0 var(--tournament-box-width);
-  width: var(--tournament-box-width);
-  justify-content: center;
-}
-
-.tournament-bracket--split .tournament-center-bracket .tournament-round,
-.tournament-bracket--split .tournament-center-bracket .tournament-match {
-  width: var(--tournament-box-width);
-  box-sizing: border-box;
+  min-width: 0;
 }
 
 .tournament-bracket--split .tournament-side span {
