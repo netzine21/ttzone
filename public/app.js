@@ -2548,7 +2548,7 @@
       liveRefreshTimer = null;
       return;
     }
-    if (!liveRefreshTimer) liveRefreshTimer = window.setInterval(refreshLiveResults, 5000);
+    if (!liveRefreshTimer) liveRefreshTimer = window.setInterval(refreshLiveResults, 30000);
   }
 
   function fitTournamentBrackets() {
