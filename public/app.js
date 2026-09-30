@@ -1630,10 +1630,7 @@
       .join('');
     const lowerEnabled = config ? config.lowerEnabled === true : true;
     const qualification = config ? getTournamentQualificationEntries(game, format, selectedAdvance, lowerEnabled) : null;
-    const availableLeagues = config ? ['upper', 'lower'] : [];
-    const league = availableLeagues.includes(state.operationTournamentLeague) ? state.operationTournamentLeague : availableLeagues[0];
-    const bracket = config?.[league];
-    const printPerPage = [1, 2, 4].includes(Number(state.tournamentPrintPerPage)) ? Number(state.tournamentPrintPerPage) : 2;
+    const availableLeagues = config ? ['upper', 'lower'].filter((leagueName) => config[leagueName]) : [];
     const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소">−</button><span>${Math.round((state.tournamentZoom || 1) * 100)}%</span><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대">+</button><button type="button" class="game-list-action" data-tournament-zoom="reset">전체 보기</button></div>`;
     const qualificationPreview = qualification
       ? `${renderTournamentQualificationList('상위리그 본선 진출자', qualification.upperEntries)}${lowerEnabled ? renderTournamentQualificationList('하위리그 본선 진출자', qualification.lowerEntries) : ''}`
@@ -1643,8 +1640,10 @@
     const generationEntries = qualification?.[generationLeague === 'lower' ? 'lowerEntries' : 'upperEntries'] || [];
     const generationSection = `<section class="tournament-bracket-generation-card"><h3>본선 대진표 생성</h3><div class="operation-controls tournament-controls tournament-bracket-generation-controls"><div class="field"><label for="tournamentGenerateLeague">생성리그</label><select id="tournamentGenerateLeague" data-tournament-generate-league>${generationOptions}</select></div><div class="field"><label for="tournamentGenerateRound">Round</label><input id="tournamentGenerateRound" type="text" value="${escapeHtml(tournamentRoundLabel(generationEntries.length))}" readonly aria-readonly="true" /></div></div><div class="button-row tournament-bracket-generate-row"><button type="button" class="game-list-action game-list-action--primary" data-generate-tournament ${qualification ? '' : 'disabled'}><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"></path><circle cx="12" cy="12" r="8"></circle></svg><span>대진표 생성</span></button></div></section>`;
     const setup = `<section class="tournament-qualification-card"><h3>본선진출자 결정</h3><div class="operation-controls tournament-controls tournament-qualification-controls"><div class="field"><label for="operationTournamentPrintFormat">경기종목</label><select id="operationTournamentPrintFormat" data-operation-format>${formats.map((item) => `<option value="${escapeHtml(item)}" ${item === format ? 'selected' : ''}>${escapeHtml(FORMAT_LABELS[item])}</option>`).join('')}</select></div><div class="field"><label for="tournamentPrintAdvanceCount">본선진출순위</label><select id="tournamentPrintAdvanceCount" data-tournament-advance>${advanceOptions}</select></div><label class="check-line tournament-lower-option"><span>하위리그 진행</span><input type="checkbox" data-tournament-lower ${lowerEnabled ? 'checked' : ''} /></label><button type="button" class="game-list-action game-list-action--primary tournament-qualification-action" data-decide-tournament ${standings.length ? '' : 'disabled'}><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"></path><circle cx="12" cy="12" r="8"></circle></svg><span>본선진출자 결정</span></button></div></section>${!standings.length ? '<div class="empty-state">먼저 조편성과 예선리그 경기결과를 완료해 주세요.</div>' : `${qualificationPreview}${generationSection}`}`;
-    const outputControls = `<div class="operation-controls tournament-controls tournament-print-output-controls">${availableLeagues.length > 1 ? `<div class="field"><label for="operationTournamentLeague">출력할 리그</label><select id="operationTournamentLeague" data-tournament-league><option value="upper" ${league === 'upper' ? 'selected' : ''}>상위리그 대진표</option><option value="lower" ${league === 'lower' ? 'selected' : ''}>하위리그 대진표</option></select></div>` : ''}<div class="field"><label for="tournamentPrintPerPage">페이지당 경기 수</label><select id="tournamentPrintPerPage" data-tournament-print-count><option value="1" ${printPerPage === 1 ? 'selected' : ''}>1경기</option><option value="2" ${printPerPage === 2 ? 'selected' : ''}>2경기</option><option value="4" ${printPerPage === 4 ? 'selected' : ''}>4경기</option></select></div><button type="button" class="btn btn-primary" data-print-tournament ${bracket ? '' : 'disabled'}>${league === 'lower' ? '하위리그 현재 라운드 인쇄' : '상위리그 현재 라운드 인쇄'}</button></div>`;
-    return `<div class="tournament-print-panel">${setup}${bracket ? `<div class="tournament-print-selected-league"><strong>${league === 'lower' ? '하위리그' : '상위리그'} 대진표</strong><span>현재 선택한 리그만 인쇄됩니다.</span></div>${outputControls}${controls}${renderTournamentPrintSheet(bracket, format, league)}` : `<div class="tournament-print-output-placeholder"><strong>본선 대진표 출력</strong><p>진출자를 결정한 뒤 본선 대진표를 생성하면 출력할 수 있습니다.</p></div>`}</div>`;
+    const bracketOutput = availableLeagues.length
+      ? `${controls}${availableLeagues.map((leagueName) => `<section class="tournament-print-league"><div class="tournament-print-league__heading"><strong>${leagueName === 'lower' ? '하위리그' : '상위리그'} 대진표</strong><button type="button" class="game-list-action game-list-action--primary tournament-print-league__button" data-print-tournament="${leagueName}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V4h12v5M6 18H4V10h16v8h-2M8 14h8v6H8z"></path></svg><span>대진표 인쇄</span></button></div><div data-tournament-print-sheet="${leagueName}">${renderTournamentPrintSheet(config[leagueName], format, leagueName)}</div></section>`).join('')}`
+      : '';
+    return `<div class="tournament-print-panel">${setup}${bracketOutput}</div>`;
   }
 
   function getTournamentConfig(game, format) {
@@ -2121,27 +2120,24 @@
     window.print();
   }
 
-  function handlePrintTournament() {
+  function handlePrintTournament(printButton = null) {
     const currentUser = getCurrentUser();
     const game = state.games.find((item) => item.id === state.operationGameId);
     const format = state.operationFormat;
     const config = getTournamentConfig(game, format);
-    const league = document.querySelector('[data-tournament-league]')?.value || state.operationTournamentLeague || 'upper';
+    const league = printButton?.dataset.printTournament || 'upper';
     const bracket = config?.[league];
-    const sheetList = bracket ? document.querySelector('.tournament-print-sheet-list') : null;
+    const sheetContainer = bracket ? document.querySelector(`[data-tournament-print-sheet="${league}"]`) : null;
+    const sheetList = sheetContainer?.querySelector('.tournament-print-sheet-list');
     if (!currentUser || !game || game.operatorId !== currentUser.id || !sheetList) return;
     const printRoot = document.createElement('div');
     printRoot.id = 'tournament-print-root';
     printRoot.className = 'tournament-print-root';
-    const printPerPage = [1, 2, 4].includes(Number(state.tournamentPrintPerPage)) ? Number(state.tournamentPrintPerPage) : 2;
-    printRoot.dataset.printCount = String(printPerPage);
     printRoot.innerHTML = sheetList.outerHTML;
     document.body.appendChild(printRoot);
     const cleanup = () => {
       document.body.classList.remove('is-printing-tournament');
-      delete document.body.dataset.printCount;
     };
-    document.body.dataset.printCount = String(printPerPage);
     document.body.classList.add('is-printing-tournament');
     window.addEventListener('afterprint', () => {
       cleanup();
@@ -3481,7 +3477,7 @@
 
     const printTournamentButton = event.target.closest('[data-print-tournament]');
     if (printTournamentButton) {
-      handlePrintTournament();
+      handlePrintTournament(printTournamentButton);
       return;
     }
 

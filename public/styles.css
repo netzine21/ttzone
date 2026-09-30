@@ -4079,6 +4079,37 @@ button {
   grid-template-columns: 1.1fr 0.85fr 0.7fr 0.7fr auto;
 }
 
+.tournament-print-league {
+  margin-top: 22px;
+  padding: 16px 18px 20px;
+  border: 1px solid rgba(165, 190, 214, 0.2);
+  border-radius: 16px;
+  background: rgba(6, 13, 24, 0.36);
+}
+
+.tournament-print-league__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tournament-print-league__heading strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.tournament-print-league__button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 7px 12px;
+  font-size: 0.78rem;
+}
+
+.tournament-print-league > [data-tournament-print-sheet] {
+  margin-top: 14px;
+}
+
 .tournament-print-sheet-list {
   display: grid;
   gap: 24px;
@@ -5489,6 +5520,24 @@ button {
     min-width: 0;
     padding: 8px 7px;
     font-size: 0.76rem;
+  }
+
+  .tournament-print-league {
+    padding: 14px 10px 16px;
+  }
+
+  .tournament-print-league__heading {
+    gap: 6px;
+  }
+
+  .tournament-print-league__heading strong {
+    font-size: 0.84rem;
+  }
+
+  .tournament-print-league__button {
+    min-height: 32px;
+    padding: 6px 8px;
+    font-size: 0.7rem;
   }
 }
 
