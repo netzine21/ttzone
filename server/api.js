@@ -195,6 +195,7 @@ function publicUser(row) {
 
 function publicGame(row, formats = [], registrations = [], viewerId = null) {
   const isOwner = viewerId && String(row.operator_id) === String(viewerId);
+  const locationParts = String(row.location || '').split(' · ');
   const qualifyingGroups = row.qualifying_groups || {};
   const visibleQualifyingGroups = Object.fromEntries(Object.entries(qualifyingGroups).map(([format, setup]) => [
     format,
@@ -205,8 +206,8 @@ function publicGame(row, formats = [], registrations = [], viewerId = null) {
     title: row.title,
     location: row.location,
     venueId: row.venue_id || null,
-    venueName: row.venue_name || row.location,
-    venueAddress: row.venue_address || '',
+    venueName: row.venue_name || locationParts[0] || row.location,
+    venueAddress: row.venue_address || locationParts.slice(1).join(' · '),
     venuePhone: row.venue_phone || '',
     formats,
     format: formats[0] || null,
