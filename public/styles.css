@@ -3792,6 +3792,64 @@ button {
   grid-template-columns: 1.2fr 0.9fr 0.75fr auto auto auto;
 }
 
+.tournament-qualification-controls {
+  grid-template-columns: minmax(120px, 0.7fr) minmax(180px, 1.2fr) auto auto;
+  align-items: end;
+}
+
+.tournament-qualification-controls .check-line {
+  align-self: center;
+  white-space: nowrap;
+}
+
+.tournament-qualification-list {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid rgba(165, 190, 214, 0.14);
+  border-radius: 14px;
+  background: rgba(6, 13, 24, 0.42);
+}
+
+.tournament-qualification-list .group-result-heading {
+  margin: 0 0 10px;
+}
+
+.tournament-qualification-list ol {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 7px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tournament-qualification-list li {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.tournament-qualification-list li strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tournament-qualification-list li small {
+  color: var(--muted-2);
+  white-space: nowrap;
+}
+
+.tournament-bracket-generate-row {
+  justify-content: center;
+  margin-top: 18px;
+}
+
 .tournament-podium {
   width: min(100%, 720px);
   margin: 22px auto 8px;
@@ -5258,6 +5316,21 @@ button {
 
   .qualifying-group {
     padding: 10px 8px;
+  }
+
+  .tournament-qualification-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+  }
+
+  .tournament-qualification-controls .check-line,
+  .tournament-qualification-controls > button {
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
+
+  .tournament-qualification-list ol {
+    grid-template-columns: 1fr;
   }
 }
 

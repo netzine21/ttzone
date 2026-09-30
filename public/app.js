@@ -1642,6 +1642,24 @@
     return matches.length > 0 && matches.every((match) => match.result?.winner && /^(\d+)\s*[-:]\s*(\d+)$/.test(String(match.result.score || '')));
   }
 
+  function getTournamentQualificationEntries(game, format, advancePerGroup, lowerEnabled = true) {
+    const standings = getQualifyingStandings(game, format);
+    const upperEntries = standings.flatMap((group) => group.standings
+      .slice(0, advancePerGroup)
+      .map((record) => ({ ...record.player, qualificationRank: record.rank, sourceGroup: group.name })));
+    const lowerEntries = lowerEnabled
+      ? standings.flatMap((group) => group.standings
+        .slice(advancePerGroup)
+        .map((record) => ({ ...record.player, qualificationRank: record.rank, sourceGroup: group.name })))
+      : [];
+    return { standings, upperEntries, lowerEntries };
+  }
+
+  function renderTournamentQualificationList(title, entries) {
+    if (!entries.length) return `<section class="tournament-qualification-list"><h3>${escapeHtml(title)}</h3><p class="empty-state">해당 진출자가 없습니다.</p></section>`;
+    return `<section class="tournament-qualification-list"><div class="group-result-heading"><h3>${escapeHtml(title)}</h3><span>${entries.length}명/팀</span></div><ol>${entries.map((entry) => `<li><span class="rank-badge rank-badge--${entry.qualificationRank || 'pending'}">${entry.qualificationRank || '-'}위</span><strong>${escapeHtml(tournamentLabel(entry))}</strong><small>${escapeHtml(entry.sourceGroup || '')}</small></li>`).join('')}</ol></section>`;
+  }
+
   function renderTournamentOperationPanel(games, game, formats, format) {
     const standings = getQualifyingStandings(game, format);
     const config = getTournamentConfig(game, format);
@@ -1649,9 +1667,14 @@
     const lower = config?.lower;
     const defaultAdvance = Math.max(1, ...standings.map((group) => group.standings.length)) >= 2 ? 2 : 1;
     const selectedAdvance = Math.min(4, Math.max(1, Number.parseInt(config?.advancePerGroup || document.querySelector('[data-tournament-advance]')?.value, 10) || defaultAdvance));
-    const advanceOptions = [1, 2, 3, 4].filter((rank) => rank <= Math.max(1, ...standings.map((group) => group.standings.length))).map((rank) => `<option value="${rank}" ${rank === selectedAdvance ? 'selected' : ''}>${rank}등</option>`).join('');
+    const advanceOptions = Array.from({ length: Math.max(1, ...standings.map((group) => group.standings.length)) }, (_, index) => index + 1).map((rank) => `<option value="${rank}" ${rank === selectedAdvance ? 'selected' : ''}>${rank}등</option>`).join('');
     const completionLabel = isTournamentComplete(config) ? '토너먼트 종료 및 저장' : '';
-    return `<div class="tournament-panel"><div class="operation-controls tournament-controls"><div class="field"><label for="operationTournamentGame">게임</label><select id="operationTournamentGame" data-operation-game>${games.map((item) => `<option value="${escapeHtml(item.id)}" ${item.id === game.id ? 'selected' : ''}>${escapeHtml(item.title)}</option>`).join('')}</select></div><div class="field"><label for="operationTournamentFormat">경기종목</label><select id="operationTournamentFormat" data-operation-format>${formats.map((item) => `<option value="${escapeHtml(item)}" ${item === format ? 'selected' : ''}>${escapeHtml(FORMAT_LABELS[item])}</option>`).join('')}</select></div><div class="field"><label for="tournamentAdvanceCount">조별 진출 등수</label><select id="tournamentAdvanceCount" data-tournament-advance>${advanceOptions}</select></div><label class="check-line"><input type="checkbox" data-tournament-upper ${config?.upperEnabled !== false ? 'checked' : ''} /> 상위리그</label><label class="check-line"><input type="checkbox" data-tournament-lower ${config ? (config.lowerEnabled ? 'checked' : '') : 'checked'} /> 하위리그</label><button type="button" class="btn btn-primary" data-generate-tournament>토너먼트 구성</button></div><div class="operation-note operation-note--tournament">예선리그 조별 순위 기준으로 진출자를 자동 선발합니다. 상위리그와 하위리그를 선택해 토너먼트를 구성합니다.</div>${!standings.length ? '<div class="empty-state">먼저 조편성과 예선리그 경기결과를 완료해 주세요.</div>' : ''}${standings.length && !config ? '<div class="empty-state">예선 순위가 확정되었습니다. 상위리그와 하위리그가 기본 선택되어 있습니다. 토너먼트 구성 버튼을 눌러 대진표를 생성해 주세요.</div>' : ''}${upper ? `<section class="tournament-league"><div class="group-result-heading"><div><p class="section-kicker">상위리그 토너먼트 대진표 및 경기결과</p><h2>${escapeHtml(String(upper.entries.length))}명/팀</h2></div><span class="subtle-note">${escapeHtml(String(upper.size))}강</span></div>${renderTournamentBracket(upper)}<div class="button-row group-save-row"><button type="button" class="btn btn-secondary" data-save-tournament="upper">${completionLabel || '상위리그 경기결과 저장'}</button></div></section>` : ''}${lower ? `<section class="tournament-league"><div class="group-result-heading"><div><p class="section-kicker">하위리그 토너먼트 대진표 및 경기결과</p><h2>${escapeHtml(String(lower.entries.length))}명/팀</h2></div><span class="subtle-note">${escapeHtml(String(lower.size))}강</span></div>${renderTournamentBracket(lower)}<div class="button-row group-save-row"><button type="button" class="btn btn-secondary" data-save-tournament="lower">${completionLabel || '하위리그 경기결과 저장'}</button></div></section>` : ''}</div>`;
+    const lowerEnabled = config ? config.lowerEnabled === true : true;
+    const qualification = config ? getTournamentQualificationEntries(game, format, selectedAdvance, lowerEnabled) : null;
+    const qualificationPreview = qualification
+      ? `${renderTournamentQualificationList('상위리그 본선 진출자', qualification.upperEntries)}${lowerEnabled ? renderTournamentQualificationList('하위리그 본선 진출자', qualification.lowerEntries) : ''}`
+      : '';
+    return `<div class="tournament-panel"><div class="operation-controls tournament-controls tournament-qualification-controls"><div class="field"><label for="operationTournamentFormat">경기종목</label><select id="operationTournamentFormat" data-operation-format>${formats.map((item) => `<option value="${escapeHtml(item)}" ${item === format ? 'selected' : ''}>${escapeHtml(FORMAT_LABELS[item])}</option>`).join('')}</select></div><div class="field"><label for="tournamentAdvanceCount">상위리그 본선 진출순위</label><select id="tournamentAdvanceCount" data-tournament-advance>${advanceOptions}</select></div><label class="check-line"><input type="checkbox" data-tournament-lower ${lowerEnabled ? 'checked' : ''} /> 하위리그 토너먼트 진행</label><button type="button" class="btn btn-primary" data-decide-tournament>본선진출자 결정</button></div>${!standings.length ? '<div class="empty-state">먼저 조편성과 예선리그 경기결과를 완료해 주세요.</div>' : ''}${standings.length ? `<div class="operation-note operation-note--tournament">예선리그 순위를 기준으로 본선 진출자를 결정합니다.</div>${qualificationPreview}${qualification ? '<div class="button-row tournament-bracket-generate-row"><button type="button" class="btn btn-secondary" data-generate-tournament>본선 대진표 생성</button></div>' : ''}` : ''}${upper ? `<section class="tournament-league"><div class="group-result-heading"><div><p class="section-kicker">상위리그 토너먼트 대진표 및 경기결과</p><h2>${escapeHtml(String(upper.entries.length))}명/팀</h2></div><span class="subtle-note">${escapeHtml(String(upper.size))}강</span></div>${renderTournamentBracket(upper)}<div class="button-row group-save-row"><button type="button" class="btn btn-secondary" data-save-tournament="upper">${completionLabel || '상위리그 경기결과 저장'}</button></div></section>` : ''}${lower ? `<section class="tournament-league"><div class="group-result-heading"><div><p class="section-kicker">하위리그 토너먼트 대진표 및 경기결과</p><h2>${escapeHtml(String(lower.entries.length))}명/팀</h2></div><span class="subtle-note">${escapeHtml(String(lower.size))}강</span></div>${renderTournamentBracket(lower)}<div class="button-row group-save-row"><button type="button" class="btn btn-secondary" data-save-tournament="lower">${completionLabel || '하위리그 경기결과 저장'}</button></div></section>` : ''}</div>`;
   }
 
   function renderOperationsPage(currentUser, embedded = false) {
@@ -1789,13 +1812,58 @@
     render();
   }
 
+  async function handleDecideTournamentQualification() {
+    const currentUser = getCurrentUser();
+    const game = state.games.find((item) => item.id === state.operationGameId);
+    const format = state.operationFormat;
+    const advancePerGroup = Number.parseInt(document.querySelector('[data-tournament-advance]')?.value, 10);
+    const lowerEnabled = Boolean(document.querySelector('[data-tournament-lower]')?.checked);
+    const standings = game ? getQualifyingStandings(game, format) : [];
+    const preliminaryMatches = game?.preliminaryMatches?.[format]?.matches || [];
+    const maxGroupSize = Math.max(0, ...standings.map((group) => group.standings.length));
+    if (!currentUser || !game || game.operatorId !== currentUser.id || !format) return;
+    if (!standings.length || !preliminaryMatches.length || preliminaryMatches.some((match) => !match.result?.winner || !/^(\d+)\s*[-:]\s*(\d+)$/.test(String(match.result.score || '')))) {
+      setFlash('예선리그 모든 경기결과를 먼저 입력하고 저장해 주세요.', 'error');
+      render();
+      return;
+    }
+    if (!Number.isInteger(advancePerGroup) || advancePerGroup < 1 || advancePerGroup > maxGroupSize) {
+      setFlash(`상위리그 본선 진출순위는 1등부터 ${maxGroupSize}등까지 선택할 수 있습니다.`, 'error');
+      render();
+      return;
+    }
+    const previousConfig = getTournamentConfig(game, format);
+    if ((previousConfig?.upper || previousConfig?.lower) && !window.confirm('본선 진출 기준을 다시 결정하면 기존 본선 대진표와 결과가 초기화됩니다. 계속할까요?')) return;
+    game.tournaments = game.tournaments || {};
+    game.tournaments[format] = {
+      format,
+      advancePerGroup,
+      upperEnabled: true,
+      lowerEnabled,
+      qualificationConfirmed: true,
+      upper: null,
+      lower: null,
+      decidedAt: new Date().toISOString(),
+    };
+    try {
+      await apiRequest(`/api/games/${encodeURIComponent(game.id)}/tournaments`, {
+        method: 'PATCH',
+        body: JSON.stringify({ format, tournament: game.tournaments[format] }),
+      });
+      await loadState();
+      setFlash(`${FORMAT_LABELS[format]} 본선 진출자가 결정되었습니다.`, 'success');
+    } catch (error) {
+      setFlash(error.message || '본선 진출자 결정 저장에 실패했습니다.', 'error');
+    }
+    render();
+  }
+
   async function handleGenerateTournament() {
     const currentUser = getCurrentUser();
     const game = state.games.find((item) => item.id === state.operationGameId);
     const format = state.operationFormat;
     const standings = game ? getQualifyingStandings(game, format) : [];
     const advancePerGroup = Number.parseInt(document.querySelector('[data-tournament-advance]')?.value, 10);
-    const upperEnabled = Boolean(document.querySelector('[data-tournament-upper]')?.checked);
     const lowerEnabled = Boolean(document.querySelector('[data-tournament-lower]')?.checked);
     const preliminaryMatches = game?.preliminaryMatches?.[format]?.matches || [];
     if (!currentUser || !game || game.operatorId !== currentUser.id || !format) return;
@@ -1805,24 +1873,19 @@
       return;
     }
     const maxGroupSize = Math.max(...standings.map((group) => group.standings.length));
-    const maxAdvancePerGroup = Math.min(4, maxGroupSize);
+    const maxAdvancePerGroup = maxGroupSize;
     if (!Number.isInteger(advancePerGroup) || advancePerGroup < 1 || advancePerGroup > maxAdvancePerGroup) {
       setFlash(`조별 진출 등수는 1등 또는 2등까지 입력해 주세요.`, 'error');
       render();
       return;
     }
-    if (!upperEnabled && !lowerEnabled) {
-      setFlash('상위리그 또는 하위리그 중 하나 이상 선택해 주세요.', 'error');
-      render();
-      return;
-    }
     const upperEntries = standings.flatMap((group) => group.standings.slice(0, advancePerGroup).map((record) => ({ ...record.player, qualificationRank: record.rank, sourceGroup: group.name })));
-    const lowerEntries = standings.flatMap((group) => group.standings.slice(upperEnabled ? advancePerGroup : 0).map((record) => ({ ...record.player, qualificationRank: record.rank, sourceGroup: group.name })));
+    const lowerEntries = standings.flatMap((group) => group.standings.slice(advancePerGroup).map((record) => ({ ...record.player, qualificationRank: record.rank, sourceGroup: group.name })));
     const tournaments = {};
-    if (upperEnabled && upperEntries.length) tournaments.upper = buildTournamentBracket(upperEntries, 'upper', format);
+    if (upperEntries.length) tournaments.upper = buildTournamentBracket(upperEntries, 'upper', format);
     if (lowerEnabled && lowerEntries.length) tournaments.lower = buildTournamentBracket(lowerEntries, 'lower', format);
     game.tournaments = game.tournaments || {};
-    game.tournaments[format] = { format, advancePerGroup, upperEnabled, lowerEnabled, upper: tournaments.upper || null, lower: tournaments.lower || null, generatedAt: new Date().toISOString() };
+    game.tournaments[format] = { format, advancePerGroup, upperEnabled: true, lowerEnabled, qualificationConfirmed: true, upper: tournaments.upper || null, lower: tournaments.lower || null, generatedAt: new Date().toISOString() };
     try {
       await apiRequest(`/api/games/${encodeURIComponent(game.id)}/tournaments`, {
         method: 'PATCH',
@@ -3349,6 +3412,12 @@
     const generateTournamentButton = event.target.closest('[data-generate-tournament]');
     if (generateTournamentButton) {
       handleGenerateTournament();
+      return;
+    }
+
+    const decideTournamentButton = event.target.closest('[data-decide-tournament]');
+    if (decideTournamentButton) {
+      handleDecideTournamentQualification();
       return;
     }
 
