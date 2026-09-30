@@ -52,6 +52,7 @@
   const state = {
     users: [],
     adminUsers: [],
+    adminUserLoadError: '',
     adminVenues: [],
     adminVenueLoadError: '',
     adminTab: 'users',
@@ -2419,7 +2420,7 @@
         <div class="admin-users-table-wrap">
           <table class="admin-users-table">
             <thead><tr><th>회원명</th><th>아이디</th><th>연락처</th><th>권한</th><th>가입일</th></tr></thead>
-            <tbody>${users.length ? users.map((user) => `<tr><td>${escapeHtml(user.nickname)}</td><td>${escapeHtml(user.memberId)}</td><td>${escapeHtml(user.phone || '미입력')}</td><td><span class="admin-role-badge admin-role-badge--${escapeHtml(user.role || 'user')}">${getRoleLabel(user.role)}</span></td><td>${escapeHtml(formatDateTime(user.createdAt))}</td></tr>`).join('') : '<tr><td colspan="5">회원 정보를 불러오는 중입니다.</td></tr>'}</tbody>
+            <tbody>${state.adminUserLoadError ? `<tr><td colspan="5">${escapeHtml(state.adminUserLoadError)}</td></tr>` : users.length ? users.map((user) => `<tr><td>${escapeHtml(user.nickname)}</td><td>${escapeHtml(user.memberId)}</td><td>${escapeHtml(user.phone || '미입력')}</td><td><span class="admin-role-badge admin-role-badge--${escapeHtml(user.role || 'user')}">${getRoleLabel(user.role)}</span></td><td>${escapeHtml(formatDateTime(user.createdAt))}</td></tr>`).join('') : '<tr><td colspan="5">등록된 회원이 없습니다.</td></tr>'}</tbody>
           </table>
         </div>
         </div>
@@ -2456,20 +2457,22 @@
     state.operationFormat = null;
     state.adminTab = readJson(STORAGE_KEYS.adminTab, 'users') === 'venues' ? 'venues' : 'users';
     state.adminUsers = [];
+    state.adminUserLoadError = '';
     state.adminVenueLoadError = '';
     render();
     const [userResult, venueResult] = await Promise.allSettled([apiRequest('/api/admin/users'), apiRequest('/api/admin/venues')]);
     if (userResult.status === 'fulfilled') {
       state.adminUsers = Array.isArray(userResult.value.users) ? userResult.value.users : [];
+    } else {
+      state.adminUserLoadError = `회원 정보를 불러오지 못했습니다: ${userResult.reason?.message || '서버 오류'}`;
+      setFlash(state.adminUserLoadError, 'error');
     }
     if (venueResult.status === 'fulfilled') {
       state.adminVenues = Array.isArray(venueResult.value.venues) ? venueResult.value.venues : [];
+      if (!state.adminVenues.length && state.venues.length) state.adminVenues = [...state.venues];
     } else {
       state.adminVenueLoadError = `탁구장 정보를 불러오지 못했습니다: ${venueResult.reason?.message || '서버 오류'}`;
       setFlash(state.adminVenueLoadError, 'error');
-    }
-    if (userResult.status === 'rejected' && venueResult.status === 'fulfilled') {
-      setFlash(userResult.reason?.message || '회원 목록을 불러오지 못했습니다.', 'error');
     }
     render();
   }
