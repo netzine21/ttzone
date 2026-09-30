@@ -4652,6 +4652,10 @@ button {
   width: var(--tournament-side-width);
 }
 
+.tournament-bracket--split .tournament-side-bracket > .tournament-round:first-child .tournament-round__matches {
+  row-gap: 8px;
+}
+
 .tournament-bracket--split .tournament-center-bracket {
   flex: 0 0 var(--tournament-box-width);
   width: var(--tournament-box-width);
