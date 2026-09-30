@@ -146,6 +146,18 @@ create index if not exists groups_game_format_idx on public.groups(game_id, form
 create index if not exists sessions_user_id_idx on public.sessions(user_id);
 create index if not exists sessions_expires_at_idx on public.sessions(expires_at);
 
+create table if not exists public.visitor_sessions (
+  id uuid primary key default gen_random_uuid(),
+  visitor_key uuid not null unique,
+  user_id uuid references public.users(id) on delete set null,
+  first_seen timestamptz not null default now(),
+  last_seen timestamptz not null default now(),
+  user_agent text
+);
+
+create index if not exists visitor_sessions_last_seen_idx on public.visitor_sessions(last_seen);
+create index if not exists visitor_sessions_user_id_idx on public.visitor_sessions(user_id);
+
 -- This application will access the database through the Render backend.
 -- Keep tables protected from direct browser access until explicit policies exist.
 alter table public.users enable row level security;

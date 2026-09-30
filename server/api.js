@@ -4,6 +4,7 @@ const incheonVenues = require('./incheon-venues');
 const bucheonVenues = require('./bucheon-venues');
 
 const SESSION_COOKIE = 'ttgms_session';
+const VISITOR_COOKIE = 'ttgms_visitor';
 const SESSION_DAYS = 30;
 let gameStateColumnsPromise = null;
 let accessColumnsPromise = null;
@@ -11,6 +12,27 @@ let gameAccessColumnsPromise = null;
 let gameVenueColumnsPromise = null;
 let regionColumnsPromise = null;
 let venueColumnsPromise = null;
+let visitorColumnsPromise = null;
+
+async function ensureVisitorColumns() {
+  if (!visitorColumnsPromise) {
+    visitorColumnsPromise = getPool().query(
+      `create table if not exists public.visitor_sessions (
+         id uuid primary key default gen_random_uuid(),
+         visitor_key uuid not null unique,
+         user_id uuid references public.users(id) on delete set null,
+         first_seen timestamptz not null default now(),
+         last_seen timestamptz not null default now(),
+         user_agent text
+       );
+       create index if not exists visitor_sessions_last_seen_idx
+         on public.visitor_sessions(last_seen);
+       create index if not exists visitor_sessions_user_id_idx
+         on public.visitor_sessions(user_id)`
+    );
+  }
+  return visitorColumnsPromise;
+}
 
 async function ensureVenueColumns() {
   if (!venueColumnsPromise) {
@@ -101,10 +123,17 @@ async function ensureGameStateColumns() {
 }
 
 function sendJson(res, statusCode, payload, headers = {}) {
+  const responseHeaders = { ...headers };
+  if (res.visitorCookie) {
+    const existingCookies = responseHeaders['Set-Cookie']
+      ? (Array.isArray(responseHeaders['Set-Cookie']) ? responseHeaders['Set-Cookie'] : [responseHeaders['Set-Cookie']])
+      : [];
+    responseHeaders['Set-Cookie'] = [res.visitorCookie, ...existingCookies];
+  }
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-store',
-    ...headers,
+    ...responseHeaders,
   });
   res.end(JSON.stringify(payload));
 }
@@ -249,6 +278,29 @@ async function createSession(userId, remember = false) {
   return token;
 }
 
+async function trackVisitor(req, res, pool) {
+  await ensureVisitorColumns();
+  const cookies = parseCookies(req);
+  let visitorKey = cookies[VISITOR_COOKIE];
+  if (!visitorKey || !/^[0-9a-f-]{36}$/i.test(visitorKey)) {
+    visitorKey = crypto.randomUUID();
+    res.visitorCookie = `${VISITOR_COOKIE}=${encodeURIComponent(visitorKey)}; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax; Path=/`;
+  }
+  const sessionToken = cookies[SESSION_COOKIE];
+  const sessionResult = sessionToken
+    ? await pool.query('select user_id from public.sessions where token_hash = $1 and expires_at > now()', [hashToken(sessionToken)])
+    : { rows: [] };
+  await pool.query(
+    `insert into public.visitor_sessions (visitor_key, user_id, user_agent)
+     values ($1, $2, $3)
+     on conflict (visitor_key) do update
+       set user_id = coalesce(excluded.user_id, public.visitor_sessions.user_id),
+           last_seen = now(),
+           user_agent = coalesce(excluded.user_agent, public.visitor_sessions.user_agent)`,
+    [visitorKey, sessionResult.rows[0]?.user_id || null, String(req.headers['user-agent'] || '').slice(0, 500) || null]
+  );
+}
+
 function requirePool() {
   const pool = getPool();
   if (!pool) {
@@ -306,6 +358,11 @@ async function handleApi(req, res, requestPath) {
   try {
     const pool = requirePool();
     await ensureAccessColumns();
+    try {
+      await trackVisitor(req, res, pool);
+    } catch (error) {
+      console.error('방문자 접속 기록 저장 실패:', error);
+    }
     if (requestPath === '/api/auth/me' && req.method === 'GET') {
       return sendJson(res, 200, { user: publicUser(await findSession(req)) });
     }
@@ -320,6 +377,32 @@ async function handleApi(req, res, requestPath) {
           order by created_at desc`
       );
       return sendJson(res, 200, { users: result.rows.map(publicUser) });
+    }
+
+    if (requestPath === '/api/admin/access-status' && req.method === 'GET') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      if (user.role !== 'admin') return sendJson(res, 403, { error: '시스템관리자만 접속현황을 확인할 수 있습니다.' });
+      await ensureVisitorColumns();
+      const result = await pool.query(
+        `select vs.visitor_key, vs.user_id, vs.first_seen, vs.last_seen,
+                u.nickname, u.member_id, u.role
+           from public.visitor_sessions vs
+           left join public.users u on u.id = vs.user_id
+          where vs.last_seen > now() - interval '2 minutes'
+          order by vs.last_seen desc`
+      );
+      return sendJson(res, 200, {
+        active: result.rows.map((row) => ({
+          visitorKey: row.visitor_key,
+          userId: row.user_id,
+          nickname: row.nickname || '',
+          memberId: row.member_id || '',
+          role: row.role || '',
+          firstSeen: row.first_seen,
+          lastSeen: row.last_seen,
+        })),
+      });
     }
 
     if (requestPath === '/api/venues' && req.method === 'GET') {

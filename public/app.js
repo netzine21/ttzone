@@ -56,6 +56,9 @@
     adminVenues: [],
     adminVenueLoadError: '',
     adminDataLoading: false,
+    adminAccess: [],
+    adminAccessLoadError: '',
+    adminAccessLoading: false,
     adminTab: 'users',
     venueRegionFilter: 'all',
     venueSearch: '',
@@ -2424,7 +2427,8 @@
     const users = Array.isArray(state.adminUsers) ? state.adminUsers : [];
     const venues = Array.isArray(state.adminVenues) ? state.adminVenues : [];
     const loading = state.adminDataLoading;
-    const adminTab = state.adminTab === 'venues' ? 'venues' : 'users';
+    const access = Array.isArray(state.adminAccess) ? state.adminAccess : [];
+    const adminTab = ['venues', 'access'].includes(state.adminTab) ? state.adminTab : 'users';
     return `
       <section class="panel section-card admin-page">
         <div class="section-heading admin-page__heading">
@@ -2435,6 +2439,7 @@
         <nav class="admin-tabs" aria-label="시스템 관리 메뉴">
           <button type="button" class="admin-tab ${adminTab === 'users' ? 'is-active' : ''}" data-admin-tab="users">회원정보관리</button>
           <button type="button" class="admin-tab ${adminTab === 'venues' ? 'is-active' : ''}" data-admin-tab="venues">탁구장정보관리</button>
+          <button type="button" class="admin-tab ${adminTab === 'access' ? 'is-active' : ''}" data-admin-tab="access">접속현황</button>
         </nav>
         <div class="admin-tab-panel ${adminTab === 'users' ? 'is-active' : ''}" data-admin-panel="users">
           <div class="section-heading admin-panel-heading"><div><p class="section-kicker">회원정보</p><h2>회원정보관리</h2></div><button class="btn btn-secondary" type="button" data-admin-refresh="users">회원정보 새로고침</button></div>
@@ -2463,12 +2468,38 @@
           <div class="admin-venue-list">${loading ? '<p class="muted">탁구장정보를 불러오는 중입니다...</p>' : state.adminVenueLoadError ? `<p class="admin-load-error">${escapeHtml(state.adminVenueLoadError)}</p>` : venues.length ? venues.map((venue) => `<form class="admin-venue-card" data-form="admin-venue" data-venue-id="${escapeHtml(venue.id)}"><label class="admin-venue-select"><input type="checkbox" data-admin-venue-select value="${escapeHtml(venue.id)}" /><span>선택</span></label><div class="field"><label>탁구장명</label><input name="name" value="${escapeHtml(venue.name)}" required /></div><div class="field"><label>주소</label><input name="address" value="${escapeHtml(venue.address)}" required /></div><div class="field"><label>지역</label><input name="region" value="${escapeHtml(venue.region || '')}" placeholder="예: 인천광역시 미추홀구" /></div><div class="field"><label>전화번호</label><input name="phone" value="${escapeHtml(venue.phone || '')}" /></div><div class="field"><label>상태</label><select name="status"><option value="pending" ${venue.status === 'pending' ? 'selected' : ''}>승인대기</option><option value="approved" ${venue.status === 'approved' ? 'selected' : ''}>사용</option><option value="archived" ${venue.status === 'archived' ? 'selected' : ''}>보관</option></select></div><button class="btn btn-secondary" type="submit">저장</button></form>`).join('') : '<p class="muted">등록된 탁구장이 없습니다.</p>'}</div>
         </div>
         </div>
+        <div class="admin-tab-panel ${adminTab === 'access' ? 'is-active' : ''}" data-admin-panel="access">
+          <div class="section-heading admin-panel-heading"><div><p class="section-kicker">실시간 접속</p><h2>접속현황</h2></div><button class="btn btn-secondary" type="button" data-admin-refresh="access">접속현황 새로고침</button></div>
+          <p class="subtle-note">최근 2분 이내 활동한 방문자입니다. 비회원은 익명으로 표시됩니다.</p>
+          <div class="admin-users-table-wrap">
+            <table class="admin-users-table">
+              <thead><tr><th>구분</th><th>아이디</th><th>권한</th><th>최초 접속</th><th>최근 활동</th></tr></thead>
+              <tbody>${state.adminAccessLoading ? '<tr><td colspan="5">접속현황을 불러오는 중입니다...</td></tr>' : state.adminAccessLoadError ? `<tr><td colspan="5">${escapeHtml(state.adminAccessLoadError)}</td></tr>` : access.length ? access.map((visitor) => `<tr><td>${escapeHtml(visitor.nickname || '비회원 방문자')}</td><td>${escapeHtml(visitor.memberId || '-')}</td><td>${escapeHtml(visitor.role ? getRoleLabel(visitor.role) : '비회원')}</td><td>${escapeHtml(formatDateTime(visitor.firstSeen))}</td><td>${escapeHtml(formatDateTime(visitor.lastSeen))}</td></tr>`).join('') : '<tr><td colspan="5">현재 접속자가 없습니다.</td></tr>'}</tbody>
+            </table>
+          </div>
+        </div>
         <div class="button-row"><button class="btn btn-ghost" type="button" data-back-dashboard>게임목록으로 돌아가기</button></div>
       </section>
     `;
   }
 
   async function refreshAdminData(scope = 'all') {
+    if (scope === 'access') {
+      state.adminAccessLoading = true;
+      state.adminAccessLoadError = '';
+      render();
+      try {
+        const result = await apiRequest('/api/admin/access-status');
+        state.adminAccess = Array.isArray(result.active) ? result.active : [];
+      } catch (error) {
+        state.adminAccessLoadError = `접속현황을 불러오지 못했습니다: ${error.message || '서버 오류'}`;
+        setFlash(state.adminAccessLoadError, 'error');
+      } finally {
+        state.adminAccessLoading = false;
+        render();
+      }
+      return;
+    }
     const shouldLoadUsers = scope === 'all' || scope === 'users';
     const shouldLoadVenues = scope === 'all' || scope === 'venues';
     state.adminDataLoading = true;
@@ -2512,8 +2543,13 @@
     state.selectedPublicGameId = null;
     state.operationGameId = null;
     state.operationFormat = null;
-    state.adminTab = readJson(STORAGE_KEYS.adminTab, 'users') === 'venues' ? 'venues' : 'users';
+    const savedAdminTab = readJson(STORAGE_KEYS.adminTab, 'users');
+    state.adminTab = ['venues', 'access'].includes(savedAdminTab) ? savedAdminTab : 'users';
+    state.adminAccess = [];
+    state.adminAccessLoadError = '';
+    state.adminAccessLoading = false;
     await refreshAdminData();
+    if (state.adminTab === 'access') await refreshAdminData('access');
   }
 
   async function handleAdminVenueUpdate(form) {
@@ -3570,9 +3606,10 @@
 
     const adminTabButton = event.target.closest('[data-admin-tab]');
     if (adminTabButton) {
-      state.adminTab = adminTabButton.dataset.adminTab === 'venues' ? 'venues' : 'users';
+      state.adminTab = ['venues', 'access'].includes(adminTabButton.dataset.adminTab) ? adminTabButton.dataset.adminTab : 'users';
       writeJson(STORAGE_KEYS.adminTab, state.adminTab);
       render();
+      if (state.adminTab === 'access') await refreshAdminData('access');
       return;
     }
 
