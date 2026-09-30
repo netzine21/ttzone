@@ -799,13 +799,32 @@
     const regions = [...new Set(allVenues.map((venue) => trimValue(venue.region)).filter(Boolean))].sort((left, right) => left.localeCompare(right, 'ko'));
     const search = trimValue(state.venueSearch).toLowerCase();
     const normalizeRegion = (value) => trimValue(value).toLowerCase().replace(/\s+/g, '');
+    const canonicalRegion = (value) => {
+      const normalized = normalizeRegion(value);
+      const aliases = [
+        ['서울특별시', '서울특별시'], ['서울시', '서울특별시'], ['서울', '서울특별시'],
+        ['부산광역시', '부산광역시'], ['부산시', '부산광역시'], ['부산', '부산광역시'],
+        ['대구광역시', '대구광역시'], ['대구시', '대구광역시'], ['대구', '대구광역시'],
+        ['인천광역시', '인천광역시'], ['인천시', '인천광역시'], ['인천', '인천광역시'],
+        ['광주광역시', '광주광역시'], ['광주시', '광주광역시'], ['광주', '광주광역시'],
+        ['대전광역시', '대전광역시'], ['대전시', '대전광역시'], ['대전', '대전광역시'],
+        ['울산광역시', '울산광역시'], ['울산시', '울산광역시'], ['울산', '울산광역시'],
+        ['경기도', '경기도'], ['경기', '경기도'],
+        ['강원특별자치도', '강원특별자치도'], ['강원도', '강원특별자치도'], ['강원', '강원특별자치도'],
+        ['충청북도', '충청북도'], ['충북', '충청북도'], ['충청남도', '충청남도'], ['충남', '충청남도'],
+        ['전북특별자치도', '전북특별자치도'], ['전라북도', '전북특별자치도'], ['전북', '전북특별자치도'],
+        ['전라남도', '전라남도'], ['전남', '전라남도'], ['경상북도', '경상북도'], ['경북', '경상북도'],
+        ['경상남도', '경상남도'], ['경남', '경상남도'], ['제주특별자치도', '제주특별자치도'],
+        ['제주도', '제주특별자치도'], ['제주', '제주특별자치도'],
+      ].sort((left, right) => right[0].length - left[0].length);
+      const alias = aliases.find(([prefix]) => normalized.startsWith(prefix.toLowerCase()));
+      return alias ? `${alias[1].toLowerCase()}${normalized.slice(alias[0].length)}` : normalized;
+    };
     const matchesActivity = (venue) => {
-      if (activitySelection.sido && activitySelection.sigungu && venue.regionSido && venue.regionSigungu) {
-        return activitySelection.sido === venue.regionSido && activitySelection.sigungu === venue.regionSigungu;
-      }
-      const wanted = normalizeRegion(activityRegion);
-      const haystack = normalizeRegion(`${venue.regionSido || ''} ${venue.regionSigungu || ''} ${venue.region || ''} ${venue.address || ''}`);
-      return Boolean(wanted && (haystack.includes(wanted) || wanted.includes(haystack)));
+      const wanted = canonicalRegion(activityRegion);
+      const venueRegion = canonicalRegion(`${venue.regionSido || ''} ${venue.regionSigungu || ''} ${venue.region || ''}`);
+      const venueAddress = canonicalRegion(venue.address || '');
+      return Boolean(wanted && (venueRegion === wanted || (!venueRegion && venueAddress.includes(wanted))));
     };
     const matchesSearch = (venue) => !search || `${venue.name} ${venue.address} ${venue.phone || ''} ${venue.region || ''}`.toLowerCase().includes(search);
     const regionFilter = state.venueRegionFilter || 'all';
