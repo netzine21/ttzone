@@ -4472,6 +4472,7 @@ button {
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+  touch-action: pan-x pan-y;
 }
 
 .tournament-bracket-viewport[data-public-tournament-viewport] {

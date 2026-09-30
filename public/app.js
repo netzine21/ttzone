@@ -76,6 +76,7 @@
   let restoringBrowserHistory = false;
   let lastBrowserRouteKey = '';
   let selectedGroupPlayer = null;
+  let tournamentPinchState = null;
 
   const app = document.getElementById('app');
   const topActions = document.getElementById('topActions');
@@ -865,7 +866,7 @@
   function renderPublicTournamentBracket(bracket) {
     if (!bracket?.rounds?.length) return '<div class="empty-state">아직 토너먼트 대진표가 생성되지 않았습니다.</div>';
     syncTournamentBracket(bracket);
-    const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소">−</button><span>${Math.round((state.tournamentZoom || 1) * 100)}%</span><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대">+</button><button type="button" class="game-list-action" data-tournament-zoom="reset">전체 보기</button></div>`;
+    const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소">−</button><span data-tournament-zoom-value>${Math.round((state.tournamentZoom || 1) * 100)}%</span><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대">+</button><button type="button" class="game-list-action" data-tournament-zoom="reset">전체 보기</button></div>`;
     if (bracket.rounds.length === 1) return `${controls}${wrapTournamentBracket(`<div class="tournament-bracket public-tournament-bracket tournament-bracket--size-${bracket.size}"><div class="tournament-rounds tournament-rounds--single">${renderPublicTournamentRound(bracket.rounds[0], true, tournamentRoundTitle(bracket, 0, true), bracket.size, 0)}</div></div>${renderTournamentPodium(bracket)}`, true)}`;
     const roundsBeforeFinal = bracket.rounds.slice(0, -1);
     const finalRound = bracket.rounds[bracket.rounds.length - 1];
@@ -1609,7 +1610,7 @@
 
   function renderTournamentBracket(bracket) {
     syncTournamentBracket(bracket);
-    const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소">−</button><span>${Math.round((state.tournamentZoom || 1) * 100)}%</span><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대">+</button><button type="button" class="game-list-action" data-tournament-zoom="reset">전체 보기</button></div>`;
+    const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소">−</button><span data-tournament-zoom-value>${Math.round((state.tournamentZoom || 1) * 100)}%</span><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대">+</button><button type="button" class="game-list-action" data-tournament-zoom="reset">전체 보기</button></div>`;
     if (bracket.rounds.length === 1) return `${controls}${wrapTournamentBracket(`<div class="tournament-bracket"><div class="tournament-rounds tournament-rounds--single">${renderTournamentRound(bracket.rounds[0], true, tournamentRoundTitle(bracket, 0, true), bracket.size, 0)}</div><p class="subtle-note">부전승은 자동 진출하며, 경기는 11점 5전 3선승입니다.</p></div>${renderTournamentPodium(bracket)}`)}`;
     const roundsBeforeFinal = bracket.rounds.slice(0, -1);
     const finalRound = bracket.rounds[bracket.rounds.length - 1];
@@ -1670,7 +1671,7 @@
     const lowerEnabled = config ? config.lowerEnabled === true : true;
     const qualification = config ? getTournamentQualificationEntries(game, format, selectedAdvance, lowerEnabled) : null;
     const availableLeagues = config ? ['upper', 'lower'].filter((leagueName) => config[leagueName]) : [];
-    const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소">−</button><span>${Math.round((state.tournamentZoom || 1) * 100)}%</span><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대">+</button><button type="button" class="game-list-action" data-tournament-zoom="reset">전체 보기</button></div>`;
+    const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소">−</button><span data-tournament-zoom-value>${Math.round((state.tournamentZoom || 1) * 100)}%</span><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대">+</button><button type="button" class="game-list-action" data-tournament-zoom="reset">전체 보기</button></div>`;
     const qualificationPreview = qualification
       ? `${renderTournamentQualificationList('상위리그 본선 진출자', qualification.upperEntries)}${lowerEnabled ? renderTournamentQualificationList('하위리그 본선 진출자', qualification.lowerEntries) : ''}`
       : '';
@@ -2659,6 +2660,44 @@
       table.style.transform = `scale(${scale})`;
       viewport.style.height = `${table.offsetHeight * scale}px`;
     });
+  }
+
+  function tournamentTouchDistance(touches) {
+    const first = touches[0];
+    const second = touches[1];
+    return Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY);
+  }
+
+  function updateTournamentZoomControls() {
+    const value = `${Math.round((state.tournamentZoom || 1) * 100)}%`;
+    document.querySelectorAll('[data-tournament-zoom-value]').forEach((element) => {
+      element.textContent = value;
+    });
+  }
+
+  function handleTournamentTouchStart(event) {
+    const target = event.target instanceof Element ? event.target.closest('[data-tournament-viewport]') : null;
+    if (!target || event.touches.length < 2) return;
+    tournamentPinchState = {
+      distance: tournamentTouchDistance(event.touches),
+      zoom: state.tournamentZoom || 1,
+    };
+    event.preventDefault();
+  }
+
+  function handleTournamentTouchMove(event) {
+    if (!tournamentPinchState || event.touches.length < 2) return;
+    const distance = tournamentTouchDistance(event.touches);
+    if (!distance || !tournamentPinchState.distance) return;
+    const nextZoom = Math.min(1.6, Math.max(0.7, tournamentPinchState.zoom * (distance / tournamentPinchState.distance)));
+    state.tournamentZoom = Math.round(nextZoom * 100) / 100;
+    fitTournamentBrackets();
+    updateTournamentZoomControls();
+    event.preventDefault();
+  }
+
+  function handleTournamentTouchEnd(event) {
+    if (event.touches.length < 2) tournamentPinchState = null;
   }
 
   function drawTournamentConnectors() {
@@ -4054,6 +4093,10 @@
     app.addEventListener('submit', handleAppSubmit);
     app.addEventListener('change', handleAppChange);
     app.addEventListener('input', handleAppInput);
+    app.addEventListener('touchstart', handleTournamentTouchStart, { passive: false });
+    app.addEventListener('touchmove', handleTournamentTouchMove, { passive: false });
+    app.addEventListener('touchend', handleTournamentTouchEnd, { passive: true });
+    app.addEventListener('touchcancel', handleTournamentTouchEnd, { passive: true });
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('resize', () => {
       fitTournamentBrackets();
