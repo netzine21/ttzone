@@ -2689,7 +2689,8 @@
         const target = point(finalMatch);
         const sourceX = direction === 'left' ? source.right : source.left;
         const targetX = direction === 'left' ? target.left : target.right;
-        path(svg, `M ${sourceX} ${source.centerY} L ${targetX} ${target.centerY}`);
+        // Keep the final connector horizontal across responsive scale factors.
+        path(svg, `M ${sourceX} ${source.centerY} H ${targetX}`);
       });
       bracket.prepend(svg);
     });
