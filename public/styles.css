@@ -3915,6 +3915,47 @@ button {
   margin-top: 18px;
 }
 
+.tournament-bracket-generation-card {
+  margin: 22px auto 0;
+  padding: 18px 20px 20px;
+  border: 1px solid rgba(165, 190, 214, 0.2);
+  border-radius: 16px;
+  background: rgba(6, 13, 24, 0.36);
+}
+
+.tournament-bracket-generation-card > h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+  text-align: left;
+}
+
+.tournament-bracket-generation-controls {
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  align-items: center;
+  justify-items: center;
+  margin-top: 16px;
+}
+
+.tournament-bracket-generation-controls .field,
+.tournament-bracket-generation-controls .field label {
+  width: 100%;
+  text-align: center;
+}
+
+.tournament-bracket-generation-controls .field input,
+.tournament-bracket-generation-controls .field select {
+  width: 100%;
+}
+
+.tournament-bracket-generation-card .tournament-bracket-generate-row {
+  margin-top: 16px;
+}
+
+.tournament-bracket-generation-card .tournament-bracket-generate-row .game-list-action {
+  min-width: 150px;
+}
+
 .tournament-podium {
   width: min(100%, 720px);
   margin: 22px auto 8px;
@@ -5299,6 +5340,10 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .tournament-print-panel .operation-controls.tournament-bracket-generation-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .tournament-panel .operation-controls.tournament-qualification-controls,
   .tournament-print-panel .operation-controls.tournament-qualification-controls {
     grid-template-columns: minmax(70px, 0.7fr) minmax(92px, 1fr) minmax(112px, 1.2fr) auto;
@@ -5428,6 +5473,22 @@ button {
 
   .tournament-qualification-list ol {
     grid-template-columns: 1fr;
+  }
+
+  .tournament-bracket-generation-card {
+    padding: 16px 12px 18px;
+  }
+
+  .tournament-bracket-generation-controls .field label {
+    font-size: 0.68rem;
+    white-space: nowrap;
+  }
+
+  .tournament-bracket-generation-controls .field input,
+  .tournament-bracket-generation-controls .field select {
+    min-width: 0;
+    padding: 8px 7px;
+    font-size: 0.76rem;
   }
 }
 
