@@ -2418,7 +2418,7 @@
           <button type="button" class="admin-tab ${adminTab === 'venues' ? 'is-active' : ''}" data-admin-tab="venues">탁구장정보관리</button>
         </nav>
         <div class="admin-tab-panel ${adminTab === 'users' ? 'is-active' : ''}" data-admin-panel="users">
-          <div class="section-heading admin-panel-heading"><div><p class="section-kicker">회원정보</p><h2>회원정보관리</h2></div></div>
+          <div class="section-heading admin-panel-heading"><div><p class="section-kicker">회원정보</p><h2>회원정보관리</h2></div><button class="btn btn-secondary" type="button" data-admin-refresh="users">회원정보 새로고침</button></div>
         <div class="admin-users-table-wrap">
           <table class="admin-users-table">
             <thead><tr><th>회원명</th><th>아이디</th><th>활동지역</th><th>연락처</th><th>권한</th><th>가입일</th></tr></thead>
@@ -2428,7 +2428,7 @@
         </div>
         <div class="admin-tab-panel ${adminTab === 'venues' ? 'is-active' : ''}" data-admin-panel="venues">
         <div class="admin-venues-section">
-          <div class="section-heading"><div><p class="section-kicker">탁구장 정보 DB</p><h2>탁구장 정보 관리</h2></div><div class="admin-venue-import-actions"><button class="btn btn-secondary" type="button" data-import-incheon>인천 공개목록 가져오기</button><button class="btn btn-secondary" type="button" data-import-bucheon>부천 공개목록 가져오기</button></div></div>
+          <div class="section-heading"><div><p class="section-kicker">탁구장 정보 DB</p><h2>탁구장 정보 관리</h2></div><div class="admin-venue-import-actions"><button class="btn btn-secondary" type="button" data-admin-refresh="venues">탁구장정보 새로고침</button><button class="btn btn-secondary" type="button" data-import-incheon>인천 공개목록 가져오기</button><button class="btn btn-secondary" type="button" data-import-bucheon>부천 공개목록 가져오기</button></div></div>
           <form class="admin-venue-create" data-form="admin-venue-create">
             <div class="admin-venue-create__heading"><strong>새 탁구장 등록</strong><span>등록 즉시 게임 생성 화면에서 선택할 수 있습니다.</span></div>
             <div class="admin-venue-create__fields">
@@ -2449,6 +2449,42 @@
     `;
   }
 
+  async function refreshAdminData(scope = 'all') {
+    const shouldLoadUsers = scope === 'all' || scope === 'users';
+    const shouldLoadVenues = scope === 'all' || scope === 'venues';
+    state.adminDataLoading = true;
+    if (shouldLoadUsers) {
+      state.adminUsers = [];
+      state.adminUserLoadError = '';
+    }
+    if (shouldLoadVenues) {
+      state.adminVenues = [];
+      state.adminVenueLoadError = '';
+    }
+    render();
+    const requests = [];
+    if (shouldLoadUsers) requests.push(['users', apiRequest('/api/admin/users')]);
+    if (shouldLoadVenues) requests.push(['venues', apiRequest('/api/admin/venues')]);
+    const results = await Promise.all(requests.map(async ([kind, request]) => [kind, await Promise.allSettled([request])]))
+      .then((items) => items.map(([kind, result]) => [kind, result[0]]));
+    for (const [kind, result] of results) {
+      if (kind === 'users' && result.status === 'fulfilled') {
+        state.adminUsers = Array.isArray(result.value.users) ? result.value.users : [];
+      } else if (kind === 'users') {
+        state.adminUserLoadError = `회원 정보를 불러오지 못했습니다: ${result.reason?.message || '서버 오류'}`;
+        setFlash(state.adminUserLoadError, 'error');
+      } else if (kind === 'venues' && result.status === 'fulfilled') {
+        state.adminVenues = Array.isArray(result.value.venues) ? result.value.venues : [];
+        if (!state.adminVenues.length && state.venues.length) state.adminVenues = [...state.venues];
+      } else {
+        state.adminVenueLoadError = `탁구장 정보를 불러오지 못했습니다: ${result.reason?.message || '서버 오류'}`;
+        setFlash(state.adminVenueLoadError, 'error');
+      }
+    }
+    state.adminDataLoading = false;
+    render();
+  }
+
   async function openAdminPage() {
     const currentUser = getCurrentUser();
     if (!currentUser || currentUser.role !== 'admin') return;
@@ -2458,28 +2494,7 @@
     state.operationGameId = null;
     state.operationFormat = null;
     state.adminTab = readJson(STORAGE_KEYS.adminTab, 'users') === 'venues' ? 'venues' : 'users';
-    state.adminUsers = [];
-    state.adminVenues = [];
-    state.adminUserLoadError = '';
-    state.adminVenueLoadError = '';
-    state.adminDataLoading = true;
-    render();
-    const [userResult, venueResult] = await Promise.allSettled([apiRequest('/api/admin/users'), apiRequest('/api/admin/venues')]);
-    if (userResult.status === 'fulfilled') {
-      state.adminUsers = Array.isArray(userResult.value.users) ? userResult.value.users : [];
-    } else {
-      state.adminUserLoadError = `회원 정보를 불러오지 못했습니다: ${userResult.reason?.message || '서버 오류'}`;
-      setFlash(state.adminUserLoadError, 'error');
-    }
-    if (venueResult.status === 'fulfilled') {
-      state.adminVenues = Array.isArray(venueResult.value.venues) ? venueResult.value.venues : [];
-      if (!state.adminVenues.length && state.venues.length) state.adminVenues = [...state.venues];
-    } else {
-      state.adminVenueLoadError = `탁구장 정보를 불러오지 못했습니다: ${venueResult.reason?.message || '서버 오류'}`;
-      setFlash(state.adminVenueLoadError, 'error');
-    }
-    state.adminDataLoading = false;
-    render();
+    await refreshAdminData();
   }
 
   async function handleAdminVenueUpdate(form) {
@@ -3539,6 +3554,12 @@
       state.adminTab = adminTabButton.dataset.adminTab === 'venues' ? 'venues' : 'users';
       writeJson(STORAGE_KEYS.adminTab, state.adminTab);
       render();
+      return;
+    }
+
+    const adminRefreshButton = event.target.closest('[data-admin-refresh]');
+    if (adminRefreshButton) {
+      await refreshAdminData(adminRefreshButton.dataset.adminRefresh || 'all');
       return;
     }
 
