@@ -53,6 +53,7 @@
     users: [],
     adminUsers: [],
     adminVenues: [],
+    adminVenueLoadError: '',
     adminTab: 'users',
     venueRegionFilter: 'all',
     venueSearch: '',
@@ -2437,7 +2438,7 @@
             </div>
           </form>
           <div class="admin-venue-toolbar"><label class="check-line"><input type="checkbox" data-admin-venue-select-all /> 전체 선택</label><select data-admin-venue-bulk-status><option value="">상태 일괄 변경</option><option value="pending">승인대기</option><option value="approved">사용</option><option value="archived">보관</option></select><button class="btn btn-secondary" type="button" data-admin-venue-bulk-save>선택 항목 저장</button></div>
-          <div class="admin-venue-list">${venues.length ? venues.map((venue) => `<form class="admin-venue-card" data-form="admin-venue" data-venue-id="${escapeHtml(venue.id)}"><label class="admin-venue-select"><input type="checkbox" data-admin-venue-select value="${escapeHtml(venue.id)}" /><span>선택</span></label><div class="field"><label>탁구장명</label><input name="name" value="${escapeHtml(venue.name)}" required /></div><div class="field"><label>주소</label><input name="address" value="${escapeHtml(venue.address)}" required /></div><div class="field"><label>전화번호</label><input name="phone" value="${escapeHtml(venue.phone || '')}" /></div><div class="field"><label>상태</label><select name="status"><option value="pending" ${venue.status === 'pending' ? 'selected' : ''}>승인대기</option><option value="approved" ${venue.status === 'approved' ? 'selected' : ''}>사용</option><option value="archived" ${venue.status === 'archived' ? 'selected' : ''}>보관</option></select></div><button class="btn btn-secondary" type="submit">저장</button></form>`).join('') : '<p class="muted">등록된 탁구장이 없습니다.</p>'}</div>
+          <div class="admin-venue-list">${state.adminVenueLoadError ? `<p class="admin-load-error">${escapeHtml(state.adminVenueLoadError)}</p>` : venues.length ? venues.map((venue) => `<form class="admin-venue-card" data-form="admin-venue" data-venue-id="${escapeHtml(venue.id)}"><label class="admin-venue-select"><input type="checkbox" data-admin-venue-select value="${escapeHtml(venue.id)}" /><span>선택</span></label><div class="field"><label>탁구장명</label><input name="name" value="${escapeHtml(venue.name)}" required /></div><div class="field"><label>주소</label><input name="address" value="${escapeHtml(venue.address)}" required /></div><div class="field"><label>전화번호</label><input name="phone" value="${escapeHtml(venue.phone || '')}" /></div><div class="field"><label>상태</label><select name="status"><option value="pending" ${venue.status === 'pending' ? 'selected' : ''}>승인대기</option><option value="approved" ${venue.status === 'approved' ? 'selected' : ''}>사용</option><option value="archived" ${venue.status === 'archived' ? 'selected' : ''}>보관</option></select></div><button class="btn btn-secondary" type="submit">저장</button></form>`).join('') : '<p class="muted">등록된 탁구장이 없습니다.</p>'}</div>
         </div>
         </div>
         <div class="button-row"><button class="btn btn-ghost" type="button" data-back-dashboard>게임목록으로 돌아가기</button></div>
@@ -2455,14 +2456,20 @@
     state.operationFormat = null;
     state.adminTab = readJson(STORAGE_KEYS.adminTab, 'users') === 'venues' ? 'venues' : 'users';
     state.adminUsers = [];
-    state.adminVenues = [];
+    state.adminVenueLoadError = '';
     render();
-    try {
-      const [userResult, venueResult] = await Promise.all([apiRequest('/api/admin/users'), apiRequest('/api/admin/venues')]);
-      state.adminUsers = Array.isArray(userResult.users) ? userResult.users : [];
-      state.adminVenues = Array.isArray(venueResult.venues) ? venueResult.venues : [];
-    } catch (error) {
-      setFlash(error.message || '회원 목록을 불러오지 못했습니다.', 'error');
+    const [userResult, venueResult] = await Promise.allSettled([apiRequest('/api/admin/users'), apiRequest('/api/admin/venues')]);
+    if (userResult.status === 'fulfilled') {
+      state.adminUsers = Array.isArray(userResult.value.users) ? userResult.value.users : [];
+    }
+    if (venueResult.status === 'fulfilled') {
+      state.adminVenues = Array.isArray(venueResult.value.venues) ? venueResult.value.venues : [];
+    } else {
+      state.adminVenueLoadError = `탁구장 정보를 불러오지 못했습니다: ${venueResult.reason?.message || '서버 오류'}`;
+      setFlash(state.adminVenueLoadError, 'error');
+    }
+    if (userResult.status === 'rejected' && venueResult.status === 'fulfilled') {
+      setFlash(userResult.reason?.message || '회원 목록을 불러오지 못했습니다.', 'error');
     }
     render();
   }
