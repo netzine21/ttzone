@@ -3829,7 +3829,7 @@ button {
 
 .tournament-qualification-controls .field label,
 .tournament-qualification-controls .tournament-lower-option {
-  color: var(--text);
+  color: var(--muted);
 }
 
 .tournament-qualification-controls .field select {
@@ -3868,6 +3868,14 @@ button {
   margin: 0 0 10px;
 }
 
+.tournament-qualification-list .group-result-heading h3 {
+  font-size: 0.9rem;
+}
+
+.tournament-qualification-list .group-result-heading span {
+  font-size: 0.72rem;
+}
+
 .tournament-qualification-list ol {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -3886,16 +3894,19 @@ button {
   padding: 8px 10px;
   border-radius: 9px;
   background: rgba(255, 255, 255, 0.035);
+  font-size: 0.82rem;
 }
 
 .tournament-qualification-list li strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 0.84rem;
 }
 
 .tournament-qualification-list li small {
   color: var(--muted-2);
+  font-size: 0.68rem;
   white-space: nowrap;
 }
 
