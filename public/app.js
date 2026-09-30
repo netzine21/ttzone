@@ -2686,12 +2686,10 @@
         const finalMatch = bracket.querySelector('.tournament-center-bracket .tournament-round--final .tournament-match');
         if (!semifinal || !finalMatch) return;
         const source = point(semifinal);
-        const finalSides = finalMatch.querySelectorAll(':scope > .tournament-side');
-        const target = point(finalSides[direction === 'left' ? 0 : 1] || finalMatch);
+        const target = point(finalMatch);
         const sourceX = direction === 'left' ? source.right : source.left;
         const targetX = direction === 'left' ? target.left : target.right;
-        const elbowX = sourceX + (targetX - sourceX) / 2;
-        path(svg, `M ${sourceX} ${source.centerY} H ${elbowX} V ${target.centerY} H ${targetX}`);
+        path(svg, `M ${sourceX} ${source.centerY} L ${targetX} ${target.centerY}`);
       });
       bracket.prepend(svg);
     });
