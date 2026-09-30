@@ -3324,15 +3324,29 @@ button {
   margin-top: 12px;
 }
 
-.public-league-results-stage .matrix-wrap,
+.public-league-results-stage .matrix-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
 .public-league-results-stage .schedule-results-table-wrap {
   overflow-x: hidden;
   scrollbar-width: none;
 }
 
-.public-league-results-stage .matrix-wrap::-webkit-scrollbar,
 .public-league-results-stage .schedule-results-table-wrap::-webkit-scrollbar {
   display: none;
+}
+
+.public-league-results-stage .matrix-wrap::-webkit-scrollbar {
+  display: block;
+  height: 8px;
+}
+
+.public-league-results-stage .matrix-wrap::-webkit-scrollbar-thumb {
+  background: rgba(165, 190, 214, 0.42);
+  border-radius: 999px;
 }
 
 .public-league-results-stage .schedule-results-table,
