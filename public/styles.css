@@ -3794,12 +3794,17 @@ button {
 
 .tournament-qualification-controls {
   grid-template-columns: minmax(120px, 0.7fr) minmax(180px, 1.2fr) auto auto;
-  align-items: end;
+  align-items: center;
 }
 
 .tournament-qualification-controls .check-line {
   align-self: center;
   white-space: nowrap;
+}
+
+.tournament-qualification-action {
+  align-self: center;
+  justify-self: center;
 }
 
 .tournament-qualification-list {
@@ -5327,7 +5332,7 @@ button {
   .tournament-qualification-controls {
     grid-template-columns: minmax(70px, 0.7fr) minmax(92px, 1fr) minmax(112px, 1.2fr) auto;
     gap: 7px;
-    align-items: end;
+    align-items: center;
   }
 
   .tournament-panel .operation-controls.tournament-qualification-controls,
@@ -5347,7 +5352,7 @@ button {
   }
 
   .tournament-qualification-controls .check-line {
-    align-self: end;
+    align-self: center;
     min-width: 0;
     font-size: 0.68rem;
     line-height: 1.15;
