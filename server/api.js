@@ -27,7 +27,9 @@ async function ensureVenueColumns() {
        create unique index if not exists venues_name_address_key
          on public.venues (lower(name), lower(address));
        alter table public.venues
-         add column if not exists phone text;
+         add column if not exists phone text,
+         add column if not exists region_sido text,
+         add column if not exists region_sigungu text;
        alter table public.games
          add column if not exists venue_id uuid references public.venues(id) on delete set null,
          add column if not exists venue_name text,
@@ -42,7 +44,9 @@ async function ensureAccessColumns() {
   if (!accessColumnsPromise) {
     accessColumnsPromise = getPool().query(
       `alter table public.users
-         add column if not exists role text not null default 'user';
+         add column if not exists role text not null default 'user',
+         add column if not exists region_sido text,
+         add column if not exists region_sigungu text;
        alter table public.games
          add column if not exists deleted_at timestamptz,
          add column if not exists deleted_by uuid references public.users(id) on delete set null`
@@ -126,6 +130,8 @@ function publicUser(row) {
     rank: row.rank,
     role: row.role || 'user',
     region: row.region || '',
+    regionSido: row.region_sido || '',
+    regionSigungu: row.region_sigungu || '',
     address: row.address || '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -302,6 +308,8 @@ async function handleApi(req, res, requestPath) {
         address: venue.address,
         phone: venue.phone || '',
         region: venue.region || '',
+        regionSido: venue.region_sido || '',
+        regionSigungu: venue.region_sigungu || '',
         mapUrl: venue.map_url || '',
         status: venue.status,
         createdBy: venue.created_by,
@@ -336,7 +344,7 @@ async function handleApi(req, res, requestPath) {
       if (user.role !== 'admin') return sendJson(res, 403, { error: '시스템관리자만 탁구장 목록을 관리할 수 있습니다.' });
       await ensureVenueColumns();
       const result = await pool.query('select * from public.venues order by name');
-      return sendJson(res, 200, { venues: result.rows.map((venue) => ({ id: venue.id, name: venue.name, address: venue.address, phone: venue.phone || '', region: venue.region || '', mapUrl: venue.map_url || '', status: venue.status, createdAt: venue.created_at, updatedAt: venue.updated_at })) });
+      return sendJson(res, 200, { venues: result.rows.map((venue) => ({ id: venue.id, name: venue.name, address: venue.address, phone: venue.phone || '', region: venue.region || '', regionSido: venue.region_sido || '', regionSigungu: venue.region_sigungu || '', mapUrl: venue.map_url || '', status: venue.status, createdAt: venue.created_at, updatedAt: venue.updated_at })) });
     }
 
     if (requestPath === '/api/admin/venues' && req.method === 'POST') {
@@ -491,6 +499,7 @@ async function handleApi(req, res, requestPath) {
     }
 
     if (requestPath === '/api/auth/signup' && req.method === 'POST') {
+      await ensureAccessColumns();
       const body = await readBody(req);
       const nickname = String(body.nickname || '').trim();
       const memberId = String(body.memberId || '').trim().toLowerCase();
@@ -499,15 +508,17 @@ async function handleApi(req, res, requestPath) {
       const gender = String(body.gender || '').trim();
       const rank = String(body.rank || '').trim();
       const region = String(body.region || '').trim();
-      if (!nickname || !memberId || !password || !phone || !rank || !region || !['male', 'female'].includes(gender)) {
+      const regionSido = String(body.regionSido || '').trim();
+      const regionSigungu = String(body.regionSigungu || '').trim();
+      if (!nickname || !memberId || !password || !phone || !rank || !region || !regionSido || !regionSigungu || !['male', 'female'].includes(gender)) {
         return sendJson(res, 400, { error: '필수 회원정보를 모두 입력해 주세요.' });
       }
       const passwordHash = await hashPassword(password);
       const result = await pool.query(
-        `insert into public.users (nickname, member_id, password_hash, gender, rank, phone, region, address)
-         values ($1, $2, $3, $4, $5, $6, $7, $8)
+        `insert into public.users (nickname, member_id, password_hash, gender, rank, phone, region, region_sido, region_sigungu, address)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          returning *`,
-        [nickname, memberId, passwordHash, gender, rank, phone, region, String(body.address || '').trim() || null]
+        [nickname, memberId, passwordHash, gender, rank, phone, region, regionSido, regionSigungu, String(body.address || '').trim() || null]
       );
       return sendJson(res, 201, { user: publicUser(result.rows[0]) });
     }
@@ -530,6 +541,39 @@ async function handleApi(req, res, requestPath) {
       const token = parseCookies(req)[SESSION_COOKIE];
       if (token) await pool.query('delete from public.sessions where token_hash = $1', [hashToken(token)]);
       return sendJson(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie('', 0) });
+    }
+
+    if (requestPath === '/api/auth/profile' && req.method === 'PATCH') {
+      await ensureAccessColumns();
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      const body = await readBody(req);
+      const nickname = String(body.nickname || '').trim();
+      const phone = String(body.phone || '').trim();
+      const gender = String(body.gender || '').trim();
+      const rank = String(body.rank || '').trim();
+      const region = String(body.region || '').trim();
+      const regionSido = String(body.regionSido || '').trim();
+      const regionSigungu = String(body.regionSigungu || '').trim();
+      if (!nickname || !phone || !rank || !region || !regionSido || !regionSigungu || !['male', 'female'].includes(gender)) {
+        return sendJson(res, 400, { error: '필수 회원정보를 모두 입력해 주세요.' });
+      }
+      const result = await pool.query(
+        `update public.users
+            set nickname = $1,
+                phone = $2,
+                gender = $3,
+                rank = $4,
+                region = $5,
+                region_sido = $6,
+                region_sigungu = $7,
+                address = $8,
+                updated_at = now()
+          where id = $9
+          returning *`,
+        [nickname, phone, gender, rank, region, regionSido, regionSigungu, String(body.address || '').trim() || null, user.id]
+      );
+      return sendJson(res, 200, { user: publicUser(result.rows[0]) });
     }
 
     if (requestPath === '/api/games' && req.method === 'GET') {

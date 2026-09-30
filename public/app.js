@@ -18,6 +18,26 @@
     leagueOnly: '리그전만 진행',
     leagueTournament: '예선리그 후 본선 토너먼트',
   };
+
+  const REGION_HIERARCHY = {
+    서울특별시: ['종로구', '중구', '용산구', '성동구', '광진구', '동대문구', '중랑구', '성북구', '강북구', '도봉구', '노원구', '은평구', '서대문구', '마포구', '양천구', '강서구', '구로구', '금천구', '영등포구', '동작구', '관악구', '서초구', '강남구', '송파구', '강동구'],
+    부산광역시: ['중구', '서구', '동구', '영도구', '부산진구', '동래구', '남구', '북구', '해운대구', '사하구', '금정구', '강서구', '연제구', '수영구', '사상구', '기장군'],
+    대구광역시: ['중구', '동구', '서구', '남구', '북구', '수성구', '달서구', '달성군', '군위군'],
+    인천광역시: ['중구', '동구', '미추홀구', '연수구', '남동구', '부평구', '계양구', '서구', '강화군', '옹진군'],
+    광주광역시: ['동구', '서구', '남구', '북구', '광산구'],
+    대전광역시: ['동구', '중구', '서구', '유성구', '대덕구'],
+    울산광역시: ['중구', '남구', '동구', '북구', '울주군'],
+    세종특별자치시: ['세종특별자치시'],
+    경기도: ['수원시', '성남시', '의정부시', '안양시', '부천시', '광명시', '평택시', '동두천시', '안산시', '고양시', '과천시', '구리시', '남양주시', '오산시', '시흥시', '군포시', '의왕시', '하남시', '용인시', '파주시', '이천시', '안성시', '김포시', '화성시', '광주시', '여주시', '양평군', '고양시 덕양구', '고양시 일산동구', '고양시 일산서구', '가평군', '연천군'],
+    강원특별자치도: ['춘천시', '원주시', '강릉시', '동해시', '태백시', '속초시', '삼척시', '홍천군', '횡성군', '영월군', '평창군', '정선군', '철원군', '화천군', '양구군', '인제군', '고성군', '양양군'],
+    충청북도: ['청주시 상당구', '청주시 서원구', '청주시 흥덕구', '청주시 청원구', '충주시', '제천시', '보은군', '옥천군', '영동군', '증평군', '진천군', '괴산군', '음성군', '단양군'],
+    충청남도: ['천안시 동남구', '천안시 서북구', '공주시', '보령시', '아산시', '서산시', '논산시', '계룡시', '당진시', '금산군', '부여군', '서천군', '청양군', '홍성군', '예산군', '태안군'],
+    전북특별자치도: ['전주시 완산구', '전주시 덕진구', '군산시', '익산시', '정읍시', '남원시', '김제시', '완주군', '진안군', '무주군', '장수군', '임실군', '순창군', '고창군', '부안군'],
+    전라남도: ['목포시', '여수시', '순천시', '나주시', '광양시', '담양군', '곡성군', '구례군', '고흥군', '보성군', '화순군', '장흥군', '강진군', '해남군', '영암군', '무안군', '함평군', '영광군', '장성군', '완도군', '진도군', '신안군'],
+    경상북도: ['포항시 남구', '포항시 북구', '경주시', '김천시', '안동시', '구미시', '영주시', '영천시', '상주시', '문경시', '경산시', '군위군', '의성군', '청송군', '영양군', '영덕군', '청도군', '고령군', '성주군', '칠곡군', '예천군', '봉화군', '울진군', '울릉군'],
+    경상남도: ['창원시 의창구', '창원시 성산구', '창원시 마산합포구', '창원시 마산회원구', '창원시 진해구', '진주시', '통영시', '사천시', '김해시', '밀양시', '거제시', '양산시', '의령군', '함안군', '창녕군', '고성군', '남해군', '하동군', '산청군', '함양군', '거창군', '합천군'],
+    제주특별자치도: ['제주시', '서귀포시'],
+  };
   const BROWSER_ROUTE_KEY = 'ttgms:v1:browser-route';
 
   function getFormatIconSvg(format) {
@@ -86,7 +106,6 @@
   const serviceMenuActions = document.getElementById('serviceMenuActions');
   const serviceMenu = document.getElementById('serviceMenu');
   const serviceMenuToggle = document.querySelector('.service-menu-toggle');
-  const topbarUser = document.getElementById('topbarUser');
   const brand = document.querySelector('.brand');
   const brandName = document.querySelector('.brand-name');
 
@@ -145,6 +164,31 @@
 
   function trimValue(value) {
     return String(value ?? '').trim();
+  }
+
+  function regionLabel(sido, sigungu) {
+    return [trimValue(sido), trimValue(sigungu)].filter(Boolean).join(' ');
+  }
+
+  function inferRegionSelection(user = {}) {
+    const rawSido = trimValue(user.regionSido);
+    const rawSigungu = trimValue(user.regionSigungu);
+    const legacyRegion = trimValue(user.region);
+    const sido = Object.prototype.hasOwnProperty.call(REGION_HIERARCHY, rawSido)
+      ? rawSido
+      : Object.keys(REGION_HIERARCHY).find((item) => legacyRegion.replace(/\s/g, '').includes(item.replace(/\s/g, ''))) || '';
+    const sigungu = rawSigungu && REGION_HIERARCHY[sido]?.includes(rawSigungu)
+      ? rawSigungu
+      : REGION_HIERARCHY[sido]?.find((item) => legacyRegion.replace(/\s/g, '').includes(item.replace(/\s/g, ''))) || '';
+    return { sido, sigungu };
+  }
+
+  function renderRegionFields(prefix, user = {}, required = true) {
+    const selected = inferRegionSelection(user);
+    const requiredAttr = required ? ' required' : '';
+    const sidoOptions = Object.keys(REGION_HIERARCHY).map((sido) => `<option value="${escapeHtml(sido)}" ${sido === selected.sido ? 'selected' : ''}>${escapeHtml(sido)}</option>`).join('');
+    const sigunguOptions = (REGION_HIERARCHY[selected.sido] || []).map((sigungu) => `<option value="${escapeHtml(sigungu)}" ${sigungu === selected.sigungu ? 'selected' : ''}>${escapeHtml(sigungu)}</option>`).join('');
+    return `<div class="field region-field"><label for="${prefix}RegionSido">활동지역${required ? ' <span class="field-requirement field-requirement--required">필수</span>' : ''}</label><div class="region-select-row"><select id="${prefix}RegionSido" name="regionSido" data-region-sido${requiredAttr}><option value="">시·도 선택</option>${sidoOptions}</select><select id="${prefix}RegionSigungu" name="regionSigungu" data-region-sigungu${requiredAttr} ${selected.sido ? '' : 'disabled'}><option value="">시·군·구 선택</option>${sigunguOptions}</select></div><input type="hidden" name="region" value="${escapeHtml(regionLabel(selected.sido, selected.sigungu))}" /></div>`;
   }
 
   function getVenueSuggestions() {
@@ -638,10 +682,7 @@
           <label for="signupPhone">휴대폰번호 <span class="field-requirement field-requirement--required">필수</span></label>
           <input id="signupPhone" name="phone" type="tel" autocomplete="tel" required placeholder="예: 010-1234-5678" />
         </div>
-        <div class="field">
-          <label for="signupRegion">활동지역 <span class="field-requirement field-requirement--required">필수</span></label>
-          <input id="signupRegion" name="region" type="text" autocomplete="address-level2" required placeholder="예: 서울 강남 / 경기 분당" />
-        </div>
+        ${renderRegionFields('signup', {}, true)}
         <div class="helper-row">
           <span>필수 항목을 모두 입력해야 가입할 수 있습니다.</span>
           <span>활동지역을 기준으로 주변 탁구장을 우선 안내합니다.</span>
@@ -749,14 +790,18 @@
   }
 
   function renderVenueFinderPage(currentUser) {
-    const activityRegion = trimValue(currentUser?.region);
+    const activitySelection = inferRegionSelection(currentUser || {});
+    const activityRegion = regionLabel(activitySelection.sido, activitySelection.sigungu) || trimValue(currentUser?.region);
     const allVenues = Array.isArray(state.venues) ? state.venues : [];
     const regions = [...new Set(allVenues.map((venue) => trimValue(venue.region)).filter(Boolean))].sort((left, right) => left.localeCompare(right, 'ko'));
     const search = trimValue(state.venueSearch).toLowerCase();
     const normalizeRegion = (value) => trimValue(value).toLowerCase().replace(/\s+/g, '');
     const matchesActivity = (venue) => {
+      if (activitySelection.sido && activitySelection.sigungu && venue.regionSido && venue.regionSigungu) {
+        return activitySelection.sido === venue.regionSido && activitySelection.sigungu === venue.regionSigungu;
+      }
       const wanted = normalizeRegion(activityRegion);
-      const haystack = normalizeRegion(`${venue.region || ''} ${venue.address || ''}`);
+      const haystack = normalizeRegion(`${venue.regionSido || ''} ${venue.regionSigungu || ''} ${venue.region || ''} ${venue.address || ''}`);
       return Boolean(wanted && (haystack.includes(wanted) || wanted.includes(haystack)));
     };
     const matchesSearch = (venue) => !search || `${venue.name} ${venue.address} ${venue.phone || ''} ${venue.region || ''}`.toLowerCase().includes(search);
@@ -2330,10 +2375,7 @@
             </div>
           </div>
           <div class="field-grid">
-            <div class="field">
-              <label for="profileRegion">활동지역</label>
-              <input id="profileRegion" name="region" type="text" value="${escapeHtml(currentUser.region || '')}" />
-            </div>
+            ${renderRegionFields('profile', currentUser, true)}
             <div class="field">
               <label for="profileRank">탁구부수</label>
               <input id="profileRank" name="rank" type="text" value="${escapeHtml(currentUser.rank || '')}" />
@@ -2523,7 +2565,6 @@
     if (topActions) topActions.innerHTML = '';
     if (mobileMenuActions) mobileMenuActions.innerHTML = actions;
     if (serviceMenuActions) serviceMenuActions.innerHTML = venueAction + fleaMarketAction + shopAction;
-    if (topbarUser) topbarUser.textContent = currentUser ? currentUser.nickname : '';
     if (mobileMenuToggle) {
       mobileMenuToggle.classList.toggle('mobile-menu-toggle--authenticated', Boolean(currentUser));
       mobileMenuToggle.setAttribute('aria-label', currentUser ? '회원 메뉴 열기 (로그인됨)' : '회원 메뉴 열기');
@@ -3068,7 +3109,9 @@
     const password = trimValue(formData.password);
     const phone = formatPhoneNumber(formData.phone);
     const gender = trimValue(formData.gender);
-    const region = trimValue(formData.region);
+    const regionSido = trimValue(formData.regionSido);
+    const regionSigungu = trimValue(formData.regionSigungu);
+    const region = regionLabel(regionSido, regionSigungu);
     const rank = trimValue(formData.rank);
     const memberIdKey = normalizeId(memberId);
 
@@ -3079,7 +3122,7 @@
       !gender ? '성별' : '',
       !rank ? '통합부수' : '',
       !phone ? '휴대폰번호' : '',
-      !region ? '활동지역' : '',
+      !regionSido || !regionSigungu ? '활동지역' : '',
     ].filter(Boolean);
     if (missingFields.length) {
       setFlash(`회원가입 실패: ${missingFields.join(', ')} 항목을 입력해 주세요.`, 'error');
@@ -3090,7 +3133,7 @@
     try {
       await apiRequest('/api/auth/signup', {
         method: 'POST',
-        body: JSON.stringify({ nickname, memberId, password, phone, gender, rank, region }),
+        body: JSON.stringify({ nickname, memberId, password, phone, gender, rank, region, regionSido, regionSigungu }),
       });
       form.reset();
       state.signupCompleted = true;
@@ -3123,6 +3166,8 @@
       phone,
       gender,
       region,
+      regionSido,
+      regionSigungu,
       rank,
       createdAt: new Date().toISOString(),
     });
@@ -3199,31 +3244,38 @@
     render();
   }
 
-  function handleProfileUpdate(form) {
+  async function handleProfileUpdate(form) {
     const currentUser = getCurrentUser();
     if (!currentUser) return;
     const formData = Object.fromEntries(new FormData(form).entries());
     const nickname = trimValue(formData.nickname);
     const phone = trimValue(formData.phone);
     const gender = trimValue(formData.gender);
-    if (!nickname || !phone) {
-      setFlash('닉네임과 휴대폰번호를 입력해 주세요.', 'error');
+    const regionSido = trimValue(formData.regionSido);
+    const regionSigungu = trimValue(formData.regionSigungu);
+    const region = regionLabel(regionSido, regionSigungu);
+    if (!nickname || !phone || !regionSido || !regionSigungu) {
+      setFlash('닉네임, 휴대폰번호, 활동지역을 입력해 주세요.', 'error');
       render();
       return;
     }
-    Object.assign(currentUser, {
-      nickname,
-      phone,
-      gender,
-      region: trimValue(formData.region),
-      rank: trimValue(formData.rank),
-      address: trimValue(formData.address),
-      updatedAt: new Date().toISOString(),
-    });
+    const profile = { nickname, phone, gender, region, regionSido, regionSigungu, rank: trimValue(formData.rank), address: trimValue(formData.address) };
+    try {
+      const result = await apiRequest('/api/auth/profile', { method: 'PATCH', body: JSON.stringify(profile) });
+      state.users = [result.user];
+      state.sessionUserId = result.user.id;
+    } catch (error) {
+      if (!error.message.includes('Failed to fetch') && !error.message.includes('서버 요청')) {
+        setFlash(`내 정보 수정 실패: ${error.message}`, 'error');
+        render();
+        return;
+      }
+      Object.assign(currentUser, { ...profile, updatedAt: new Date().toISOString() });
+      persistUsers();
+    }
     state.games.filter((game) => game.operatorId === currentUser.id).forEach((game) => {
       game.operatorNickname = currentUser.nickname;
     });
-    persistUsers();
     persistGames();
     state.page = 'dashboard';
     setFlash('내 정보가 수정되었습니다.', 'success');
@@ -3894,7 +3946,7 @@
     }
 
     if (form.dataset.form === 'profile') {
-      handleProfileUpdate(form);
+      await handleProfileUpdate(form);
       return;
     }
 
@@ -3930,6 +3982,26 @@
 
   async function handleAppChange(event) {
     const input = event.target;
+    if (input.matches('[data-region-sido]')) {
+      const form = input.closest('form');
+      const sigunguInput = form?.querySelector('[data-region-sigungu]');
+      const regionInput = form?.querySelector('input[name="region"]');
+      const options = REGION_HIERARCHY[input.value] || [];
+      if (sigunguInput) {
+        sigunguInput.innerHTML = `<option value="">시·군·구 선택</option>${options.map((sigungu) => `<option value="${escapeHtml(sigungu)}">${escapeHtml(sigungu)}</option>`).join('')}`;
+        sigunguInput.disabled = !input.value;
+        sigunguInput.value = '';
+      }
+      if (regionInput) regionInput.value = '';
+      return;
+    }
+    if (input.matches('[data-region-sigungu]')) {
+      const form = input.closest('form');
+      const sidoInput = form?.querySelector('[data-region-sido]');
+      const regionInput = form?.querySelector('input[name="region"]');
+      if (regionInput) regionInput.value = regionLabel(sidoInput?.value, input.value);
+      return;
+    }
     if (input.matches('[data-venue-region-filter]')) {
       state.venueRegionFilter = input.value || 'all';
       render();

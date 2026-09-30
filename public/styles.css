@@ -137,18 +137,6 @@ button {
   gap: 8px;
 }
 
-.topbar-user {
-  position: absolute;
-  left: 0;
-  max-width: 180px;
-  overflow: hidden;
-  color: var(--muted);
-  font-size: 0.82rem;
-  font-weight: 800;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .service-menu-toggle {
   display: none;
 }
@@ -1277,6 +1265,16 @@ button {
 .field {
   display: grid;
   gap: 8px;
+}
+
+.region-select-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.region-select-row select {
+  min-width: 0;
 }
 
 .field label {

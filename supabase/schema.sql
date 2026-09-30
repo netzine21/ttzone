@@ -12,6 +12,8 @@ create table if not exists public.users (
   rank text not null,
   phone text not null,
   region text,
+  region_sido text,
+  region_sigungu text,
   address text,
   role text not null default 'user',
   created_at timestamptz not null default now(),
