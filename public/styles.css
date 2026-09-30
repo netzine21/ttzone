@@ -3802,6 +3802,11 @@ button {
   text-align: center;
 }
 
+.tournament-qualification-controls .field label,
+.tournament-qualification-controls .tournament-lower-option {
+  color: var(--text);
+}
+
 .tournament-qualification-controls .field select {
   width: 100%;
 }
