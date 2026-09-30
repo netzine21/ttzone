@@ -1466,15 +1466,24 @@
 
   function buildTournamentBracket(entries, league, format) {
     if (!entries.length) return null;
-    const size = 2 ** Math.ceil(Math.log2(entries.length));
-    const halfSize = size / 2;
-    const leftEntries = entries.slice(0, Math.ceil(entries.length / 2));
-    const rightEntries = entries.slice(Math.ceil(entries.length / 2));
-    const slots = [...leftEntries];
-    while (slots.length < halfSize) slots.push(null);
-    slots.push(...rightEntries);
-    while (slots.length < size) slots.push(null);
+    const orderedEntries = entries
+      .map((entry, index) => ({ entry, index }))
+      .sort((left, right) => {
+        const rankDifference = (Number(left.entry.qualificationRank) || Number.MAX_SAFE_INTEGER) - (Number(right.entry.qualificationRank) || Number.MAX_SAFE_INTEGER);
+        if (rankDifference) return rankDifference;
+        const leftGroup = Number(String(left.entry.sourceGroup || '').match(/\d+/)?.[0]) || Number.MAX_SAFE_INTEGER;
+        const rightGroup = Number(String(right.entry.sourceGroup || '').match(/\d+/)?.[0]) || Number.MAX_SAFE_INTEGER;
+        return leftGroup - rightGroup || left.index - right.index;
+      })
+      .map(({ entry }) => entry);
+    const size = entries.length === 1 ? 1 : 2 ** Math.ceil(Math.log2(entries.length));
+    const seedOrder = getTournamentSeedOrder(size);
+    const slots = seedOrder.map((seed) => orderedEntries[seed - 1] || null);
     const rounds = [];
+    if (size === 1) {
+      rounds.push([{ id: makeId('tmatch'), round: 1, matchIndex: 0, sideA: orderedEntries[0], sideB: null, result: null }]);
+      return { league, format, size, entries: orderedEntries, rounds, seeded: true, pointsToWin: 11, bestOf: 5, generatedAt: new Date().toISOString() };
+    }
     const firstRound = [];
     for (let index = 0; index < size / 2; index += 1) {
       const left = slots[index * 2];
@@ -1485,8 +1494,17 @@
     for (let round = 2; round <= Math.log2(size); round += 1) {
       rounds.push(Array.from({ length: size / (2 ** round) }, (_, matchIndex) => ({ id: makeId('tmatch'), round, matchIndex, sideA: null, sideB: null, result: null })));
     }
-    if (size === 1) rounds[0][0] = { id: makeId('tmatch'), round: 1, matchIndex: 0, sideA: entries[0], sideB: null, result: null };
-    return { league, format, size, entries, rounds, pointsToWin: 11, bestOf: 5, generatedAt: new Date().toISOString() };
+    return { league, format, size, entries: orderedEntries, rounds, seeded: true, pointsToWin: 11, bestOf: 5, generatedAt: new Date().toISOString() };
+  }
+
+  function getTournamentSeedOrder(size) {
+    if (size <= 1) return [1];
+    let order = [1, 2];
+    while (order.length < size) {
+      const nextSize = order.length * 2;
+      order = order.flatMap((seed) => [seed, nextSize + 1 - seed]);
+    }
+    return order;
   }
 
   function tournamentRoundLabel(entryCount) {
@@ -1534,7 +1552,7 @@
 
   function rebalanceTournamentFirstRound(bracket) {
     const firstRound = bracket.rounds?.[0] || [];
-    if (!firstRound.length || firstRound.some((match) => match.result?.winner || match.result?.score)) return;
+    if (bracket.seeded || !firstRound.length || firstRound.some((match) => match.result?.winner || match.result?.score)) return;
     const entries = (bracket.entries?.length ? bracket.entries : firstRound.flatMap((match) => [match.sideA, match.sideB])).filter(Boolean);
     const size = bracket.size || firstRound.length * 2;
     const halfSize = size / 2;
