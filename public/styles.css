@@ -4609,6 +4609,10 @@ button {
   display: none !important;
 }
 
+.tournament-bracket--split .tournament-round__connector {
+  display: none !important;
+}
+
 .tournament-bracket--split .tournament-side {
   min-width: 0;
   padding-left: 6px;
