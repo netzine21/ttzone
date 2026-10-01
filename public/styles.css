@@ -2520,6 +2520,19 @@ button {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 24px 40px;
+  text-align: center;
+}
+
+.public-game-detail:fullscreen .public-league-results-viewport,
+.public-game-detail:fullscreen .tournament-bracket-viewport {
+  display: flex;
+  justify-content: center;
+}
+
+.public-game-detail:fullscreen .public-league-results-stage,
+.public-game-detail:fullscreen .tournament-bracket-stage {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .competition-content-heading {
@@ -2792,7 +2805,7 @@ button {
 .public-league-summary td {
   padding: 7px 6px;
   border-bottom: 1px solid rgba(165, 190, 214, 0.1);
-  text-align: left;
+  text-align: center;
   vertical-align: middle;
 }
 
@@ -3973,6 +3986,7 @@ button {
   padding: 8px 9px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.035);
+  text-align: center;
 }
 
 .qualifying-standing-row strong {

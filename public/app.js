@@ -2838,6 +2838,7 @@
     if (state.detailTab !== 'progress' || state.operationGameId || !Boolean(state.selectedPublicGameId || state.selectedGameId)) return false;
     const liveGame = state.games.find((game) => game.id === (state.selectedPublicGameId || state.selectedGameId));
     const liveFormat = liveGame ? getPublicFormat(liveGame) : null;
+    if (liveGame && liveFormat && getFormatStatus(liveGame, liveFormat).key === 'done') return false;
     if (state.progressSubtab === 'tournament' && liveGame) {
       const liveTournament = getTournamentConfig(liveGame, liveFormat);
       const liveLeague = liveTournament && ['upper', 'lower'].includes(state.progressTournamentLeague) && liveTournament[state.progressTournamentLeague]
