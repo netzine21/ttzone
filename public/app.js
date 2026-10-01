@@ -61,6 +61,7 @@
     adminVenueSigungu: '',
     adminVenueImportRows: [],
     adminVenueImportMessage: '',
+    adminVenueEditingId: null,
     adminDataLoading: false,
     adminAccess: [],
     adminAccessLoadError: '',
@@ -105,6 +106,7 @@
   let liveRefreshTimer = null;
   let liveRefreshInFlight = false;
   let scheduleResultsSaveTimer = null;
+  let searchRenderTimer = null;
   let browserHistoryReady = false;
   let restoringBrowserHistory = false;
   let lastBrowserRouteKey = '';
@@ -2441,6 +2443,13 @@
     return role === 'admin' ? '시스템관리자' : role === 'operator' ? '운영자' : '일반회원';
   }
 
+  function renderAdminVenueEditCard(venue, isEditing) {
+    if (isEditing) {
+      return `<form class="admin-venue-card" data-form="admin-venue" data-venue-id="${escapeHtml(venue.id)}"><div class="field"><label>탁구장명</label><input name="name" value="${escapeHtml(venue.name)}" required /></div><div class="field"><label>주소</label><input name="address" value="${escapeHtml(venue.address)}" required /></div><div class="field"><label>지역</label><input name="region" value="${escapeHtml(venue.region || '')}" placeholder="예: 인천광역시 미추홀구" /></div><div class="field"><label>전화번호</label><input name="phone" value="${escapeHtml(venue.phone || '')}" /></div><div class="field"><label>상태</label><select name="status"><option value="pending" ${venue.status === 'pending' ? 'selected' : ''}>승인대기</option><option value="approved" ${venue.status === 'approved' ? 'selected' : ''}>사용</option><option value="archived" ${venue.status === 'archived' ? 'selected' : ''}>보관</option></select></div><div class="button-row"><button class="btn btn-primary" type="submit">저장</button><button class="btn btn-ghost" type="button" data-admin-venue-edit-cancel>취소</button></div></form>`;
+    }
+    return `<article class="admin-venue-card admin-venue-card--result"><div><strong>${escapeHtml(venue.name)}</strong><p>${escapeHtml(venue.address)}</p><p>${escapeHtml(venue.region || '지역 미입력')} · ${escapeHtml(venue.phone || '전화번호 미입력')}</p><span class="admin-role-badge">${venue.status === 'approved' ? '사용' : venue.status === 'archived' ? '보관' : '승인대기'}</span></div><button class="btn btn-secondary" type="button" data-admin-venue-edit="${escapeHtml(venue.id)}">수정</button></article>`;
+  }
+
   function renderAdminPage(currentUser) {
     const users = Array.isArray(state.adminUsers) ? state.adminUsers : [];
     const venues = Array.isArray(state.adminVenues) ? state.adminVenues : [];
@@ -2449,6 +2458,7 @@
     const editVenues = adminVenueTab === 'edit' && venueSearch
       ? venues.filter((venue) => String(venue.name || '').toLowerCase().includes(venueSearch))
       : [];
+    const editVenueRows = editVenues.map((venue) => renderAdminVenueEditCard(venue, state.adminVenueEditingId === venue.id)).join('');
     const regionParts = (venue) => trimValue(venue.region).split(/\s+/).filter(Boolean);
     const venueSido = state.adminVenueSido || '';
     const venueSigunguOptions = [...new Set(venues.filter((venue) => !venueSido || regionParts(venue)[0] === venueSido).map((venue) => regionParts(venue)[1]).filter(Boolean))].sort((left, right) => left.localeCompare(right, 'ko'));
@@ -2507,8 +2517,8 @@
             <div class="admin-venue-view-toolbar"><select data-admin-venue-sido><option value="">전체 시·도</option>${Object.keys(REGION_HIERARCHY).map((sido) => `<option value="${escapeHtml(sido)}" ${venueSido === sido ? 'selected' : ''}>${escapeHtml(sido)}</option>`).join('')}</select><select data-admin-venue-sigungu ${venueSido ? '' : 'disabled'}><option value="">전체 시·군·구</option>${venueSigunguOptions.map((sigungu) => `<option value="${escapeHtml(sigungu)}" ${state.adminVenueSigungu === sigungu ? 'selected' : ''}>${escapeHtml(sigungu)}</option>`).join('')}</select></div>
             <div class="admin-users-table-wrap"><table class="admin-users-table"><thead><tr><th>탁구장명</th><th>주소</th><th>지역</th><th>전화번호</th><th>상태</th></tr></thead><tbody>${loading ? '<tr><td colspan="5">탁구장정보를 불러오는 중입니다...</td></tr>' : state.adminVenueLoadError ? `<tr><td colspan="5">${escapeHtml(state.adminVenueLoadError)}</td></tr>` : venueViewRows || '<tr><td colspan="5">조회된 탁구장이 없습니다.</td></tr>'}</tbody></table></div>
           </div>
-          <div class="admin-venue-toolbar"><input class="admin-venue-search" type="search" data-admin-venue-search placeholder="탁구장명 검색" value="${escapeHtml(state.adminVenueSearch)}" /></div>
-          <div class="admin-venue-list">${loading ? '<p class="muted">탁구장정보를 불러오는 중입니다...</p>' : state.adminVenueLoadError ? `<p class="admin-load-error">${escapeHtml(state.adminVenueLoadError)}</p>` : editVenues.length ? editVenues.map((venue) => `<form class="admin-venue-card" data-form="admin-venue" data-venue-id="${escapeHtml(venue.id)}"><label class="admin-venue-select"><input type="checkbox" data-admin-venue-select value="${escapeHtml(venue.id)}" /><span>선택</span></label><div class="field"><label>탁구장명</label><input name="name" value="${escapeHtml(venue.name)}" required /></div><div class="field"><label>주소</label><input name="address" value="${escapeHtml(venue.address)}" required /></div><div class="field"><label>지역</label><input name="region" value="${escapeHtml(venue.region || '')}" placeholder="예: 인천광역시 미추홀구" /></div><div class="field"><label>전화번호</label><input name="phone" value="${escapeHtml(venue.phone || '')}" /></div><div class="field"><label>상태</label><select name="status"><option value="pending" ${venue.status === 'pending' ? 'selected' : ''}>승인대기</option><option value="approved" ${venue.status === 'approved' ? 'selected' : ''}>사용</option><option value="archived" ${venue.status === 'archived' ? 'selected' : ''}>보관</option></select></div><button class="btn btn-secondary" type="submit">저장</button></form>`).join('') : venueSearch ? '<p class="muted">검색 결과가 없습니다.</p>' : '<p class="muted">수정할 탁구장명을 검색해 주세요.</p>'}</div>
+          <div class="admin-venue-toolbar"><input class="admin-venue-search" type="search" data-admin-venue-search placeholder="탁구장명 검색" value="${escapeHtml(state.adminVenueSearch)}" /><button class="btn btn-secondary" type="button" data-admin-venue-search-submit>검색</button></div>
+          <div class="admin-venue-list">${loading ? '<p class="muted">탁구장정보를 불러오는 중입니다...</p>' : state.adminVenueLoadError ? `<p class="admin-load-error">${escapeHtml(state.adminVenueLoadError)}</p>` : editVenueRows || (venueSearch ? '<p class="muted">검색 결과가 없습니다.</p>' : '<p class="muted">탁구장명을 입력한 후 검색 버튼을 눌러 주세요.</p>')}</div>
         </div>
         </div>
         <div class="admin-tab-panel ${adminTab === 'access' ? 'is-active' : ''}" data-admin-panel="access">
@@ -2593,6 +2603,7 @@
     state.adminAccessLoading = false;
     state.adminVenueImportRows = [];
     state.adminVenueImportMessage = '';
+    state.adminVenueEditingId = null;
     await refreshAdminData();
     if (state.adminTab === 'access') await refreshAdminData('access');
   }
@@ -3737,6 +3748,30 @@
       state.adminVenueTab = ['register', 'view', 'edit'].includes(adminVenueTabButton.dataset.adminVenueTabButton)
         ? adminVenueTabButton.dataset.adminVenueTabButton
         : 'register';
+      state.adminVenueEditingId = null;
+      render();
+      return;
+    }
+
+    const adminVenueSearchButton = event.target.closest('[data-admin-venue-search-submit]');
+    if (adminVenueSearchButton) {
+      const searchInput = document.querySelector('[data-admin-venue-search]');
+      state.adminVenueSearch = trimValue(searchInput?.value);
+      state.adminVenueEditingId = null;
+      render();
+      return;
+    }
+
+    const adminVenueEditButton = event.target.closest('[data-admin-venue-edit]');
+    if (adminVenueEditButton) {
+      state.adminVenueEditingId = adminVenueEditButton.dataset.adminVenueEdit || null;
+      render();
+      return;
+    }
+
+    const adminVenueEditCancelButton = event.target.closest('[data-admin-venue-edit-cancel]');
+    if (adminVenueEditCancelButton) {
+      state.adminVenueEditingId = null;
       render();
       return;
     }
@@ -4333,23 +4368,11 @@
     if (input.matches('[data-venue-search]')) {
       state.venueSearch = input.value;
       if (event.isComposing || input.dataset.composing) return;
-      render();
-      const searchInput = document.querySelector('[data-venue-search]');
-      if (searchInput) {
-        searchInput.focus();
-        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
-      }
+      scheduleSearchRender('[data-venue-search]');
       return;
     }
     if (input.matches('[data-admin-venue-search], [data-admin-venue-view-search]')) {
       state.adminVenueSearch = input.value;
-      if (event.isComposing || input.dataset.composing) return;
-      render();
-      const searchInput = document.querySelector(`[data-${input.matches('[data-admin-venue-view-search]') ? 'admin-venue-view-search' : 'admin-venue-search'}]`);
-      if (searchInput) {
-        searchInput.focus();
-        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
-      }
       return;
     }
     if (input.id === 'signupPhone') {
@@ -4369,6 +4392,7 @@
   function handleCompositionStart(event) {
     const input = event.target;
     if (input instanceof HTMLInputElement && input.matches('[data-admin-venue-search], [data-admin-venue-view-search], [data-venue-search]')) {
+      window.clearTimeout(searchRenderTimer);
       input.dataset.composing = 'true';
     }
   }
@@ -4376,10 +4400,13 @@
   function handleCompositionEnd(event) {
     const input = event.target;
     if (!(input instanceof HTMLInputElement) || !input.matches('[data-admin-venue-search], [data-admin-venue-view-search], [data-venue-search]')) return;
-    input.dataset.composing = 'pending';
+    window.clearTimeout(searchRenderTimer);
     window.setTimeout(() => {
       delete input.dataset.composing;
-    if (input.matches('[data-admin-venue-search], [data-admin-venue-view-search]')) state.adminVenueSearch = input.value;
+      if (input.matches('[data-admin-venue-search], [data-admin-venue-view-search]')) {
+        state.adminVenueSearch = input.value;
+        return;
+      }
       if (input.matches('[data-venue-search]')) state.venueSearch = input.value;
       render();
       const searchInput = document.querySelector(input.matches('[data-admin-venue-search]') ? '[data-admin-venue-search]' : input.matches('[data-admin-venue-view-search]') ? '[data-admin-venue-view-search]' : '[data-venue-search]');
@@ -4388,6 +4415,18 @@
         searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
       }
     }, 0);
+  }
+
+  function scheduleSearchRender(selector) {
+    window.clearTimeout(searchRenderTimer);
+    searchRenderTimer = window.setTimeout(() => {
+      render();
+      const searchInput = document.querySelector(selector);
+      if (searchInput) {
+        searchInput.focus();
+        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+      }
+    }, 220);
   }
 
   function moveDraggedGroupPlayer(playerKey, format, targetGroupName) {
@@ -4475,7 +4514,13 @@
   async function init() {
     await loadState();
     const savedRoute = readSessionJson(BROWSER_ROUTE_KEY, null);
-    if (savedRoute) restoreBrowserRoute(savedRoute);
+    if (savedRoute) {
+      restoreBrowserRoute(savedRoute);
+      if (state.page === 'admin' && getCurrentUser()?.role === 'admin') {
+        await refreshAdminData();
+        if (state.adminTab === 'access') await refreshAdminData('access');
+      }
+    }
     wireEvents();
     startAccessHeartbeat();
     render();

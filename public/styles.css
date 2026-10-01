@@ -627,6 +627,22 @@ button {
   max-width: 420px;
 }
 
+.admin-venue-card--result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-venue-card--result p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.admin-venue-card--result .admin-role-badge {
+  margin-top: 10px;
+}
+
 .admin-venue-tabs {
   display: flex;
   gap: 8px;
