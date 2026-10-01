@@ -330,7 +330,7 @@ async function getGames(viewerId = null) {
   const registrations = await pool.query(
     `select r.id, r.game_id, r.format, r.user_id, r.nickname, r.member_id, r.rank, r.team_name,
             u.gender,
-            registered_by, registration_source, applied_at, updated_at
+            r.registered_by, r.registration_source, r.applied_at, r.updated_at
        from public.registrations r
        left join public.users u on u.id = r.user_id
       order by r.applied_at`
