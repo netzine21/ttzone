@@ -4779,8 +4779,7 @@ button {
 }
 
 .tournament-bracket-viewport[data-public-tournament-viewport] {
-  display: flex;
-  justify-content: center;
+  display: block;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;

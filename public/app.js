@@ -2901,10 +2901,14 @@
       if (!stage) return;
       const availableWidth = viewport.clientWidth;
       if (!availableWidth) return;
-      stage.style.transformOrigin = 'top center';
+      stage.style.transformOrigin = 'top left';
       const naturalWidth = Math.max(stage.scrollWidth, 1);
       stage.style.width = `${naturalWidth}px`;
       const scale = Math.min(1, availableWidth / naturalWidth) * (state.tournamentZoom || 1);
+      const visualWidth = naturalWidth * scale;
+      const sideInset = Math.max(0, (availableWidth - visualWidth) / 2);
+      stage.style.marginLeft = `${sideInset}px`;
+      stage.style.marginRight = `${sideInset}px`;
       stage.style.transform = `scale(${scale})`;
       viewport.style.height = `${stage.scrollHeight * scale}px`;
     });
