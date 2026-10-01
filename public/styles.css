@@ -2508,12 +2508,7 @@ button {
 }
 
 .public-game-detail:fullscreen .game-detail-header {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  padding: 16px 24px;
-  background: rgba(6, 13, 24, 0.94);
-  backdrop-filter: blur(12px);
+  display: none;
 }
 
 .public-game-detail:fullscreen .competition-progress-toolbar {
@@ -2524,7 +2519,11 @@ button {
 }
 
 .public-game-detail:fullscreen .competition-progress-toolbar .format-selector,
-.public-game-detail:fullscreen .competition-progress__tabs {
+.public-game-detail:fullscreen .competition-progress__tabs,
+.public-game-detail:fullscreen .competition-content-heading,
+.public-game-detail:fullscreen .competition-tournament-heading,
+.public-game-detail:fullscreen .public-league-matrix > h4,
+.public-game-detail:fullscreen .public-league-results > h4 {
   display: none;
 }
 
