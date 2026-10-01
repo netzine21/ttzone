@@ -2516,6 +2516,22 @@ button {
   backdrop-filter: blur(12px);
 }
 
+.public-game-detail:fullscreen .competition-progress-toolbar {
+  position: fixed;
+  right: 24px;
+  bottom: 18px;
+  z-index: 10;
+}
+
+.public-game-detail:fullscreen .competition-progress-toolbar .format-selector,
+.public-game-detail:fullscreen .competition-progress__tabs {
+  display: none;
+}
+
+.public-game-detail:fullscreen .competition-fullscreen-button {
+  opacity: 0.72;
+}
+
 .public-game-detail:fullscreen .competition-view {
   max-width: 1440px;
   margin: 0 auto;
