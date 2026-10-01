@@ -2517,8 +2517,8 @@ button {
 
 .public-game-detail:fullscreen .game-detail-title {
   margin: 0;
-  font-size: 1rem;
-  line-height: 1.25;
+  font-size: 2rem;
+  line-height: 1.15;
 }
 
 .public-game-detail:fullscreen .competition-progress-toolbar {
@@ -2892,22 +2892,29 @@ button {
 .public-league-entry {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 7px;
   min-height: 36px;
   padding: 5px 6px;
   border-left: 0;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.025);
+  text-align: center;
+}
+
+.public-league-entry > div {
+  text-align: center;
 }
 
 .public-league-entry strong {
   color: var(--text);
   font-size: 0.82rem;
+  text-align: center;
   white-space: nowrap;
 }
 
 .public-league-entry__skill {
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -2928,11 +2935,13 @@ button {
 
 .public-league-entry__team {
   display: block;
+  text-align: center;
 }
 
 .public-league-entry__members {
   display: block;
   margin-top: 3px;
+  text-align: center;
 }
 
 .public-league-summary--team .public-league-summary__group,
@@ -2996,6 +3005,7 @@ button {
   margin-top: 2px;
   color: var(--muted);
   font-size: 0.68rem;
+  text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
