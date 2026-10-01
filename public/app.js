@@ -443,6 +443,12 @@
     return text ? escapeHtml(text) : '<span class="muted">미입력</span>';
   }
 
+  function genderLabel(gender) {
+    if (gender === 'male') return '남자';
+    if (gender === 'female') return '여자';
+    return '미입력';
+  }
+
   function getGameParticipants(game) {
     return Array.isArray(game.participants) ? game.participants : [];
   }
@@ -898,7 +904,7 @@
   function renderPublicParticipantList(game, format) {
     const registrations = getGameRegistrations(game, format);
     if (!registrations.length) return '<div class="empty-state">아직 참가신청한 회원이 없습니다.</div>';
-    return `<div class="schedule-table-wrap"><table class="public-data-table public-participant-table"><thead><tr><th>소속팀</th><th>선수명</th><th>통합부수</th></tr></thead><tbody>${registrations.map((participant) => `<tr><td>${escapeHtml(participant.teamName || '-')}</td><td>${escapeHtml(participant.nickname || '-')}</td><td>${escapeHtml(participant.rank || '-')}</td></tr>`).join('')}</tbody></table></div>`;
+    return `<div class="schedule-table-wrap"><table class="public-data-table public-participant-table"><thead><tr><th>소속팀</th><th>선수명</th><th>성별</th><th>통합부수</th></tr></thead><tbody>${registrations.map((participant) => `<tr><td>${escapeHtml(participant.teamName || '-')}</td><td>${escapeHtml(participant.nickname || '-')}</td><td>${escapeHtml(genderLabel(participant.gender))}</td><td>${escapeHtml(participant.rank || '-')}</td></tr>`).join('')}</tbody></table></div>`;
   }
 
   function renderPublicLeagueStandings(game, format) {
@@ -2473,10 +2479,10 @@
     return `
       <section class="panel section-card admin-page">
         <div class="section-heading admin-page__heading">
-          <div><p class="section-kicker">시스템 관리</p><h1>시스템 관리</h1></div>
+          <div><h1>시스템 관리</h1></div>
           <button type="button" class="create-game-close" aria-label="시스템 관리 닫기" data-back-dashboard><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg></button>
         </div>
-        <div class="admin-role-card"><strong>${escapeHtml(currentUser.nickname)}</strong><span>시스템관리자</span><p>전체 회원정보와 생성된 게임을 관리할 수 있습니다.</p></div>
+        <div class="admin-role-card"><strong>${escapeHtml(currentUser.nickname)}</strong><span>시스템관리자</span></div>
         <nav class="admin-tabs" aria-label="시스템 관리 메뉴">
           <button type="button" class="admin-tab ${adminTab === 'users' ? 'is-active' : ''}" data-admin-tab="users">회원정보관리</button>
           <button type="button" class="admin-tab ${adminTab === 'venues' ? 'is-active' : ''}" data-admin-tab="venues">탁구장정보관리</button>
@@ -2496,7 +2502,7 @@
           <div class="section-heading"><div><p class="section-kicker">탁구장 정보 DB</p><h2>탁구장 정보 관리</h2></div></div>
           <nav class="admin-venue-tabs" aria-label="탁구장 관리 메뉴"><button type="button" class="admin-tab ${adminVenueTab === 'register' ? 'is-active' : ''}" data-admin-venue-tab-button="register">탁구장정보등록</button><button type="button" class="admin-tab ${adminVenueTab === 'view' ? 'is-active' : ''}" data-admin-venue-tab-button="view">탁구장보기</button><button type="button" class="admin-tab ${adminVenueTab === 'edit' ? 'is-active' : ''}" data-admin-venue-tab-button="edit">탁구장정보수정</button></nav>
           <form class="admin-venue-create" data-form="admin-venue-create">
-            <div class="admin-venue-create__heading"><strong>새 탁구장 등록</strong><span>등록 즉시 게임 생성 화면에서 선택할 수 있습니다.</span></div>
+            <div class="admin-venue-create__heading"><strong>새 탁구장 등록</strong></div>
             <div class="admin-venue-create__fields">
               <div class="field"><label for="adminVenueName">탁구장명</label><input id="adminVenueName" name="name" required placeholder="예: 부천탁구클럽" /></div>
               <div class="field"><label for="adminVenueAddress">주소</label><input id="adminVenueAddress" name="address" required placeholder="도로명 주소" /></div>
@@ -2507,7 +2513,7 @@
             </div>
           </form>
           <div class="admin-venue-bulk-import">
-            <div><strong>CSV·TSV 일괄등록</strong><p>열 이름은 탁구장명, 주소, 전화번호, 지역, 지도 링크를 사용하세요.</p></div>
+            <div><strong>CSV·TSV 일괄등록</strong></div>
             <input type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values" data-admin-venue-import-file />
             ${state.adminVenueImportRows.length ? `<p class="admin-import-summary">${state.adminVenueImportRows.length}건을 읽었습니다. 아래 버튼을 눌러 등록하세요.</p>` : ''}
             ${state.adminVenueImportMessage ? `<p class="admin-load-error">${escapeHtml(state.adminVenueImportMessage)}</p>` : ''}
@@ -2523,7 +2529,6 @@
         </div>
         <div class="admin-tab-panel ${adminTab === 'access' ? 'is-active' : ''}" data-admin-panel="access">
           <div class="section-heading admin-panel-heading"><div><p class="section-kicker">실시간 접속</p><h2>접속현황</h2></div><button class="btn btn-secondary" type="button" data-admin-refresh="access">접속현황 새로고침</button></div>
-          <p class="subtle-note">최근 2분 이내 활동한 방문자입니다. 비회원은 익명으로 표시됩니다.</p>
           <div class="admin-users-table-wrap">
             <table class="admin-users-table">
               <thead><tr><th>구분</th><th>아이디</th><th>권한</th><th>최초 접속</th><th>최근 활동</th></tr></thead>

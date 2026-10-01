@@ -328,10 +328,12 @@ async function getGames(viewerId = null) {
   );
   const formats = await pool.query('select game_id, format from public.game_formats');
   const registrations = await pool.query(
-    `select id, game_id, format, user_id, nickname, member_id, rank, team_name,
+    `select r.id, r.game_id, r.format, r.user_id, r.nickname, r.member_id, r.rank, r.team_name,
+            u.gender,
             registered_by, registration_source, applied_at, updated_at
-       from public.registrations
-      order by applied_at`
+       from public.registrations r
+       left join public.users u on u.id = r.user_id
+      order by r.applied_at`
   );
   return games.rows.map((game) => publicGame(
     game,
@@ -340,6 +342,7 @@ async function getGames(viewerId = null) {
       id: item.id,
       userId: item.user_id,
       nickname: item.nickname,
+      gender: item.gender || '',
       memberId: item.member_id || '',
       rank: item.rank,
       teamName: item.team_name || '',
