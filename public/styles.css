@@ -1819,6 +1819,12 @@ button {
   white-space: nowrap;
 }
 
+@media (min-width: 561px) {
+  .public-game-detail h1.game-detail-title {
+    font-size: clamp(1.05rem, 3.6vw, 2rem);
+  }
+}
+
 .public-detail-meta {
   margin-top: 24px;
 }
