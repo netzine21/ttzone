@@ -4200,6 +4200,7 @@
     }
     if (input.matches('[data-venue-search]')) {
       state.venueSearch = input.value;
+      if (event.isComposing || input.dataset.composing === 'true') return;
       render();
       const searchInput = document.querySelector('[data-venue-search]');
       if (searchInput) {
@@ -4210,6 +4211,7 @@
     }
     if (input.matches('[data-admin-venue-search]')) {
       state.adminVenueSearch = input.value;
+      if (event.isComposing || input.dataset.composing === 'true') return;
       render();
       const searchInput = document.querySelector('[data-admin-venue-search]');
       if (searchInput) {
@@ -4229,6 +4231,27 @@
       const phoneInput = document.getElementById(input.dataset.venuePhoneTarget);
       if (venue && addressInput) addressInput.value = venue.address;
       if (venue && phoneInput) phoneInput.value = venue.phone || '';
+    }
+  }
+
+  function handleCompositionStart(event) {
+    const input = event.target;
+    if (input instanceof HTMLInputElement && input.matches('[data-admin-venue-search], [data-venue-search]')) {
+      input.dataset.composing = 'true';
+    }
+  }
+
+  function handleCompositionEnd(event) {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || !input.matches('[data-admin-venue-search], [data-venue-search]')) return;
+    delete input.dataset.composing;
+    if (input.matches('[data-admin-venue-search]')) state.adminVenueSearch = input.value;
+    if (input.matches('[data-venue-search]')) state.venueSearch = input.value;
+    render();
+    const searchInput = document.querySelector(`[data-${input.matches('[data-admin-venue-search]') ? 'admin-venue' : 'venue'}-search]`);
+    if (searchInput) {
+      searchInput.focus();
+      searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
     }
   }
 
@@ -4300,6 +4323,8 @@
     app.addEventListener('submit', handleAppSubmit);
     app.addEventListener('change', handleAppChange);
     app.addEventListener('input', handleAppInput);
+    app.addEventListener('compositionstart', handleCompositionStart);
+    app.addEventListener('compositionend', handleCompositionEnd);
     app.addEventListener('touchstart', handleTournamentTouchStart, { passive: false });
     app.addEventListener('touchmove', handleTournamentTouchMove, { passive: false });
     app.addEventListener('touchend', handleTournamentTouchEnd, { passive: true });
