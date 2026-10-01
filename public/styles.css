@@ -658,6 +658,34 @@ button {
   margin: 12px 0;
 }
 
+.admin-venue-view-toolbar select {
+  min-width: 180px;
+}
+
+.admin-venue-view-toolbar select + select {
+  margin-left: 8px;
+}
+
+.admin-venue-bulk-import {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px dashed rgba(165, 190, 214, 0.3);
+  border-radius: var(--radius-md);
+  background: rgba(8, 16, 28, 0.34);
+}
+
+.admin-venue-bulk-import p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.admin-import-summary {
+  color: var(--accent) !important;
+}
+
 .admin-venues-section[data-admin-venue-tab="view"] .admin-venue-import-actions [data-import-incheon],
 .admin-venues-section[data-admin-venue-tab="view"] .admin-venue-import-actions [data-import-bucheon],
 .admin-venues-section[data-admin-venue-tab="edit"] .admin-venue-import-actions [data-import-incheon],

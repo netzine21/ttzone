@@ -489,6 +489,44 @@ async function handleApi(req, res, requestPath) {
       return sendJson(res, 201, { venue: result.rows[0] });
     }
 
+    if (requestPath === '/api/admin/venues/bulk-import' && req.method === 'POST') {
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      if (user.role !== 'admin') return sendJson(res, 403, { error: '시스템관리자만 탁구장을 일괄등록할 수 있습니다.' });
+      await ensureVenueColumns();
+      const body = await readBody(req);
+      const rows = Array.isArray(body.rows) ? body.rows.slice(0, 2000) : [];
+      if (!rows.length) return sendJson(res, 400, { error: '등록할 탁구장 데이터가 없습니다.' });
+      const client = await pool.connect();
+      let imported = 0;
+      try {
+        await client.query('begin');
+        for (const row of rows) {
+          const name = String(row.name || '').trim();
+          const address = String(row.address || '').trim();
+          if (!name || !address) continue;
+          await client.query(
+            `insert into public.venues (name, address, phone, region, map_url, status, created_by)
+             values ($1, $2, $3, $4, $5, 'approved', $6)
+             on conflict ((lower(name)), (lower(address))) do update
+               set phone = coalesce(nullif(excluded.phone, ''), public.venues.phone),
+                   region = coalesce(nullif(excluded.region, ''), public.venues.region),
+                   map_url = coalesce(nullif(excluded.map_url, ''), public.venues.map_url),
+                   updated_at = now()`,
+            [name, address, String(row.phone || '').trim() || null, String(row.region || '').trim() || null, String(row.mapUrl || '').trim() || null, user.id]
+          );
+          imported += 1;
+        }
+        await client.query('commit');
+      } catch (error) {
+        await client.query('rollback');
+        throw error;
+      } finally {
+        client.release();
+      }
+      return sendJson(res, 200, { imported });
+    }
+
     if (requestPath === '/api/admin/venues/import-incheon' && req.method === 'POST') {
       const user = await findSession(req);
       if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
