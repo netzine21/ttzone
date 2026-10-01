@@ -4360,16 +4360,12 @@ button {
 
 .tournament-podium {
   width: min(100%, 720px);
-  margin: 22px auto 8px;
-  padding: 14px;
+  margin: 10px auto 8px;
+  padding: 8px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: rgba(6, 13, 24, 0.72);
   text-align: center;
-}
-
-.tournament-podium .section-kicker {
-  margin-bottom: 10px;
 }
 
 .tournament-podium__cards {
@@ -4412,14 +4408,30 @@ button {
 }
 
 .tournament-podium__medal {
+  position: relative;
+  isolation: isolate;
   display: grid;
   flex: 0 0 30px;
   place-items: center;
   width: 30px;
   height: 30px;
+  margin-top: 5px;
   border-radius: 50%;
   color: #16202b;
   font-weight: 900;
+}
+
+.tournament-podium__medal::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -8px;
+  left: 50%;
+  width: 15px;
+  height: 13px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #d94e6d 0 50%, #3478c8 50% 100%);
+  clip-path: polygon(0 0, 100% 0, 86% 100%, 50% 72%, 14% 100%);
 }
 
 .tournament-podium__card--gold .tournament-podium__medal {
@@ -4763,6 +4775,16 @@ button {
 .public-league-results-controls .competition-fullscreen-button,
 .public-tournament-results-controls .competition-fullscreen-button {
   white-space: nowrap;
+  color: var(--muted);
+}
+
+.public-league-results-controls .competition-fullscreen-button:hover,
+.public-league-results-controls .competition-fullscreen-button:focus,
+.public-league-results-controls .competition-fullscreen-button:active,
+.public-tournament-results-controls .competition-fullscreen-button:hover,
+.public-tournament-results-controls .competition-fullscreen-button:focus,
+.public-tournament-results-controls .competition-fullscreen-button:active {
+  color: var(--muted);
 }
 
 .tournament-bracket-viewport {
