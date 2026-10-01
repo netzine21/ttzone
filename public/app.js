@@ -3063,7 +3063,16 @@
     const publicGame = state.games.find((game) => game.id === state.selectedPublicGameId);
     app.className = currentUser ? 'app app--dashboard' : state.page === 'auth' ? 'app app--auth' : 'app app--public';
     const showPublicHome = !currentUser && state.page === 'public' && !state.selectedGameId && !publicGame;
-    app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : state.page === 'venues' ? renderVenueFinderPage(currentUser) : showPublicHome ? renderPublicGamesPage() : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : state.page === 'auth' ? renderAuthPage() : publicGame ? renderPublicGameDetail(publicGame) : renderPublicGamesPage()}`;
+    const fullscreenTarget = document.fullscreenElement?.classList.contains('public-game-detail') ? document.fullscreenElement : null;
+    const fullscreenGame = state.games.find((game) => game.id === (state.selectedPublicGameId || state.selectedGameId));
+    if (fullscreenTarget && fullscreenGame) {
+      const template = document.createElement('template');
+      template.innerHTML = renderGameDetailView(fullscreenGame, currentUser);
+      const nextSection = template.content.firstElementChild;
+      if (nextSection) fullscreenTarget.replaceChildren(...Array.from(nextSection.childNodes));
+    } else {
+      app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : state.page === 'venues' ? renderVenueFinderPage(currentUser) : showPublicHome ? renderPublicGamesPage() : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : state.page === 'auth' ? renderAuthPage() : publicGame ? renderPublicGameDetail(publicGame) : renderPublicGamesPage()}`;
+    }
     window.requestAnimationFrame(() => {
       fitTournamentBrackets();
       drawTournamentConnectors();
