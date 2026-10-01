@@ -2507,7 +2507,18 @@ button {
 }
 
 .public-game-detail:fullscreen .game-detail-header {
-  display: none;
+  display: block;
+  margin: 0;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(165, 190, 214, 0.12);
+  background: rgba(6, 13, 24, 0.72);
+  text-align: center;
+}
+
+.public-game-detail:fullscreen .game-detail-title {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.25;
 }
 
 .public-game-detail:fullscreen .competition-progress-toolbar {
