@@ -2423,6 +2423,10 @@
             <button class="btn btn-ghost" type="button" data-back-dashboard>돌아가기</button>
           </div>
         </form>
+        <div class="account-danger-zone">
+          <div><strong>회원탈퇴</strong><p>탈퇴하면 회원정보와 로그인 세션이 삭제되며 되돌릴 수 없습니다.</p></div>
+          <button class="btn btn-danger" type="button" data-delete-account>회원탈퇴</button>
+        </div>
       </section>
     `;
   }
@@ -4026,6 +4030,22 @@
       persistSession();
       setFlash('로그아웃되었습니다.', 'info');
       render();
+      return;
+    }
+
+    const deleteAccountButton = event.target.closest('[data-delete-account]');
+    if (deleteAccountButton) {
+      if (!window.confirm('회원탈퇴를 진행할까요? 탈퇴 후에는 회원정보를 복구할 수 없습니다.')) return;
+      try {
+        await apiRequest('/api/auth/account', { method: 'DELETE' });
+        state.sessionUserId = null;
+        state.page = 'public';
+        persistSession();
+        setFlash('회원탈퇴가 완료되었습니다.', 'info');
+        render();
+      } catch (error) {
+        setFlash(error.message || '회원탈퇴에 실패했습니다.', 'error');
+      }
     }
   }
 

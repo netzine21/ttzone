@@ -658,6 +658,37 @@ async function handleApi(req, res, requestPath) {
       return sendJson(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie('', 0) });
     }
 
+    if (requestPath === '/api/auth/account' && req.method === 'DELETE') {
+      await ensureGameAccessColumns();
+      await ensureVisitorColumns();
+      const user = await findSession(req);
+      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
+      const ownedGames = await pool.query(
+        `select id, title
+           from public.games
+          where operator_id = $1
+          limit 1`,
+        [user.id]
+      );
+      if (ownedGames.rows.length) {
+        return sendJson(res, 409, { error: '생성한 게임이 있어 회원탈퇴를 진행할 수 없습니다. 운영 중인 게임을 먼저 정리해 주세요.' });
+      }
+      const client = await pool.connect();
+      try {
+        await client.query('begin');
+        await client.query('delete from public.sessions where user_id = $1', [user.id]);
+        await client.query('update public.visitor_sessions set user_id = null where user_id = $1', [user.id]);
+        await client.query('delete from public.users where id = $1', [user.id]);
+        await client.query('commit');
+      } catch (error) {
+        await client.query('rollback');
+        throw error;
+      } finally {
+        client.release();
+      }
+      return sendJson(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie('', 0) });
+    }
+
     if (requestPath === '/api/auth/profile' && req.method === 'PATCH') {
       await ensureRegionColumns();
       const user = await findSession(req);
