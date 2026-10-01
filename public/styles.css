@@ -2524,7 +2524,8 @@ button {
 .public-game-detail:fullscreen .competition-progress-toolbar {
   position: fixed;
   right: 24px;
-  bottom: 18px;
+  top: 14px;
+  bottom: auto;
   z-index: 10;
 }
 
@@ -2538,7 +2539,9 @@ button {
 }
 
 .public-game-detail:fullscreen .competition-fullscreen-button {
-  opacity: 0.72;
+  opacity: 1;
+  background: rgba(6, 13, 24, 0.88);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
 }
 
 .public-game-detail:fullscreen .competition-view {
