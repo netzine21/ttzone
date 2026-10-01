@@ -4394,7 +4394,8 @@ button {
 }
 
 .tournament-podium__card strong {
-  font-size: 0.78rem;
+  font-size: 0.62rem;
+  line-height: 1.15;
 }
 
 .tournament-podium__card > div > span {
@@ -4405,6 +4406,8 @@ button {
   white-space: nowrap;
   color: var(--text);
   font-weight: 700;
+  font-size: 0.68rem;
+  line-height: 1.15;
 }
 
 .tournament-podium__medal {
@@ -4796,9 +4799,15 @@ button {
 }
 
 .tournament-bracket-viewport[data-public-tournament-viewport] {
+  display: flex;
+  justify-content: center;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+}
+
+.tournament-bracket-viewport[data-public-tournament-viewport] .tournament-bracket-stage {
+  flex: 0 0 auto;
 }
 
 .tournament-bracket-stage {
