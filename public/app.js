@@ -56,6 +56,7 @@
     adminUserLoadError: '',
     adminVenues: [],
     adminVenueLoadError: '',
+    adminVenueSearch: '',
     adminDataLoading: false,
     adminAccess: [],
     adminAccessLoadError: '',
@@ -2438,6 +2439,10 @@
   function renderAdminPage(currentUser) {
     const users = Array.isArray(state.adminUsers) ? state.adminUsers : [];
     const venues = Array.isArray(state.adminVenues) ? state.adminVenues : [];
+    const venueSearch = trimValue(state.adminVenueSearch).toLowerCase();
+    const filteredVenues = venueSearch
+      ? venues.filter((venue) => `${venue.name || ''} ${venue.address || ''} ${venue.region || ''} ${venue.phone || ''}`.toLowerCase().includes(venueSearch))
+      : venues;
     const loading = state.adminDataLoading;
     const access = Array.isArray(state.adminAccess) ? state.adminAccess : [];
     const adminTab = ['venues', 'access'].includes(state.adminTab) ? state.adminTab : 'users';
@@ -2476,8 +2481,8 @@
               <button class="btn btn-primary admin-venue-create__submit" type="submit">탁구장 등록</button>
             </div>
           </form>
-          <div class="admin-venue-toolbar"><label class="check-line"><input type="checkbox" data-admin-venue-select-all /> 전체 선택</label><select data-admin-venue-bulk-status><option value="">상태 일괄 변경</option><option value="pending">승인대기</option><option value="approved">사용</option><option value="archived">보관</option></select><button class="btn btn-secondary" type="button" data-admin-venue-bulk-save>선택 항목 저장</button></div>
-          <div class="admin-venue-list">${loading ? '<p class="muted">탁구장정보를 불러오는 중입니다...</p>' : state.adminVenueLoadError ? `<p class="admin-load-error">${escapeHtml(state.adminVenueLoadError)}</p>` : venues.length ? venues.map((venue) => `<form class="admin-venue-card" data-form="admin-venue" data-venue-id="${escapeHtml(venue.id)}"><label class="admin-venue-select"><input type="checkbox" data-admin-venue-select value="${escapeHtml(venue.id)}" /><span>선택</span></label><div class="field"><label>탁구장명</label><input name="name" value="${escapeHtml(venue.name)}" required /></div><div class="field"><label>주소</label><input name="address" value="${escapeHtml(venue.address)}" required /></div><div class="field"><label>지역</label><input name="region" value="${escapeHtml(venue.region || '')}" placeholder="예: 인천광역시 미추홀구" /></div><div class="field"><label>전화번호</label><input name="phone" value="${escapeHtml(venue.phone || '')}" /></div><div class="field"><label>상태</label><select name="status"><option value="pending" ${venue.status === 'pending' ? 'selected' : ''}>승인대기</option><option value="approved" ${venue.status === 'approved' ? 'selected' : ''}>사용</option><option value="archived" ${venue.status === 'archived' ? 'selected' : ''}>보관</option></select></div><button class="btn btn-secondary" type="submit">저장</button></form>`).join('') : '<p class="muted">등록된 탁구장이 없습니다.</p>'}</div>
+          <div class="admin-venue-toolbar"><input class="admin-venue-search" type="search" data-admin-venue-search placeholder="탁구장명, 주소, 지역, 전화번호 검색" value="${escapeHtml(state.adminVenueSearch)}" /><label class="check-line"><input type="checkbox" data-admin-venue-select-all /> 전체 선택</label><select data-admin-venue-bulk-status><option value="">상태 일괄 변경</option><option value="pending">승인대기</option><option value="approved">사용</option><option value="archived">보관</option></select><button class="btn btn-secondary" type="button" data-admin-venue-bulk-save>선택 항목 저장</button></div>
+          <div class="admin-venue-list">${loading ? '<p class="muted">탁구장정보를 불러오는 중입니다...</p>' : state.adminVenueLoadError ? `<p class="admin-load-error">${escapeHtml(state.adminVenueLoadError)}</p>` : filteredVenues.length ? filteredVenues.map((venue) => `<form class="admin-venue-card" data-form="admin-venue" data-venue-id="${escapeHtml(venue.id)}"><label class="admin-venue-select"><input type="checkbox" data-admin-venue-select value="${escapeHtml(venue.id)}" /><span>선택</span></label><div class="field"><label>탁구장명</label><input name="name" value="${escapeHtml(venue.name)}" required /></div><div class="field"><label>주소</label><input name="address" value="${escapeHtml(venue.address)}" required /></div><div class="field"><label>지역</label><input name="region" value="${escapeHtml(venue.region || '')}" placeholder="예: 인천광역시 미추홀구" /></div><div class="field"><label>전화번호</label><input name="phone" value="${escapeHtml(venue.phone || '')}" /></div><div class="field"><label>상태</label><select name="status"><option value="pending" ${venue.status === 'pending' ? 'selected' : ''}>승인대기</option><option value="approved" ${venue.status === 'approved' ? 'selected' : ''}>사용</option><option value="archived" ${venue.status === 'archived' ? 'selected' : ''}>보관</option></select></div><button class="btn btn-secondary" type="submit">저장</button></form>`).join('') : venueSearch ? '<p class="muted">검색 결과가 없습니다.</p>' : '<p class="muted">등록된 탁구장이 없습니다.</p>'}</div>
         </div>
         </div>
         <div class="admin-tab-panel ${adminTab === 'access' ? 'is-active' : ''}" data-admin-panel="access">
@@ -4197,6 +4202,16 @@
       state.venueSearch = input.value;
       render();
       const searchInput = document.querySelector('[data-venue-search]');
+      if (searchInput) {
+        searchInput.focus();
+        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+      }
+      return;
+    }
+    if (input.matches('[data-admin-venue-search]')) {
+      state.adminVenueSearch = input.value;
+      render();
+      const searchInput = document.querySelector('[data-admin-venue-search]');
       if (searchInput) {
         searchInput.focus();
         searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);

@@ -621,6 +621,12 @@ button {
   min-width: 150px;
 }
 
+.admin-venue-search {
+  flex: 1 1 280px;
+  min-width: 220px;
+  max-width: 420px;
+}
+
 .admin-venue-create {
   display: grid;
   gap: 12px;
@@ -1008,6 +1014,16 @@ button {
 
 .account-danger-zone strong {
   color: var(--danger);
+}
+
+.account-danger-zone > div {
+  min-width: 0;
+}
+
+.account-danger-zone .btn {
+  flex: 0 0 auto;
+  min-width: 88px;
+  white-space: nowrap;
 }
 
 .account-danger-zone p {
