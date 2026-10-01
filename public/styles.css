@@ -627,6 +627,44 @@ button {
   max-width: 420px;
 }
 
+.admin-venue-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
+.admin-venue-view-table {
+  display: none;
+}
+
+.admin-venues-section[data-admin-venue-tab="register"] .admin-venue-toolbar,
+.admin-venues-section[data-admin-venue-tab="register"] .admin-venue-list,
+.admin-venues-section[data-admin-venue-tab="edit"] .admin-venue-create,
+.admin-venues-section[data-admin-venue-tab="edit"] .admin-venue-view-table,
+.admin-venues-section[data-admin-venue-tab="view"] .admin-venue-create,
+.admin-venues-section[data-admin-venue-tab="view"] .admin-venue-toolbar,
+.admin-venues-section[data-admin-venue-tab="view"] .admin-venue-list {
+  display: none;
+}
+
+.admin-venues-section[data-admin-venue-tab="view"] .admin-venue-view-table {
+  display: block;
+}
+
+.admin-venue-view-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 12px 0;
+}
+
+.admin-venues-section[data-admin-venue-tab="view"] .admin-venue-import-actions [data-import-incheon],
+.admin-venues-section[data-admin-venue-tab="view"] .admin-venue-import-actions [data-import-bucheon],
+.admin-venues-section[data-admin-venue-tab="edit"] .admin-venue-import-actions [data-import-incheon],
+.admin-venues-section[data-admin-venue-tab="edit"] .admin-venue-import-actions [data-import-bucheon] {
+  display: none;
+}
+
 .admin-venue-create {
   display: grid;
   gap: 12px;

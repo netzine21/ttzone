@@ -62,6 +62,7 @@
     adminAccessLoadError: '',
     adminAccessLoading: false,
     adminTab: 'users',
+    adminVenueTab: 'register',
     venueRegionFilter: 'all',
     venueSearch: '',
     venues: [],
@@ -2443,6 +2444,8 @@
     const filteredVenues = venueSearch
       ? venues.filter((venue) => `${venue.name || ''} ${venue.address || ''} ${venue.region || ''} ${venue.phone || ''}`.toLowerCase().includes(venueSearch))
       : venues;
+    const adminVenueTab = ['register', 'view', 'edit'].includes(state.adminVenueTab) ? state.adminVenueTab : 'register';
+    const venueViewRows = filteredVenues.map((venue) => `<tr><td>${escapeHtml(venue.name)}</td><td>${escapeHtml(venue.address)}</td><td>${escapeHtml(venue.region || '미입력')}</td><td>${escapeHtml(venue.phone || '미입력')}</td><td>${venue.status === 'approved' ? '사용' : venue.status === 'archived' ? '보관' : '승인대기'}</td></tr>`).join('');
     const loading = state.adminDataLoading;
     const access = Array.isArray(state.adminAccess) ? state.adminAccess : [];
     const adminTab = ['venues', 'access'].includes(state.adminTab) ? state.adminTab : 'users';
@@ -2468,8 +2471,9 @@
         </div>
         </div>
         <div class="admin-tab-panel ${adminTab === 'venues' ? 'is-active' : ''}" data-admin-panel="venues">
-        <div class="admin-venues-section">
+        <div class="admin-venues-section" data-admin-venue-tab="${adminVenueTab}">
           <div class="section-heading"><div><p class="section-kicker">탁구장 정보 DB</p><h2>탁구장 정보 관리</h2></div><div class="admin-venue-import-actions"><button class="btn btn-secondary" type="button" data-admin-refresh="venues">탁구장정보 새로고침</button><button class="btn btn-secondary" type="button" data-import-incheon>인천 공개목록 가져오기</button><button class="btn btn-secondary" type="button" data-import-bucheon>부천 공개목록 가져오기</button></div></div>
+          <nav class="admin-venue-tabs" aria-label="탁구장 관리 메뉴"><button type="button" class="admin-tab ${adminVenueTab === 'register' ? 'is-active' : ''}" data-admin-venue-tab-button="register">탁구장정보등록</button><button type="button" class="admin-tab ${adminVenueTab === 'view' ? 'is-active' : ''}" data-admin-venue-tab-button="view">탁구장보기</button><button type="button" class="admin-tab ${adminVenueTab === 'edit' ? 'is-active' : ''}" data-admin-venue-tab-button="edit">탁구장정보수정</button></nav>
           <form class="admin-venue-create" data-form="admin-venue-create">
             <div class="admin-venue-create__heading"><strong>새 탁구장 등록</strong><span>등록 즉시 게임 생성 화면에서 선택할 수 있습니다.</span></div>
             <div class="admin-venue-create__fields">
@@ -2481,6 +2485,10 @@
               <button class="btn btn-primary admin-venue-create__submit" type="submit">탁구장 등록</button>
             </div>
           </form>
+          <div class="admin-venue-view-table">
+            <div class="admin-venue-view-toolbar"><input class="admin-venue-search" type="search" data-admin-venue-view-search placeholder="탁구장명, 주소, 지역, 전화번호 검색" value="${escapeHtml(state.adminVenueSearch)}" /></div>
+            <div class="admin-users-table-wrap"><table class="admin-users-table"><thead><tr><th>탁구장명</th><th>주소</th><th>지역</th><th>전화번호</th><th>상태</th></tr></thead><tbody>${loading ? '<tr><td colspan="5">탁구장정보를 불러오는 중입니다...</td></tr>' : state.adminVenueLoadError ? `<tr><td colspan="5">${escapeHtml(state.adminVenueLoadError)}</td></tr>` : venueViewRows || '<tr><td colspan="5">조회된 탁구장이 없습니다.</td></tr>'}</tbody></table></div>
+          </div>
           <div class="admin-venue-toolbar"><input class="admin-venue-search" type="search" data-admin-venue-search placeholder="탁구장명, 주소, 지역, 전화번호 검색" value="${escapeHtml(state.adminVenueSearch)}" /><label class="check-line"><input type="checkbox" data-admin-venue-select-all /> 전체 선택</label><select data-admin-venue-bulk-status><option value="">상태 일괄 변경</option><option value="pending">승인대기</option><option value="approved">사용</option><option value="archived">보관</option></select><button class="btn btn-secondary" type="button" data-admin-venue-bulk-save>선택 항목 저장</button></div>
           <div class="admin-venue-list">${loading ? '<p class="muted">탁구장정보를 불러오는 중입니다...</p>' : state.adminVenueLoadError ? `<p class="admin-load-error">${escapeHtml(state.adminVenueLoadError)}</p>` : filteredVenues.length ? filteredVenues.map((venue) => `<form class="admin-venue-card" data-form="admin-venue" data-venue-id="${escapeHtml(venue.id)}"><label class="admin-venue-select"><input type="checkbox" data-admin-venue-select value="${escapeHtml(venue.id)}" /><span>선택</span></label><div class="field"><label>탁구장명</label><input name="name" value="${escapeHtml(venue.name)}" required /></div><div class="field"><label>주소</label><input name="address" value="${escapeHtml(venue.address)}" required /></div><div class="field"><label>지역</label><input name="region" value="${escapeHtml(venue.region || '')}" placeholder="예: 인천광역시 미추홀구" /></div><div class="field"><label>전화번호</label><input name="phone" value="${escapeHtml(venue.phone || '')}" /></div><div class="field"><label>상태</label><select name="status"><option value="pending" ${venue.status === 'pending' ? 'selected' : ''}>승인대기</option><option value="approved" ${venue.status === 'approved' ? 'selected' : ''}>사용</option><option value="archived" ${venue.status === 'archived' ? 'selected' : ''}>보관</option></select></div><button class="btn btn-secondary" type="submit">저장</button></form>`).join('') : venueSearch ? '<p class="muted">검색 결과가 없습니다.</p>' : '<p class="muted">등록된 탁구장이 없습니다.</p>'}</div>
         </div>
@@ -3630,6 +3638,15 @@
       return;
     }
 
+    const adminVenueTabButton = event.target.closest('[data-admin-venue-tab-button]');
+    if (adminVenueTabButton) {
+      state.adminVenueTab = ['register', 'view', 'edit'].includes(adminVenueTabButton.dataset.adminVenueTabButton)
+        ? adminVenueTabButton.dataset.adminVenueTabButton
+        : 'register';
+      render();
+      return;
+    }
+
     const adminRefreshButton = event.target.closest('[data-admin-refresh]');
     if (adminRefreshButton) {
       await refreshAdminData(adminRefreshButton.dataset.adminRefresh || 'all');
@@ -4209,11 +4226,11 @@
       }
       return;
     }
-    if (input.matches('[data-admin-venue-search]')) {
+    if (input.matches('[data-admin-venue-search], [data-admin-venue-view-search]')) {
       state.adminVenueSearch = input.value;
       if (event.isComposing || input.dataset.composing) return;
       render();
-      const searchInput = document.querySelector('[data-admin-venue-search]');
+      const searchInput = document.querySelector(`[data-${input.matches('[data-admin-venue-view-search]') ? 'admin-venue-view-search' : 'admin-venue-search'}]`);
       if (searchInput) {
         searchInput.focus();
         searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
@@ -4236,21 +4253,21 @@
 
   function handleCompositionStart(event) {
     const input = event.target;
-    if (input instanceof HTMLInputElement && input.matches('[data-admin-venue-search], [data-venue-search]')) {
+    if (input instanceof HTMLInputElement && input.matches('[data-admin-venue-search], [data-admin-venue-view-search], [data-venue-search]')) {
       input.dataset.composing = 'true';
     }
   }
 
   function handleCompositionEnd(event) {
     const input = event.target;
-    if (!(input instanceof HTMLInputElement) || !input.matches('[data-admin-venue-search], [data-venue-search]')) return;
+    if (!(input instanceof HTMLInputElement) || !input.matches('[data-admin-venue-search], [data-admin-venue-view-search], [data-venue-search]')) return;
     input.dataset.composing = 'pending';
     window.setTimeout(() => {
       delete input.dataset.composing;
-      if (input.matches('[data-admin-venue-search]')) state.adminVenueSearch = input.value;
+    if (input.matches('[data-admin-venue-search], [data-admin-venue-view-search]')) state.adminVenueSearch = input.value;
       if (input.matches('[data-venue-search]')) state.venueSearch = input.value;
       render();
-      const searchInput = document.querySelector(`[data-${input.matches('[data-admin-venue-search]') ? 'admin-venue' : 'venue'}-search]`);
+      const searchInput = document.querySelector(input.matches('[data-admin-venue-search]') ? '[data-admin-venue-search]' : input.matches('[data-admin-venue-view-search]') ? '[data-admin-venue-view-search]' : '[data-venue-search]');
       if (searchInput) {
         searchInput.focus();
         searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
