@@ -4200,7 +4200,7 @@
     }
     if (input.matches('[data-venue-search]')) {
       state.venueSearch = input.value;
-      if (event.isComposing || input.dataset.composing === 'true') return;
+      if (event.isComposing || input.dataset.composing) return;
       render();
       const searchInput = document.querySelector('[data-venue-search]');
       if (searchInput) {
@@ -4211,7 +4211,7 @@
     }
     if (input.matches('[data-admin-venue-search]')) {
       state.adminVenueSearch = input.value;
-      if (event.isComposing || input.dataset.composing === 'true') return;
+      if (event.isComposing || input.dataset.composing) return;
       render();
       const searchInput = document.querySelector('[data-admin-venue-search]');
       if (searchInput) {
@@ -4244,15 +4244,18 @@
   function handleCompositionEnd(event) {
     const input = event.target;
     if (!(input instanceof HTMLInputElement) || !input.matches('[data-admin-venue-search], [data-venue-search]')) return;
-    delete input.dataset.composing;
-    if (input.matches('[data-admin-venue-search]')) state.adminVenueSearch = input.value;
-    if (input.matches('[data-venue-search]')) state.venueSearch = input.value;
-    render();
-    const searchInput = document.querySelector(`[data-${input.matches('[data-admin-venue-search]') ? 'admin-venue' : 'venue'}-search]`);
-    if (searchInput) {
-      searchInput.focus();
-      searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
-    }
+    input.dataset.composing = 'pending';
+    window.setTimeout(() => {
+      delete input.dataset.composing;
+      if (input.matches('[data-admin-venue-search]')) state.adminVenueSearch = input.value;
+      if (input.matches('[data-venue-search]')) state.venueSearch = input.value;
+      render();
+      const searchInput = document.querySelector(`[data-${input.matches('[data-admin-venue-search]') ? 'admin-venue' : 'venue'}-search]`);
+      if (searchInput) {
+        searchInput.focus();
+        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+      }
+    }, 0);
   }
 
   function moveDraggedGroupPlayer(playerKey, format, targetGroupName) {
