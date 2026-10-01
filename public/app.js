@@ -986,7 +986,7 @@
     const tournamentBracket = config?.[tournamentLeague];
     const tournamentContent = `<h3 class="competition-tournament-heading">[${escapeHtml(FORMAT_LABELS[format])} 토너먼트 대진표]</h3>${tournamentLeagues.length ? `<div class="tournament-progress-league-tabs" role="tablist" aria-label="토너먼트 리그 선택">${tournamentLeagues.map((league) => `<button type="button" class="game-list-action tournament-progress-league-tab ${league === tournamentLeague ? 'is-active' : ''}" data-tournament-progress-league="${league}"><span>${league === 'lower' ? '하위리그' : '상위리그'}</span><small>${config[league].completed ? '종료' : '진행 중'}</small></button>`).join('')}</div>${canViewGroups && tournamentBracket ? renderPublicTournamentBracket(tournamentBracket) : !canViewGroups ? '<div class="empty-state">운영자가 경기 진행을 준비 중입니다.</div>' : ''}` : '<div class="empty-state">아직 본선 토너먼트가 생성되지 않았습니다.</div>'}`;
     const progressContent = progressSubtab === 'participants' ? `<div class="competition-content-heading"><h3>[${escapeHtml(FORMAT_LABELS[format])} 참가자 목록]</h3><span>총 ${participantCount}명/팀</span></div>${renderPublicParticipantList(game, format)}` : progressSubtab === 'league' ? `<div class="competition-content-heading"><h3>[${escapeHtml(FORMAT_LABELS[format])} 리그전]</h3><span>총 ${groupCount}개 조</span></div>${canViewGroups ? renderPublicLeagueStandings(game, format) : '<div class="empty-state">운영자가 조편성을 준비 중입니다.</div>'}` : tournamentContent;
-    return `<div class="competition-view"><div class="format-selector" role="tablist" aria-label="경기종목">${getGameFormats(game).map((item) => `<button type="button" class="format-selector__item ${item === format ? 'is-active' : ''}" data-status-format="${escapeHtml(item)}"><svg class="progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${getFormatIconSvg(item)}</svg><span>${escapeHtml(FORMAT_LABELS[item])}</span></button>`).join('')}</div><div class="competition-subtabs competition-progress__tabs" role="tablist" aria-label="경기진행 메뉴">${progressTabs.map(([value, label, icon]) => `<button type="button" class="game-list-action progress-tab ${progressSubtab === value ? 'is-active' : ''}" data-status-progress="${value}"><svg class="game-list-action__icon progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${icon}</svg><span>${label}</span></button>`).join('')}</div>${progressContent}</div>`;
+    return `<div class="competition-view"><div class="competition-progress-toolbar"><div class="format-selector" role="tablist" aria-label="경기종목">${getGameFormats(game).map((item) => `<button type="button" class="format-selector__item ${item === format ? 'is-active' : ''}" data-status-format="${escapeHtml(item)}"><svg class="progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${getFormatIconSvg(item)}</svg><span>${escapeHtml(FORMAT_LABELS[item])}</span></button>`).join('')}</div><button type="button" class="game-list-action competition-fullscreen-button" data-progress-fullscreen><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" /></svg><span data-progress-fullscreen-label>전체화면 전환</span></button></div><div class="competition-subtabs competition-progress__tabs" role="tablist" aria-label="경기진행 메뉴">${progressTabs.map(([value, label, icon]) => `<button type="button" class="game-list-action progress-tab ${progressSubtab === value ? 'is-active' : ''}" data-status-progress="${value}"><svg class="game-list-action__icon progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${icon}</svg><span>${label}</span></button>`).join('')}</div>${progressContent}</div>`;
   }
   function renderApplicationsView(game, currentUser) {
     if (!currentUser) return `<div class="public-apply-cta"><p>신청조회·수정 및 참가신청은 로그인 후 이용할 수 있습니다.</p><button type="button" class="btn btn-primary" data-game-apply="${escapeHtml(game.id)}">로그인하고 참가신청</button></div>`;
@@ -2811,6 +2811,29 @@
     setServiceMenuOpen(false);
   }
 
+  async function toggleProgressFullscreen() {
+    const target = document.querySelector('.public-game-detail');
+    if (!target) return;
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (target.requestFullscreen) {
+        await target.requestFullscreen();
+      } else {
+        setFlash('이 브라우저에서는 전체화면을 지원하지 않습니다.', 'error');
+      }
+    } catch (error) {
+      setFlash(error.message || '전체화면 전환에 실패했습니다.', 'error');
+    }
+  }
+
+  function updateProgressFullscreenButton() {
+    const isFullscreen = Boolean(document.fullscreenElement);
+    document.querySelectorAll('[data-progress-fullscreen-label]').forEach((label) => {
+      label.textContent = isFullscreen ? '전체화면 해제' : '전체화면 전환';
+    });
+  }
+
   function shouldLiveRefresh() {
     if (state.detailTab !== 'progress' || state.operationGameId || !Boolean(state.selectedPublicGameId || state.selectedGameId)) return false;
     const liveGame = state.games.find((game) => game.id === (state.selectedPublicGameId || state.selectedGameId));
@@ -3677,6 +3700,12 @@
   }
 
   async function handleAppClick(event) {
+    const fullscreenButton = event.target.closest('[data-progress-fullscreen]');
+    if (fullscreenButton) {
+      await toggleProgressFullscreen();
+      return;
+    }
+
     const groupTarget = event.target.closest('[data-group-target]');
     if (groupTarget && selectedGroupPlayer) {
       moveDraggedGroupPlayer(selectedGroupPlayer.playerKey, selectedGroupPlayer.format, groupTarget.dataset.groupTarget);
@@ -4506,6 +4535,7 @@
     app.addEventListener('touchmove', handleTournamentTouchMove, { passive: false });
     app.addEventListener('touchend', handleTournamentTouchEnd, { passive: true });
     app.addEventListener('touchcancel', handleTournamentTouchEnd, { passive: true });
+    document.addEventListener('fullscreenchange', updateProgressFullscreenButton);
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('resize', () => {
       fitTournamentBrackets();
