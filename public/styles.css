@@ -2557,10 +2557,13 @@ button {
   text-align: center;
 }
 
-.public-game-detail:fullscreen .public-league-results-viewport,
-.public-game-detail:fullscreen .tournament-bracket-viewport {
+.public-game-detail:fullscreen .public-league-results-viewport {
   display: flex;
   justify-content: center;
+}
+
+.public-game-detail:fullscreen .tournament-bracket-viewport {
+  display: block;
 }
 
 .public-game-detail:fullscreen .public-league-results-stage,
