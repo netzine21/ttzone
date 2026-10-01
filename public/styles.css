@@ -640,6 +640,8 @@ button {
 
 .admin-venues-section[data-admin-venue-tab="register"] .admin-venue-toolbar,
 .admin-venues-section[data-admin-venue-tab="register"] .admin-venue-list,
+.admin-venues-section[data-admin-venue-tab="view"] .admin-venue-bulk-import,
+.admin-venues-section[data-admin-venue-tab="edit"] .admin-venue-bulk-import,
 .admin-venues-section[data-admin-venue-tab="edit"] .admin-venue-create,
 .admin-venues-section[data-admin-venue-tab="edit"] .admin-venue-view-table,
 .admin-venues-section[data-admin-venue-tab="view"] .admin-venue-create,
