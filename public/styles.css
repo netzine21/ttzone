@@ -754,6 +754,38 @@ button {
   background: rgba(6, 13, 24, 0.42);
 }
 
+.admin-venue-card--result {
+  grid-template-columns: minmax(150px, 0.85fr) minmax(220px, 1.5fr) minmax(150px, 0.9fr) minmax(130px, 0.8fr) 90px auto;
+  align-items: center;
+}
+
+.admin-venue-card--result > span:not(.admin-role-badge) {
+  min-width: 0;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.admin-venue-card--result .admin-role-badge {
+  justify-self: start;
+}
+
+.admin-venue-search-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.admin-venue-search-submit svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
 .admin-venue-select {
   display: inline-flex;
   align-items: center;
