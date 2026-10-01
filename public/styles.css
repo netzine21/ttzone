@@ -2484,7 +2484,7 @@ button {
   width: 100%;
 }
 
-.competition-fullscreen-button {
+.competition-progress-toolbar .competition-fullscreen-button {
   position: absolute;
   top: 0;
   right: 0;
@@ -2538,7 +2538,7 @@ button {
   display: none;
 }
 
-.public-game-detail:fullscreen .competition-fullscreen-button {
+.public-game-detail:fullscreen .competition-progress-toolbar .competition-fullscreen-button {
   opacity: 1;
   background: rgba(6, 13, 24, 0.88);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
@@ -2819,7 +2819,8 @@ button {
   margin: 10px 0 8px;
 }
 
-.public-league-results-controls > span {
+.public-league-results-controls .zoom-value-control,
+.public-tournament-results-controls .zoom-value-control {
   min-width: 44px;
   color: var(--muted);
   font-size: 0.78rem;
@@ -4757,6 +4758,11 @@ button {
   min-width: 34px;
   padding: 4px 8px;
   font-size: 0.76rem;
+}
+
+.public-league-results-controls .competition-fullscreen-button,
+.public-tournament-results-controls .competition-fullscreen-button {
+  white-space: nowrap;
 }
 
 .tournament-bracket-viewport {
