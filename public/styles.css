@@ -1778,6 +1778,12 @@ button {
   width: 100%;
 }
 
+@media (min-width: 821px) {
+  .public-game-detail {
+    max-width: var(--max-width);
+  }
+}
+
 .game-detail-header {
   text-align: center;
 }
