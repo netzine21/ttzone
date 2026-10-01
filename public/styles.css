@@ -4411,30 +4411,16 @@ button {
 }
 
 .tournament-podium__medal {
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  flex: 0 0 30px;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  margin-top: 5px;
-  border-radius: 50%;
-  color: #16202b;
-  font-weight: 900;
+  display: block;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 48px;
 }
 
-.tournament-podium__medal::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  top: -8px;
-  left: 50%;
-  width: 15px;
-  height: 13px;
-  transform: translateX(-50%);
-  background: linear-gradient(90deg, #d94e6d 0 50%, #3478c8 50% 100%);
-  clip-path: polygon(0 0, 100% 0, 86% 100%, 50% 72%, 14% 100%);
+.tournament-podium__medal-svg {
+  display: block;
+  width: 42px;
+  height: 48px;
 }
 
 .tournament-podium__card--gold .tournament-podium__medal {

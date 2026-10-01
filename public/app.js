@@ -1633,6 +1633,15 @@
     return { winner, runnerUp, third };
   }
 
+  function renderTournamentMedal(rank, modifier) {
+    const colors = {
+      gold: ['#ffe08a', '#e5a91a', '#9a5a08'],
+      silver: ['#f5f8fc', '#b9c6d4', '#697888'],
+      bronze: ['#ffd0a5', '#c77b45', '#7c3d20'],
+    }[modifier] || ['#f5f8fc', '#b9c6d4', '#697888'];
+    return `<svg class="tournament-podium__medal-svg" viewBox="0 0 48 58" role="img" aria-label="${rank}등 메달"><path d="M7 0 23 21h7L14 0zM41 0 25 21h-7L34 0z" fill="#d9304f"/><path d="M7 0 23 21h4L14 0zM41 0 25 21h-4L34 0z" fill="#3153a6" opacity=".95"/><rect x="20" y="16" width="8" height="8" rx="2" fill="${colors[1]}"/><circle cx="24" cy="38" r="17" fill="${colors[2]}"/><circle cx="24" cy="37" r="14" fill="${colors[1]}" stroke="${colors[0]}" stroke-width="2"/><path d="M13 43c3 5 7 7 11 8M35 43c-3 5-7 7-11 8" fill="none" stroke="${colors[0]}" stroke-width="1.5" stroke-linecap="round"/><text x="24" y="43" text-anchor="middle" fill="#fff8e6" font-size="15" font-weight="900" font-family="inherit">${rank}</text></svg>`;
+  }
+
   function renderTournamentPodium(bracket) {
     const placements = getTournamentPlacements(bracket);
     const cards = [
@@ -1640,7 +1649,7 @@
       { rank: 2, title: '준우승', value: placements.runnerUp ? tournamentLabel(placements.runnerUp) : null, modifier: 'silver' },
       { rank: 3, title: '3등', value: placements.third.length ? placements.third.map((entry) => tournamentLabel(entry)).join(' · ') : null, modifier: 'bronze' },
     ];
-    return `<section class="tournament-podium" aria-label="토너먼트 입상자"><div class="tournament-podium__cards">${cards.map((card) => `<div class="tournament-podium__card tournament-podium__card--${card.modifier}"><span class="tournament-podium__medal">${card.rank}</span><div><strong>${card.title}</strong><span>${escapeHtml(card.value || '결정 대기')}</span></div></div>`).join('')}</div></section>`;
+    return `<section class="tournament-podium" aria-label="토너먼트 입상자"><div class="tournament-podium__cards">${cards.map((card) => `<div class="tournament-podium__card tournament-podium__card--${card.modifier}"><span class="tournament-podium__medal">${renderTournamentMedal(card.rank, card.modifier)}</span><div><strong>${card.title}</strong><span>${escapeHtml(card.value || '결정 대기')}</span></div></div>`).join('')}</div></section>`;
   }
 
   function rebalanceTournamentFirstRound(bracket) {
