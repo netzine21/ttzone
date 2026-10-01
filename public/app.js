@@ -2877,6 +2877,7 @@
       const stage = viewport.querySelector('[data-tournament-stage]');
       if (!stage) return;
       stage.style.transform = 'none';
+      stage.style.transformOrigin = 'top center';
       viewport.style.height = '';
       const availableWidth = viewport.clientWidth;
       const naturalWidth = Math.max(stage.scrollWidth, 1);
@@ -2891,6 +2892,7 @@
       if (!stage) return;
       const availableWidth = viewport.clientWidth;
       if (!availableWidth) return;
+      stage.style.transformOrigin = 'top center';
       const naturalWidth = Math.max(stage.scrollWidth, 1);
       stage.style.width = `${naturalWidth}px`;
       const scale = Math.min(1, availableWidth / naturalWidth) * (state.tournamentZoom || 1);
@@ -2914,6 +2916,7 @@
       const stage = viewport.querySelector('[data-public-league-stage]');
       if (!stage) return;
       stage.style.transform = 'none';
+      stage.style.transformOrigin = 'top center';
       viewport.style.height = '';
       const availableWidth = viewport.clientWidth;
       if (!availableWidth) {

@@ -2765,7 +2765,8 @@ button {
 
 .public-league-results-viewport {
   width: 100%;
-  display: block;
+  display: flex;
+  justify-content: center;
   min-height: 1px;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
@@ -2776,7 +2777,9 @@ button {
   display: block;
   width: 760px;
   min-width: 760px;
-  transform-origin: top left;
+  margin-left: auto;
+  margin-right: auto;
+  transform-origin: top center;
   will-change: transform;
 }
 
@@ -4730,7 +4733,9 @@ button {
 .tournament-bracket-stage {
   width: 100%;
   min-width: 960px;
-  transform-origin: top left;
+  margin-left: auto;
+  margin-right: auto;
+  transform-origin: top center;
   will-change: transform;
 }
 
