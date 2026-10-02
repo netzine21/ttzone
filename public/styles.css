@@ -147,6 +147,12 @@ html[data-theme="light"] .profile-grid .profile-item {
   border-color: #829aaa;
 }
 
+html[data-theme="light"] .public-detail-meta div {
+  border: 1px solid #687f8f;
+  background: #f4f7f8;
+  box-shadow: 0 2px 8px rgba(46, 74, 96, 0.06);
+}
+
 html[data-theme="light"] .public-participant-table th,
 html[data-theme="light"] .public-participant-table td {
   border: 1px solid rgba(46, 74, 96, 0.24);
