@@ -81,7 +81,7 @@
     statusSubtab: 'info',
     progressSubtab: 'participants',
     progressTournamentLeague: 'upper',
-    leagueResultsZoom: 1,
+    leagueResultsZoom: 3,
     tournamentZoom: 1,
     tournamentZoomInitialized: false,
     statusFormat: null,
@@ -932,7 +932,7 @@
       ? groups.map((group) => `<section class="public-league-matrix"><h4>${escapeHtml(group.name)} 경기결과</h4>${renderScheduleMatrix(group, matches.filter((match) => match.groupName === group.name))}</section>`).join('')
       : '';
     const results = '';
-    return `<div class="public-league-results-controls" aria-label="리그전 결과표 크기 조정"><button type="button" class="game-list-action" data-league-results-zoom="out" aria-label="결과표 축소">−</button><button type="button" class="game-list-action zoom-value-control" data-league-results-zoom="reset" aria-label="결과표 100%로 복원">${Math.round((state.leagueResultsZoom || 1) * 100)}%</button><button type="button" class="game-list-action" data-league-results-zoom="in" aria-label="결과표 확대">+</button><button type="button" class="game-list-action competition-fullscreen-button" data-progress-fullscreen><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" /></svg><span data-progress-fullscreen-label>전체화면 전환</span></button></div><div class="public-league-results-viewport public-league-results-viewport--${leagueOnly ? 'league-only' : 'league-tournament'}" data-public-league-viewport><div class="public-league-results-stage" data-public-league-stage>${summaryTable}${leagueOnlyMatrices}</div></div>${results}`;
+    return `<div class="public-league-results-controls" aria-label="리그전 결과표 크기 조정"><button type="button" class="game-list-action" data-league-results-zoom="out" aria-label="결과표 축소"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4M8 11h6"></path></svg></button><button type="button" class="game-list-action zoom-value-control" data-league-results-zoom="reset" aria-label="리그전 결과표 기본 크기">기본 크기</button><button type="button" class="game-list-action" data-league-results-zoom="in" aria-label="결과표 확대"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4M8 11h6M11 8v6"></path></svg></button><button type="button" class="game-list-action competition-fullscreen-button" data-progress-fullscreen><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" /></svg><span data-progress-fullscreen-label>전체화면 전환</span></button></div><div class="public-league-results-viewport public-league-results-viewport--${leagueOnly ? 'league-only' : 'league-tournament'}" data-public-league-viewport><div class="public-league-results-stage" data-public-league-stage>${summaryTable}${leagueOnlyMatrices}</div></div>${results}`;
   }
 
   function renderPublicMatchScheduleTable(game, format) {
@@ -1475,11 +1475,11 @@
     let savedContent = `${isResultsMode ? renderQualifyingStandingsOverview(game, format) : ''}${visibleGroups.map((group) => { const groupMatches = matches.filter((match) => match.groupName === group.name); const groupNumber = String(group.name).replace(/\s*조$/, ''); const scheduleTitle = isResultsMode ? `${FORMAT_LABELS[format]} ${group.name} 경기결과` : `[${FORMAT_LABELS[format]} (${groupNumber})조 대진표]`; return `<div class="schedule-summary"><strong>${escapeHtml(scheduleTitle)}</strong><span>${escapeHtml(String(groupMatches.length))}경기 · ${escapeHtml(String(group.players.length))}명/팀</span></div><div class="schedule-group-matrices"><section class="schedule-group-block"><div class="group-result-heading"><h3>${escapeHtml(group.name)} ${isResultsMode ? '경기결과 입력' : '대진 매트릭스'}</h3><span class="subtle-note">${escapeHtml(group.name)} 탁구대</span></div>${renderScheduleMatrix(group, groupMatches)}<h4 class="schedule-order-title">${escapeHtml(group.name)} 경기 진행순서</h4>${renderScheduleResultsTable(groupMatches, isResultsMode, format)}</section></div>`; }).join('')}${isResultsMode ? '<div class="button-row group-save-row"><button type="button" class="btn btn-secondary" data-save-schedule-results>경기결과 저장</button></div>' : ''}`;
     if (isResultsMode) savedContent = `<div class="schedule-result-divider" aria-hidden="true"></div>${savedContent}`;
     if (isResultsMode) {
-      const controls = `<div class="public-league-results-controls" aria-label="경기결과 입력 화면 크기 조정"><button type="button" class="game-list-action" data-league-results-zoom="out" aria-label="결과입력 화면 축소">−</button><span>${Math.round((state.leagueResultsZoom || 1) * 100)}%</span><button type="button" class="game-list-action" data-league-results-zoom="in" aria-label="결과입력 화면 확대">+</button><button type="button" class="game-list-action" data-league-results-zoom="reset">전체 보기</button></div>`;
+      const controls = `<div class="public-league-results-controls" aria-label="경기결과 입력 화면 크기 조정"><button type="button" class="game-list-action" data-league-results-zoom="out" aria-label="결과입력 화면 축소"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4M8 11h6"></path></svg></button><button type="button" class="game-list-action zoom-value-control" data-league-results-zoom="reset" aria-label="리그전 결과입력 화면 기본 크기">기본 크기</button><button type="button" class="game-list-action" data-league-results-zoom="in" aria-label="결과입력 화면 확대"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4M8 11h6M11 8v6"></path></svg></button></div>`;
       savedContent = `<div class="schedule-result-toolbar schedule-result-toolbar--results">${controls}</div><div class="public-league-results-viewport public-league-results-viewport--operator" data-public-league-viewport><div class="public-league-results-stage" data-public-league-stage>${savedContent}</div></div>`;
     }
     if (!isResultsMode) {
-      const controls = `<div class="public-league-results-controls" aria-label="리그전 대진표 크기 조정"><button type="button" class="game-list-action" data-league-results-zoom="out" aria-label="대진표 축소">−</button><span>${Math.round((state.leagueResultsZoom || 1) * 100)}%</span><button type="button" class="game-list-action" data-league-results-zoom="in" aria-label="대진표 확대">+</button><button type="button" class="game-list-action" data-league-results-zoom="reset">전체 보기</button></div>`;
+      const controls = `<div class="public-league-results-controls" aria-label="리그전 대진표 크기 조정"><button type="button" class="game-list-action" data-league-results-zoom="out" aria-label="대진표 축소"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4M8 11h6"></path></svg></button><button type="button" class="game-list-action zoom-value-control" data-league-results-zoom="reset" aria-label="리그전 대진표 기본 크기">기본 크기</button><button type="button" class="game-list-action" data-league-results-zoom="in" aria-label="대진표 확대"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4M8 11h6M11 8v6"></path></svg></button></div>`;
       const printButton = '<button type="button" class="schedule-result-print" data-print-all-schedules aria-label="전체 리그전 대진표 출력" title="전체 대진표 출력"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V4h12v5M6 17H4V10h16v7h-2M6 14h12v6H6z"></path><path d="M17 12h1"></path></svg><span>대진표 출력</span></button>';
       savedContent = `<div class="schedule-result-divider" aria-hidden="true"></div><div class="schedule-result-heading"><h2>[${escapeHtml(FORMAT_LABELS[format])}] 리그전 대진표</h2></div><div class="schedule-result-toolbar">${controls}${printButton}</div><div class="public-league-results-viewport" data-public-league-viewport><div class="public-league-results-stage" data-public-league-stage>${savedContent}</div></div>`;
     }
@@ -2998,11 +2998,12 @@
   }
 
   function handleTournamentTouchStart(event) {
-    const target = event.target instanceof Element ? event.target.closest('[data-tournament-viewport]') : null;
+    const target = event.target instanceof Element ? event.target.closest('[data-tournament-viewport], [data-public-league-viewport]') : null;
     if (!target || event.touches.length < 2) return;
     tournamentPinchState = {
       distance: tournamentTouchDistance(event.touches),
-      zoom: state.tournamentZoom || 1,
+      zoomKey: target.matches('[data-public-league-viewport]') ? 'leagueResultsZoom' : 'tournamentZoom',
+      zoom: target.matches('[data-public-league-viewport]') ? (state.leagueResultsZoom || 1) : (state.tournamentZoom || 1),
     };
     event.preventDefault();
   }
@@ -3012,7 +3013,7 @@
     const distance = tournamentTouchDistance(event.touches);
     if (!distance || !tournamentPinchState.distance) return;
     const nextZoom = Math.max(0.7, tournamentPinchState.zoom * (distance / tournamentPinchState.distance));
-    state.tournamentZoom = Math.round(nextZoom * 100) / 100;
+    state[tournamentPinchState.zoomKey] = Math.round(nextZoom * 100) / 100;
     fitTournamentBrackets();
     updateTournamentZoomControls();
     event.preventDefault();
@@ -4137,8 +4138,8 @@
       const action = leagueResultsZoomButton.dataset.leagueResultsZoom;
       const currentZoom = state.leagueResultsZoom || 1;
       state.leagueResultsZoom = action === 'reset'
-        ? 1
-        : Math.min(1.6, Math.max(0.7, currentZoom + (action === 'in' ? 0.1 : -0.1)));
+        ? 3
+        : Math.max(0.7, currentZoom + (action === 'in' ? 0.1 : -0.1));
       render();
       return;
     }
