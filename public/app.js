@@ -967,16 +967,20 @@
     return isFinal ? '결승' : `${bracket.size / (2 ** roundIndex)}강`;
   }
 
+  function getTournamentBaseZoom() {
+    const viewportWidth = window.innerWidth || 1280;
+    return viewportWidth <= 640 ? 2 : viewportWidth <= 1024 ? 1.5 : 1.2;
+  }
+
   function renderPublicTournamentBracket(bracket, includeFullscreen = false) {
     if (!bracket?.rounds?.length) return '<div class="empty-state">아직 토너먼트 대진표가 생성되지 않았습니다.</div>';
     if (!state.tournamentZoomInitialized) {
-      const viewportWidth = window.innerWidth || 1280;
-      state.tournamentZoom = viewportWidth <= 640 ? 2 : viewportWidth <= 1024 ? 1.5 : 1.2;
+      state.tournamentZoom = getTournamentBaseZoom();
       state.tournamentZoomInitialized = true;
     }
     syncTournamentBracket(bracket);
     const fullscreenControl = includeFullscreen ? `<button type="button" class="game-list-action competition-fullscreen-button" data-progress-fullscreen><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" /></svg><span data-progress-fullscreen-label>전체화면 전환</span></button>` : '';
-    const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소">−</button><button type="button" class="game-list-action zoom-value-control" data-tournament-zoom="reset" data-tournament-zoom-value aria-label="토너먼트 대진표 100%로 복원">${Math.round((state.tournamentZoom || 1) * 100)}%</button><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대">+</button>${fullscreenControl}</div>`;
+    const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4M8 11h6"></path></svg></button><button type="button" class="game-list-action zoom-value-control" data-tournament-zoom="reset" aria-label="토너먼트 대진표 기본 크기">기본 크기</button><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4M8 11h6M11 8v6"></path></svg></button>${fullscreenControl}</div>`;
     if (bracket.rounds.length === 1) return `${controls}${renderTournamentPodium(bracket)}${wrapTournamentBracket(`<div class="tournament-bracket public-tournament-bracket tournament-bracket--size-${bracket.size}"><div class="tournament-rounds tournament-rounds--single">${renderPublicTournamentRound(bracket.rounds[0], true, tournamentRoundTitle(bracket, 0, true), bracket.size, 0)}</div></div>`, true)}`;
     const roundsBeforeFinal = bracket.rounds.slice(0, -1);
     const finalRound = bracket.rounds[bracket.rounds.length - 1];
@@ -1728,7 +1732,7 @@
 
   function renderTournamentBracket(bracket) {
     syncTournamentBracket(bracket);
-    const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소">−</button><span data-tournament-zoom-value>${Math.round((state.tournamentZoom || 1) * 100)}%</span><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대">+</button><button type="button" class="game-list-action" data-tournament-zoom="reset">전체 보기</button></div>`;
+    const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4M8 11h6"></path></svg></button><button type="button" class="game-list-action zoom-value-control" data-tournament-zoom="reset" aria-label="토너먼트 대진표 기본 크기">기본 크기</button><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4M8 11h6M11 8v6"></path></svg></button></div>`;
     if (bracket.rounds.length === 1) return `${controls}${wrapTournamentBracket(`<div class="tournament-bracket"><div class="tournament-rounds tournament-rounds--single">${renderTournamentRound(bracket.rounds[0], true, tournamentRoundTitle(bracket, 0, true), bracket.size, 0)}</div><p class="subtle-note">부전승은 자동 진출하며, 경기는 11점 5전 3선승입니다.</p></div>${renderTournamentPodium(bracket)}`)}`;
     const roundsBeforeFinal = bracket.rounds.slice(0, -1);
     const finalRound = bracket.rounds[bracket.rounds.length - 1];
@@ -1789,7 +1793,7 @@
     const lowerEnabled = config ? config.lowerEnabled === true : true;
     const qualification = config ? getTournamentQualificationEntries(game, format, selectedAdvance, lowerEnabled) : null;
     const availableLeagues = config ? ['upper', 'lower'].filter((leagueName) => config[leagueName]) : [];
-    const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소">−</button><span data-tournament-zoom-value>${Math.round((state.tournamentZoom || 1) * 100)}%</span><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대">+</button><button type="button" class="game-list-action" data-tournament-zoom="reset">전체 보기</button></div>`;
+    const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4M8 11h6"></path></svg></button><button type="button" class="game-list-action zoom-value-control" data-tournament-zoom="reset" aria-label="토너먼트 대진표 기본 크기">기본 크기</button><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4M8 11h6M11 8v6"></path></svg></button></div>`;
     const qualificationPreview = qualification
       ? `${renderTournamentQualificationList('상위리그 본선 진출자', qualification.upperEntries)}${lowerEnabled ? renderTournamentQualificationList('하위리그 본선 진출자', qualification.lowerEntries) : ''}`
       : '';
@@ -4145,7 +4149,7 @@
       const action = tournamentZoomButton.dataset.tournamentZoom;
       const currentZoom = state.tournamentZoom || 1;
       state.tournamentZoom = action === 'reset'
-        ? 1
+        ? getTournamentBaseZoom()
         : Math.min(1.6, Math.max(0.7, currentZoom + (action === 'in' ? 0.1 : -0.1)));
       render();
       return;
