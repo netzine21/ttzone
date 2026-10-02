@@ -1808,17 +1808,17 @@ button {
 
 @media (min-width: 821px) {
   .public-game-detail .game-detail-actions {
-    gap: 20px;
+    gap: 24px;
   }
 
   .public-game-detail .game-detail-actions .game-list-action {
-    gap: 7px;
-    font-size: 0.96rem;
+    gap: 8px;
+    font-size: 1.1rem;
   }
 
   .public-game-detail .game-detail-actions .game-list-action__icon {
-    width: 17px;
-    height: 17px;
+    width: 18px;
+    height: 18px;
   }
 }
 
@@ -2709,17 +2709,17 @@ button {
 
 @media (min-width: 821px) {
   .public-game-detail .competition-subtabs {
-    gap: 26px;
+    gap: 32px;
   }
 
   .public-game-detail .competition-subtabs .progress-tab {
-    gap: 7px;
-    font-size: 0.96rem;
+    gap: 8px;
+    font-size: 1.05rem;
   }
 
   .public-game-detail .competition-subtabs .progress-tab__icon {
-    width: 17px;
-    height: 17px;
+    width: 18px;
+    height: 18px;
   }
 }
 
