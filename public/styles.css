@@ -1808,17 +1808,17 @@ button {
 
 @media (min-width: 821px) {
   .public-game-detail .game-detail-actions {
-    gap: 24px;
+    gap: 28px;
   }
 
   .public-game-detail .game-detail-actions .game-list-action {
-    gap: 8px;
-    font-size: 1.1rem;
+    gap: 9px;
+    font-size: 1.2rem;
   }
 
   .public-game-detail .game-detail-actions .game-list-action__icon {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
   }
 }
 
@@ -2709,27 +2709,27 @@ button {
 
 @media (min-width: 821px) {
   .public-game-detail .competition-subtabs {
-    gap: 32px;
+    gap: 38px;
   }
 
   .public-game-detail .competition-subtabs .progress-tab {
-    gap: 8px;
-    font-size: 1.05rem;
+    gap: 9px;
+    font-size: 1.2rem;
   }
 
   .public-game-detail .competition-subtabs .progress-tab__icon {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
   }
 
   .public-game-detail .competition-content-heading h3,
   .public-game-detail .competition-tournament-heading,
   .public-game-detail .tournament-result-live-heading {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
   }
 
   .public-game-detail .tournament-progress-league-tab {
-    font-size: 1.05rem;
+    font-size: 1.15rem;
   }
 }
 
