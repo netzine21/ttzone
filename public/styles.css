@@ -133,14 +133,18 @@ html[data-theme="light"] .tournament-bracket {
 
 html[data-theme="light"] .public-detail-note,
 html[data-theme="light"] .profile-item {
-  border-color: rgba(46, 74, 96, 0.52);
-  box-shadow: 0 2px 8px rgba(46, 74, 96, 0.05);
+  border: 1px solid #8ca3b2;
+  box-shadow: 0 2px 8px rgba(46, 74, 96, 0.07);
 }
 
 html[data-theme="light"] .game-list-item:hover {
   border-color: rgba(46, 74, 96, 0.44);
   background: linear-gradient(180deg, #ffffff, #eef3f5);
   box-shadow: 0 14px 30px rgba(46, 74, 96, 0.18);
+}
+
+html[data-theme="light"] .profile-grid .profile-item {
+  border-color: #829aaa;
 }
 
 html[data-theme="light"] .public-participant-table th,
