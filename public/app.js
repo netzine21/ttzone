@@ -968,8 +968,7 @@
   }
 
   function getTournamentBaseZoom() {
-    const viewportWidth = window.innerWidth || 1280;
-    return viewportWidth <= 640 ? 2 : viewportWidth <= 1024 ? 1.5 : 1.2;
+    return 3;
   }
 
   function renderPublicTournamentBracket(bracket, includeFullscreen = false) {

@@ -5224,7 +5224,7 @@ html[data-theme="light"] .brand-mark__image--light {
 }
 
 .tournament-bracket--split .tournament-side {
-  min-height: 34px;
+  min-height: 40px;
   align-items: center;
   border: 1px solid rgba(165, 190, 214, 0.24);
   background: rgba(10, 18, 31, 0.72);
@@ -5404,7 +5404,9 @@ html[data-theme="light"] .brand-mark__image--light {
   box-sizing: border-box;
   padding-left: 6px;
   padding-right: 6px;
-  font-size: clamp(0.68rem, 1.3vw, 0.9rem);
+  padding-top: 9px;
+  padding-bottom: 9px;
+  font-size: clamp(0.74rem, 1.4vw, 0.98rem);
 }
 
 .tournament-bracket--split .tournament-round {
@@ -5451,7 +5453,7 @@ html[data-theme="light"] .brand-mark__image--light {
 
 .tournament-bracket--size-16 .tournament-side,
 .tournament-bracket--size-32 .tournament-side {
-  font-size: clamp(0.64rem, 1.1vw, 0.84rem);
+  font-size: clamp(0.7rem, 1.2vw, 0.92rem);
 }
 
 .tournament-bracket--size-16 .tournament-match__input,
@@ -5520,7 +5522,7 @@ html[data-theme="light"] .brand-mark__image--light {
 }
 
 .tournament-bracket--split .tournament-side .tournament-player-label small {
-  font-size: clamp(0.56rem, 0.82vw, 0.7rem);
+  font-size: clamp(0.62rem, 0.9vw, 0.76rem);
   line-height: 1.15;
 }
 
@@ -6790,16 +6792,16 @@ html[data-theme="light"] .brand-mark__image--light {
 
   .public-game-detail:has(.public-tournament-bracket) .tournament-bracket {
     margin-top: 6px;
-    padding: 7px;
+    padding: 12px 10px;
   }
 
   .public-game-detail:has(.public-tournament-bracket) .tournament-bracket--size-16 .tournament-side,
   .public-game-detail:has(.public-tournament-bracket) .tournament-bracket--size-32 .tournament-side {
-    font-size: 0.78rem;
+    font-size: 0.86rem;
   }
 
   .public-game-detail:has(.public-tournament-bracket) .tournament-bracket--split .tournament-side .tournament-player-label small {
-    font-size: 0.66rem;
+    font-size: 0.72rem;
   }
 
   .public-game-detail:has(.public-tournament-bracket) .tournament-round h4 {
@@ -6818,21 +6820,21 @@ html[data-theme="light"] .brand-mark__image--light {
 /* Keep tournament readability identical in the dark theme. */
 html[data-theme="dark"] .public-game-detail .tournament-bracket--size-16 .tournament-side,
 html[data-theme="dark"] .public-game-detail .tournament-bracket--size-32 .tournament-side {
-  font-size: clamp(0.64rem, 1.1vw, 0.84rem);
+  font-size: clamp(0.7rem, 1.2vw, 0.92rem);
 }
 
 html[data-theme="dark"] .public-game-detail .tournament-bracket--split .tournament-side .tournament-player-label small {
-  font-size: clamp(0.56rem, 0.82vw, 0.7rem);
+  font-size: clamp(0.62rem, 0.9vw, 0.76rem);
 }
 
 @media (max-width: 640px) {
   html[data-theme="dark"] .public-game-detail:has(.public-tournament-bracket) .tournament-bracket--size-16 .tournament-side,
   html[data-theme="dark"] .public-game-detail:has(.public-tournament-bracket) .tournament-bracket--size-32 .tournament-side {
-    font-size: 0.78rem;
+    font-size: 0.86rem;
   }
 
   html[data-theme="dark"] .public-game-detail:has(.public-tournament-bracket) .tournament-bracket--split .tournament-side .tournament-player-label small {
-    font-size: 0.66rem;
+    font-size: 0.72rem;
   }
 }
 
