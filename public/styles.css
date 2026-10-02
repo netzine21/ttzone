@@ -2721,6 +2721,16 @@ button {
     width: 18px;
     height: 18px;
   }
+
+  .public-game-detail .competition-content-heading h3,
+  .public-game-detail .competition-tournament-heading,
+  .public-game-detail .tournament-result-live-heading {
+    font-size: 1.1rem;
+  }
+
+  .public-game-detail .tournament-progress-league-tab {
+    font-size: 1.05rem;
+  }
 }
 
 .public-group-grid {
