@@ -37,6 +37,10 @@ html[data-theme="light"] {
   --text: #172536;
   --muted: #52677a;
   --muted-2: #7890a2;
+  --primary: #0f766e;
+  --primary-strong: #0b5e56;
+  --accent: #c2410c;
+  --accent-strong: #9a3412;
   --shadow: 0 20px 56px rgba(38, 62, 79, 0.16);
 }
 
@@ -100,6 +104,22 @@ html[data-theme="light"] .qualifying-group {
 
 html[data-theme="light"] .game-list-item__date {
   color: #657b8d;
+}
+
+html[data-theme="light"] .btn-primary {
+  color: #ffffff;
+  background: linear-gradient(135deg, #0f766e, #0b5e56);
+  box-shadow: 0 12px 24px rgba(15, 118, 110, 0.2);
+}
+
+html[data-theme="light"] .btn-secondary {
+  background: rgba(255, 255, 255, 0.82);
+}
+
+html[data-theme="light"] .public-game-filter.is-active,
+html[data-theme="light"] .admin-role-badge--admin,
+html[data-theme="light"] .signup-success__mark {
+  color: #ffffff;
 }
 
 *,
