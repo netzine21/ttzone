@@ -122,6 +122,67 @@ html[data-theme="light"] .signup-success__mark {
   color: #ffffff;
 }
 
+html[data-theme="light"] .public-detail-note,
+html[data-theme="light"] .profile-item,
+html[data-theme="light"] .metric-card,
+html[data-theme="light"] .public-group-card,
+html[data-theme="light"] .tournament-bracket {
+  border-color: rgba(46, 74, 96, 0.26);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+html[data-theme="light"] .public-data-table th,
+html[data-theme="light"] .public-league-summary thead th,
+html[data-theme="light"] .schedule-table th {
+  border: 1px solid rgba(46, 74, 96, 0.24);
+  background: #e5eef3;
+}
+
+html[data-theme="light"] .public-data-table th,
+html[data-theme="light"] .public-data-table td,
+html[data-theme="light"] .public-league-summary th,
+html[data-theme="light"] .public-league-summary td,
+html[data-theme="light"] .schedule-table th,
+html[data-theme="light"] .schedule-table td {
+  border-bottom-color: rgba(46, 74, 96, 0.22);
+}
+
+html[data-theme="light"] .public-participant-table th,
+html[data-theme="light"] .public-league-summary tbody tr:first-child th,
+html[data-theme="light"] .public-league-summary tbody tr:first-child td,
+html[data-theme="light"] .public-league-summary tbody tr + tr th,
+html[data-theme="light"] .public-league-summary tbody tr + tr td,
+html[data-theme="light"] .public-league-summary tbody tr:last-child th,
+html[data-theme="light"] .public-league-summary tbody tr:last-child td {
+  border-top-color: rgba(15, 118, 110, 0.46);
+  border-bottom-color: rgba(15, 118, 110, 0.46);
+}
+
+html[data-theme="light"] .format-selector::after,
+html[data-theme="light"] .operation-menu::after {
+  background: linear-gradient(90deg, transparent, rgba(15, 118, 110, 0.18) 20%, rgba(15, 118, 110, 0.78) 50%, rgba(15, 118, 110, 0.18) 80%, transparent);
+}
+
+html[data-theme="light"] .tournament-match,
+html[data-theme="light"] .tournament-bracket--split .tournament-side,
+html[data-theme="light"] .tournament-bracket--split .tournament-match__input {
+  border-color: rgba(46, 74, 96, 0.28);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+html[data-theme="light"] .tournament-bracket--split .tournament-side + .tournament-side {
+  border-top-color: rgba(46, 74, 96, 0.28);
+}
+
+html[data-theme="light"] .tournament-round__connector::after,
+html[data-theme="light"] .tournament-round__connector::before,
+html[data-theme="light"] .tournament-bracket--split .tournament-side-bracket--left .tournament-round .tournament-match::after,
+html[data-theme="light"] .tournament-bracket--split .tournament-side-bracket--right .tournament-round .tournament-match::after,
+html[data-theme="light"] .tournament-bracket--split .tournament-center-bracket .tournament-round--final .tournament-match::before,
+html[data-theme="light"] .tournament-bracket--split .tournament-center-bracket .tournament-round--final .tournament-match::after {
+  border-color: rgba(15, 118, 110, 0.7);
+}
+
 *,
 *::before,
 *::after {
