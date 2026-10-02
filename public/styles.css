@@ -4730,7 +4730,7 @@ html[data-theme="light"] .brand-mark__image--light {
 }
 
 .tournament-podium__card strong {
-  font-size: 0.62rem;
+  font-size: 0.74rem;
   line-height: 1.15;
 }
 
@@ -4742,7 +4742,7 @@ html[data-theme="light"] .brand-mark__image--light {
   white-space: nowrap;
   color: var(--text);
   font-weight: 700;
-  font-size: 0.68rem;
+  font-size: 0.82rem;
   line-height: 1.15;
 }
 
@@ -4772,15 +4772,15 @@ html[data-theme="light"] .brand-mark__image--light {
   }
 
   .tournament-podium__card {
-    flex-direction: column;
-    gap: 4px;
-    padding: 7px 4px;
-    text-align: center;
+    flex-direction: row;
+    gap: 6px;
+    padding: 7px 6px;
+    text-align: left;
   }
 
   .tournament-podium__card > div > span {
     max-width: 100%;
-    font-size: 0.72rem;
+    font-size: 0.82rem;
   }
 }
 
