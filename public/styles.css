@@ -4748,15 +4748,15 @@ html[data-theme="light"] .brand-mark__image--light {
 
 .tournament-podium__medal {
   display: block;
-  flex: 0 0 42px;
-  width: 42px;
-  height: 48px;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 42px;
 }
 
 .tournament-podium__medal-svg {
   display: block;
-  width: 42px;
-  height: 48px;
+  width: 36px;
+  height: 42px;
 }
 
 .tournament-podium__note {
@@ -6667,6 +6667,110 @@ html[data-theme="light"] .brand-mark__image--light {
 
   .operation-note {
     display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .public-game-detail:has(.public-tournament-bracket) .game-detail-title {
+    font-size: 1.35rem;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .game-detail-actions {
+    gap: 9px;
+    margin-top: 5px;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .game-detail-actions .game-list-action {
+    gap: 4px;
+    padding: 3px 0;
+    font-size: 0.78rem;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .competition-view {
+    margin-top: 10px;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .competition-progress-toolbar .format-selector {
+    gap: 10px;
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .competition-progress-toolbar .format-selector__item,
+  .public-game-detail:has(.public-tournament-bracket) .competition-subtabs .progress-tab {
+    gap: 4px;
+    padding: 2px 0;
+    font-size: 0.84rem;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .competition-subtabs {
+    gap: 10px;
+    margin-bottom: 7px;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .competition-tournament-heading {
+    margin: 4px 0 5px;
+    font-size: 0.98rem;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .tournament-progress-league-tabs {
+    gap: 8px;
+    margin: 5px 0 6px;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .tournament-progress-league-tab {
+    gap: 4px;
+    padding: 2px 0;
+    font-size: 0.82rem;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .tournament-progress-league-tab small {
+    font-size: 0.62rem;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .public-tournament-results-controls {
+    gap: 3px;
+    margin: 4px 0 5px;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .public-tournament-results-controls .game-list-action {
+    min-width: 28px;
+    padding: 3px 5px;
+    font-size: 0.72rem;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .tournament-podium {
+    margin: 4px auto 5px;
+    padding: 5px;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .tournament-podium__cards {
+    gap: 4px;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .tournament-podium__card {
+    min-height: 46px;
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .tournament-podium__card strong {
+    font-size: 0.68rem;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .tournament-podium__card > div > span {
+    font-size: 0.78rem;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .tournament-podium__medal,
+  .public-game-detail:has(.public-tournament-bracket) .tournament-podium__medal-svg {
+    width: 32px;
+    height: 38px;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .tournament-bracket {
+    margin-top: 6px;
+    padding: 7px;
   }
 }
 
