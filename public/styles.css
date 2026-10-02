@@ -153,6 +153,14 @@ html[data-theme="light"] .public-detail-meta div {
   box-shadow: 0 2px 8px rgba(46, 74, 96, 0.06);
 }
 
+html[data-theme="light"] .public-league-entry,
+html[data-theme="light"] .public-league-entry.rank-row--1,
+html[data-theme="light"] .public-league-entry.rank-row--2,
+html[data-theme="light"] .public-league-entry.rank-row--3 {
+  border: 1px solid #c3d0d7;
+  background: #eef2f4;
+}
+
 html[data-theme="light"] .public-participant-table th,
 html[data-theme="light"] .public-participant-table td {
   border: 1px solid rgba(46, 74, 96, 0.24);
