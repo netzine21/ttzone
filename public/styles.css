@@ -73,6 +73,35 @@ html[data-theme="light"] .service-menu-toggle {
   background: rgba(255, 255, 255, 0.72);
 }
 
+html[data-theme="light"] .game-card,
+html[data-theme="light"] .game-list-item {
+  border-color: rgba(46, 74, 96, 0.18);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 250, 0.94));
+  box-shadow: 0 12px 28px rgba(38, 62, 79, 0.08);
+}
+
+html[data-theme="light"] .game-list-item:hover {
+  border-color: rgba(55, 214, 154, 0.46);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(228, 245, 239, 0.96));
+  box-shadow: 0 14px 30px rgba(38, 62, 79, 0.12);
+}
+
+html[data-theme="light"] .game-card__top,
+html[data-theme="light"] .game-list-item__body,
+html[data-theme="light"] .participant-status-card,
+html[data-theme="light"] .application-summary,
+html[data-theme="light"] .tournament-podium,
+html[data-theme="light"] .tournament-podium__card,
+html[data-theme="light"] .schedule-summary,
+html[data-theme="light"] .schedule-group-block,
+html[data-theme="light"] .qualifying-group {
+  background: rgba(255, 255, 255, 0.62);
+}
+
+html[data-theme="light"] .game-list-item__date {
+  color: #657b8d;
+}
+
 *,
 *::before,
 *::after {
