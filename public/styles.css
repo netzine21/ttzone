@@ -127,8 +127,18 @@ html[data-theme="light"] .profile-item,
 html[data-theme="light"] .metric-card,
 html[data-theme="light"] .public-group-card,
 html[data-theme="light"] .tournament-bracket {
-  border-color: rgba(46, 74, 96, 0.26);
+  border: 1px solid rgba(46, 74, 96, 0.34);
   background: rgba(255, 255, 255, 0.72);
+}
+
+html[data-theme="light"] .public-detail-note,
+html[data-theme="light"] .profile-item {
+  border-color: rgba(46, 74, 96, 0.38);
+}
+
+html[data-theme="light"] .public-participant-table th,
+html[data-theme="light"] .public-participant-table td {
+  border: 1px solid rgba(46, 74, 96, 0.24);
 }
 
 html[data-theme="light"] .public-data-table th,
@@ -170,6 +180,14 @@ html[data-theme="light"] .tournament-bracket--split .tournament-match__input {
   background: rgba(255, 255, 255, 0.78);
 }
 
+html[data-theme="light"] .tournament-bracket--split .tournament-side {
+  background: #edf2f4;
+}
+
+html[data-theme="light"] .tournament-bracket--split .tournament-side + .tournament-side {
+  background: #e7eef1;
+}
+
 html[data-theme="light"] .tournament-bracket--split .tournament-side + .tournament-side {
   border-top-color: rgba(46, 74, 96, 0.28);
 }
@@ -181,6 +199,16 @@ html[data-theme="light"] .tournament-bracket--split .tournament-side-bracket--ri
 html[data-theme="light"] .tournament-bracket--split .tournament-center-bracket .tournament-round--final .tournament-match::before,
 html[data-theme="light"] .tournament-bracket--split .tournament-center-bracket .tournament-round--final .tournament-match::after {
   border-color: rgba(15, 118, 110, 0.7);
+}
+
+.competition-progress-toolbar .format-selector__item {
+  font-size: 1.05rem;
+}
+
+@media (min-width: 821px) {
+  .competition-progress-toolbar .format-selector__item {
+    font-size: 1.2rem;
+  }
 }
 
 *,
