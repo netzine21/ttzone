@@ -6773,6 +6773,19 @@ html[data-theme="light"] .brand-mark__image--light {
     padding: 7px;
   }
 
+  .public-game-detail:has(.public-tournament-bracket) .tournament-bracket--size-16 .tournament-side,
+  .public-game-detail:has(.public-tournament-bracket) .tournament-bracket--size-32 .tournament-side {
+    font-size: 0.78rem;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .tournament-bracket--split .tournament-side .tournament-player-label small {
+    font-size: 0.66rem;
+  }
+
+  .public-game-detail:has(.public-tournament-bracket) .tournament-round h4 {
+    font-size: 0.8rem;
+  }
+
   .public-game-detail .public-league-entry strong {
     font-size: 0.82rem;
   }
