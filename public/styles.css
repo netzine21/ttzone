@@ -1806,6 +1806,22 @@ button {
   white-space: nowrap;
 }
 
+@media (min-width: 821px) {
+  .public-game-detail .game-detail-actions {
+    gap: 20px;
+  }
+
+  .public-game-detail .game-detail-actions .game-list-action {
+    gap: 7px;
+    font-size: 0.96rem;
+  }
+
+  .public-game-detail .game-detail-actions .game-list-action__icon {
+    width: 17px;
+    height: 17px;
+  }
+}
+
 .game-edit-bottom-action {
   display: flex;
   justify-content: center;
@@ -2689,6 +2705,22 @@ button {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.8;
+}
+
+@media (min-width: 821px) {
+  .public-game-detail .competition-subtabs {
+    gap: 26px;
+  }
+
+  .public-game-detail .competition-subtabs .progress-tab {
+    gap: 7px;
+    font-size: 0.96rem;
+  }
+
+  .public-game-detail .competition-subtabs .progress-tab__icon {
+    width: 17px;
+    height: 17px;
+  }
 }
 
 .public-group-grid {
