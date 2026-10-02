@@ -3011,7 +3011,7 @@
     if (!tournamentPinchState || event.touches.length < 2) return;
     const distance = tournamentTouchDistance(event.touches);
     if (!distance || !tournamentPinchState.distance) return;
-    const nextZoom = Math.min(3, Math.max(0.7, tournamentPinchState.zoom * (distance / tournamentPinchState.distance)));
+    const nextZoom = Math.max(0.7, tournamentPinchState.zoom * (distance / tournamentPinchState.distance));
     state.tournamentZoom = Math.round(nextZoom * 100) / 100;
     fitTournamentBrackets();
     updateTournamentZoomControls();
@@ -4138,7 +4138,7 @@
       const currentZoom = state.leagueResultsZoom || 1;
       state.leagueResultsZoom = action === 'reset'
         ? 1
-        : Math.min(3, Math.max(0.7, currentZoom + (action === 'in' ? 0.1 : -0.1)));
+        : Math.min(1.6, Math.max(0.7, currentZoom + (action === 'in' ? 0.1 : -0.1)));
       render();
       return;
     }
@@ -4149,7 +4149,7 @@
       const currentZoom = state.tournamentZoom || 1;
       state.tournamentZoom = action === 'reset'
         ? getTournamentBaseZoom()
-        : Math.min(1.6, Math.max(0.7, currentZoom + (action === 'in' ? 0.1 : -0.1)));
+        : Math.max(0.7, currentZoom + (action === 'in' ? 0.1 : -0.1));
       render();
       return;
     }
