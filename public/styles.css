@@ -3265,6 +3265,31 @@ button {
   color: var(--primary);
 }
 
+@media (min-width: 821px) {
+  .public-game-detail .operation-menu {
+    gap: 12px;
+  }
+
+  .public-game-detail .operation-menu__item {
+    gap: 9px;
+    padding: 14px 18px;
+    font-size: 1.2rem;
+  }
+
+  .public-game-detail .operation-menu__icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .public-game-detail .operation-submenu {
+    gap: 26px;
+  }
+
+  .public-game-detail .operation-submenu__item {
+    font-size: 1.2rem;
+  }
+}
+
 .roster-operation-panel {
   margin-top: 22px;
 }
