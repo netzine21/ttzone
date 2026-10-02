@@ -6782,6 +6782,32 @@ html[data-theme="light"] .brand-mark__image--light {
   }
 }
 
+/* Keep the progress navigation hierarchy visually consistent at every viewport. */
+.public-game-detail .game-detail-actions .game-list-action,
+.public-game-detail .competition-progress-toolbar .format-selector__item,
+.public-game-detail .competition-subtabs .progress-tab,
+.public-game-detail .tournament-progress-league-tab {
+  font-size: 1rem;
+}
+
+@media (min-width: 821px) {
+  .public-game-detail .game-detail-actions .game-list-action,
+  .public-game-detail .competition-progress-toolbar .format-selector__item,
+  .public-game-detail .competition-subtabs .progress-tab,
+  .public-game-detail .tournament-progress-league-tab {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .public-game-detail .game-detail-actions .game-list-action,
+  .public-game-detail .competition-progress-toolbar .format-selector__item,
+  .public-game-detail .competition-subtabs .progress-tab,
+  .public-game-detail .tournament-progress-league-tab {
+    font-size: 0.84rem;
+  }
+}
+
 .schedule-print-root {
   display: none;
 }
