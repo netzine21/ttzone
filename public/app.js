@@ -2950,7 +2950,7 @@
       const stage = viewport.querySelector('[data-public-league-stage]');
       if (!stage) return;
       stage.style.transform = 'none';
-      stage.style.transformOrigin = 'top center';
+      stage.style.transformOrigin = 'top left';
       viewport.style.height = '';
       const availableWidth = viewport.clientWidth;
       if (!availableWidth) {

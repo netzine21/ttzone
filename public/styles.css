@@ -3085,7 +3085,7 @@ html[data-theme="light"] .brand-mark__image--light {
 .public-league-results-viewport {
   width: 100%;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 1px;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
@@ -3096,9 +3096,9 @@ html[data-theme="light"] .brand-mark__image--light {
   display: block;
   width: 760px;
   min-width: 760px;
-  margin-left: auto;
-  margin-right: auto;
-  transform-origin: top center;
+  margin-left: 0;
+  margin-right: 0;
+  transform-origin: top left;
   will-change: transform;
 }
 
