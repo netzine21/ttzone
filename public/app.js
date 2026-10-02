@@ -81,7 +81,7 @@
     statusSubtab: 'info',
     progressSubtab: 'participants',
     progressTournamentLeague: 'upper',
-    leagueResultsZoom: 3,
+    leagueResultsZoom: 1.6,
     tournamentZoom: 1,
     tournamentZoomInitialized: false,
     statusFormat: null,
@@ -4138,7 +4138,7 @@
       const action = leagueResultsZoomButton.dataset.leagueResultsZoom;
       const currentZoom = state.leagueResultsZoom || 1;
       state.leagueResultsZoom = action === 'reset'
-        ? 3
+        ? 1.6
         : Math.max(0.7, currentZoom + (action === 'in' ? 0.1 : -0.1));
       render();
       return;
