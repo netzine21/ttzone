@@ -123,6 +123,7 @@
   const serviceMenuToggle = document.querySelector('.service-menu-toggle');
   const brand = document.querySelector('.brand');
   const brandName = document.querySelector('.brand-name');
+  const THEME_STORAGE_KEY = 'ttground-theme';
 
   function readJson(key, fallback) {
     try {
@@ -137,6 +138,17 @@
 
   function writeJson(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function getTheme() {
+    return readJson(THEME_STORAGE_KEY, 'dark') === 'light' ? 'light' : 'dark';
+  }
+
+  function applyTheme(theme, persist = true) {
+    const nextTheme = theme === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = nextTheme;
+    if (persist) writeJson(THEME_STORAGE_KEY, nextTheme);
+    return nextTheme;
   }
 
   function readSessionJson(key, fallback) {
@@ -2788,9 +2800,10 @@
     const adminAction = currentUser?.role === 'admin'
       ? '<button type="button" class="btn top-action top-action--admin" data-open-admin><svg class="top-action__user-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" /><circle cx="12" cy="12" r="3.5" /><circle cx="12" cy="12" r="8" /></svg><span>시스템 관리</span></button>'
       : '';
+    const themeAction = `<button type="button" class="btn top-action top-action--theme" data-theme-toggle><svg class="top-action__user-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg><span>${getTheme() === 'dark' ? '라이트 테마' : '다크 테마'}</span></button>`;
     const actions = currentUser
-      ? `<button type="button" class="btn top-action" data-open-mypage>${renderUserIcon()}<span>Mypage</span></button><button type="button" class="btn top-action" data-logout>${renderUserIcon()}<span>로그아웃(${escapeHtml(currentUser.nickname)})</span></button>${venueAction}${adminAction}`
-      : `<button type="button" class="btn top-action" data-open-auth="signup">${renderUserIcon()}<span>회원가입</span></button><button type="button" class="btn top-action" data-open-auth="login">${renderLockIcon(true)}<span>로그인</span></button>${venueAction}${adminAction}`;
+      ? `<button type="button" class="btn top-action" data-open-mypage>${renderUserIcon()}<span>Mypage</span></button><button type="button" class="btn top-action" data-logout>${renderUserIcon()}<span>로그아웃(${escapeHtml(currentUser.nickname)})</span></button>${venueAction}${adminAction}${themeAction}`
+      : `<button type="button" class="btn top-action" data-open-auth="signup">${renderUserIcon()}<span>회원가입</span></button><button type="button" class="btn top-action" data-open-auth="login">${renderLockIcon(true)}<span>로그인</span></button>${venueAction}${adminAction}${themeAction}`;
     if (topActions) topActions.innerHTML = '';
     if (mobileMenuActions) mobileMenuActions.innerHTML = actions;
     if (serviceMenuActions) serviceMenuActions.innerHTML = venueAction + fleaMarketAction + shopAction;
@@ -3727,6 +3740,13 @@
   }
 
   async function handleAppClick(event) {
+    const themeToggle = event.target.closest('[data-theme-toggle]');
+    if (themeToggle) {
+      applyTheme(getTheme() === 'dark' ? 'light' : 'dark');
+      updateTopActions(getCurrentUser());
+      return;
+    }
+
     const fullscreenButton = event.target.closest('[data-progress-fullscreen]');
     if (fullscreenButton) {
       await toggleProgressFullscreen();
@@ -4572,6 +4592,7 @@
   }
 
   async function init() {
+    applyTheme(getTheme(), false);
     await loadState();
     const savedRoute = readSessionJson(BROWSER_ROUTE_KEY, null);
     if (savedRoute) {
