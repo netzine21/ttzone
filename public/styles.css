@@ -1031,6 +1031,18 @@ button {
   object-fit: contain;
 }
 
+.brand-mark__image--light {
+  display: none;
+}
+
+html[data-theme="light"] .brand-mark__image--dark {
+  display: none;
+}
+
+html[data-theme="light"] .brand-mark__image--light {
+  display: block;
+}
+
 .brand-mark__badge {
   fill: #111f2e;
   stroke: rgba(255, 255, 255, 0.28);
