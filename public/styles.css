@@ -2814,14 +2814,19 @@ html[data-theme="light"] .brand-mark__image--light {
 
 .public-game-detail:fullscreen .public-league-results-viewport {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
+}
+
+.public-game-detail:fullscreen .public-league-results-stage {
+  margin-left: 0;
+  margin-right: 0;
+  transform-origin: top left;
 }
 
 .public-game-detail:fullscreen .tournament-bracket-viewport {
   display: block;
 }
 
-.public-game-detail:fullscreen .public-league-results-stage,
 .public-game-detail:fullscreen .tournament-bracket-stage {
   margin-left: auto;
   margin-right: auto;
