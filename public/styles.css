@@ -3193,7 +3193,7 @@ html[data-theme="light"] .brand-mark__image--light {
 
 .public-league-entry strong {
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   text-align: center;
   white-space: nowrap;
 }
@@ -3289,7 +3289,7 @@ html[data-theme="light"] .brand-mark__image--light {
   display: block;
   margin-top: 2px;
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -5394,7 +5394,7 @@ html[data-theme="light"] .brand-mark__image--light {
   box-sizing: border-box;
   padding-left: 6px;
   padding-right: 6px;
-  font-size: clamp(0.62rem, 1.2vw, 0.82rem);
+  font-size: clamp(0.68rem, 1.3vw, 0.9rem);
 }
 
 .tournament-bracket--split .tournament-round {
@@ -5441,7 +5441,7 @@ html[data-theme="light"] .brand-mark__image--light {
 
 .tournament-bracket--size-16 .tournament-side,
 .tournament-bracket--size-32 .tournament-side {
-  font-size: clamp(0.58rem, 1vw, 0.76rem);
+  font-size: clamp(0.64rem, 1.1vw, 0.84rem);
 }
 
 .tournament-bracket--size-16 .tournament-match__input,
@@ -5510,7 +5510,7 @@ html[data-theme="light"] .brand-mark__image--light {
 }
 
 .tournament-bracket--split .tournament-side .tournament-player-label small {
-  font-size: clamp(0.48rem, 0.75vw, 0.62rem);
+  font-size: clamp(0.56rem, 0.82vw, 0.7rem);
   line-height: 1.15;
 }
 
@@ -6771,6 +6771,14 @@ html[data-theme="light"] .brand-mark__image--light {
   .public-game-detail:has(.public-tournament-bracket) .tournament-bracket {
     margin-top: 6px;
     padding: 7px;
+  }
+
+  .public-game-detail .public-league-entry strong {
+    font-size: 0.82rem;
+  }
+
+  .public-game-detail .public-league-entry small {
+    font-size: 0.68rem;
   }
 }
 
