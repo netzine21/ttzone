@@ -153,6 +153,16 @@ html[data-theme="light"] .public-detail-meta div {
   box-shadow: 0 2px 8px rgba(46, 74, 96, 0.06);
 }
 
+html[data-theme="light"] .public-game-detail:fullscreen .game-detail-header {
+  border-bottom-color: rgba(46, 74, 96, 0.28);
+  background: rgba(248, 251, 252, 0.96);
+  box-shadow: 0 4px 14px rgba(46, 74, 96, 0.08);
+}
+
+html[data-theme="light"] .public-game-detail:fullscreen .game-detail-title {
+  color: var(--text);
+}
+
 html[data-theme="light"] .public-league-entry,
 html[data-theme="light"] .public-league-entry.rank-row--1,
 html[data-theme="light"] .public-league-entry.rank-row--2,
@@ -6671,6 +6681,16 @@ html[data-theme="light"] .brand-mark__image--light {
 }
 
 @media (max-width: 640px) {
+  .public-game-detail:fullscreen .game-detail-header {
+    padding: 6px 10px;
+  }
+
+  .public-game-detail:fullscreen .game-detail-title {
+    padding: 0 16px;
+    font-size: 1.35rem;
+    line-height: 1.2;
+  }
+
   .public-game-detail:has(.public-tournament-bracket) .game-detail-title {
     font-size: 1.35rem;
   }
