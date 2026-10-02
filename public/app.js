@@ -83,6 +83,7 @@
     progressTournamentLeague: 'upper',
     leagueResultsZoom: 1,
     tournamentZoom: 1,
+    tournamentZoomInitialized: false,
     statusFormat: null,
     editingGameId: null,
     operationGameId: null,
@@ -968,6 +969,11 @@
 
   function renderPublicTournamentBracket(bracket, includeFullscreen = false) {
     if (!bracket?.rounds?.length) return '<div class="empty-state">아직 토너먼트 대진표가 생성되지 않았습니다.</div>';
+    if (!state.tournamentZoomInitialized) {
+      const viewportWidth = window.innerWidth || 1280;
+      state.tournamentZoom = viewportWidth <= 640 ? 2 : viewportWidth <= 1024 ? 1.5 : 1.2;
+      state.tournamentZoomInitialized = true;
+    }
     syncTournamentBracket(bracket);
     const fullscreenControl = includeFullscreen ? `<button type="button" class="game-list-action competition-fullscreen-button" data-progress-fullscreen><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" /></svg><span data-progress-fullscreen-label>전체화면 전환</span></button>` : '';
     const controls = `<div class="public-tournament-results-controls" aria-label="토너먼트 대진표 크기 조정"><button type="button" class="game-list-action" data-tournament-zoom="out" aria-label="토너먼트 축소">−</button><button type="button" class="game-list-action zoom-value-control" data-tournament-zoom="reset" data-tournament-zoom-value aria-label="토너먼트 대진표 100%로 복원">${Math.round((state.tournamentZoom || 1) * 100)}%</button><button type="button" class="game-list-action" data-tournament-zoom="in" aria-label="토너먼트 확대">+</button>${fullscreenControl}</div>`;
