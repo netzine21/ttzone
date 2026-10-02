@@ -3933,6 +3933,36 @@ button {
   width: 100%;
 }
 
+@media (min-width: 821px) {
+  .public-game-detail .schedule-panel--results .schedule-generation-controls--results {
+    width: 100%;
+  }
+
+  .public-game-detail .schedule-panel--results .schedule-group-matrices {
+    width: 100%;
+    max-width: none;
+  }
+
+  .public-game-detail .schedule-panel--results .schedule-matrix th,
+  .public-game-detail .schedule-panel--results .schedule-matrix td {
+    padding: 12px 9px;
+    font-size: 0.9rem;
+    overflow-wrap: normal;
+  }
+
+  .public-game-detail .schedule-panel--results .schedule-results-table th,
+  .public-game-detail .schedule-panel--results .schedule-results-table td {
+    padding: 12px 10px;
+    font-size: 0.9rem;
+  }
+
+  .public-game-detail .schedule-panel--results .schedule-results-table .schedule-result-input,
+  .public-game-detail .schedule-panel--results .schedule-results-table select {
+    padding: 9px 10px;
+    font-size: 0.9rem;
+  }
+}
+
 .schedule-panel--results .qualifying-standings-overview .group-result-heading h2 {
   margin: 0;
   font-size: clamp(1.05rem, 2vw, 1.35rem);
