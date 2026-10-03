@@ -3095,6 +3095,7 @@ html[data-theme="light"] .brand-mark__image--light {
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+  touch-action: pan-x pan-y;
 }
 
 .public-league-results-stage {
@@ -4004,7 +4005,7 @@ html[data-theme="light"] .brand-mark__image--light {
   width: 1.55em;
   height: 1.55em;
   border-radius: 50%;
-  color: #061018;
+  color: #f8fffc;
   background: var(--primary);
   box-shadow: 0 0 0 2px rgba(118, 240, 196, 0.18);
 }

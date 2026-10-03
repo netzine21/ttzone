@@ -81,7 +81,7 @@
     statusSubtab: 'info',
     progressSubtab: 'participants',
     progressTournamentLeague: 'upper',
-    leagueResultsZoom: 1.6,
+    leagueResultsZoom: getLeagueBaseZoom(),
     tournamentZoom: 1,
     tournamentZoomInitialized: false,
     statusFormat: null,
@@ -969,6 +969,16 @@
 
   function getTournamentBaseZoom() {
     return 3;
+  }
+
+  function isTabletDevice() {
+    const userAgent = navigator.userAgent || '';
+    return /iPad|Tablet|Android(?!.*Mobile)/i.test(userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  function getLeagueBaseZoom() {
+    return isTabletDevice() ? 1.4 : 1.6;
   }
 
   function renderPublicTournamentBracket(bracket, includeFullscreen = false) {
@@ -4138,7 +4148,7 @@
       const action = leagueResultsZoomButton.dataset.leagueResultsZoom;
       const currentZoom = state.leagueResultsZoom || 1;
       state.leagueResultsZoom = action === 'reset'
-        ? 1.6
+        ? getLeagueBaseZoom()
         : Math.max(0.7, currentZoom + (action === 'in' ? 0.1 : -0.1));
       render();
       return;
