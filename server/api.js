@@ -113,7 +113,8 @@ async function ensureGameStateColumns() {
          add column if not exists registration_closed jsonb not null default '{}'::jsonb,
          add column if not exists format_modes jsonb not null default '{}'::jsonb;
        alter table public.registrations
-         add column if not exists registration_source text not null default 'bulk';
+         add column if not exists registration_source text not null default 'bulk',
+         add column if not exists gender text;
        update public.registrations
           set registration_source = 'online'
         where user_id is not null and registration_source = 'bulk'`
@@ -329,7 +330,7 @@ async function getGames(viewerId = null) {
   const formats = await pool.query('select game_id, format from public.game_formats');
   const registrations = await pool.query(
     `select r.id, r.game_id, r.format, r.user_id, r.nickname, r.member_id, r.rank, r.team_name,
-            coalesce(u.gender, member.gender) as gender,
+            coalesce(r.gender, u.gender, member.gender) as gender,
             r.registered_by, r.registration_source, r.applied_at, r.updated_at
        from public.registrations r
        left join public.users u on u.id = r.user_id
@@ -1076,6 +1077,7 @@ async function handleApi(req, res, requestPath) {
           const rank = String(row.rank || '').trim();
           const teamName = String(row.teamName || '').trim();
           const memberId = String(row.memberId || '').trim() || null;
+          const gender = ['male', 'female'].includes(String(row.gender || '').trim()) ? String(row.gender).trim() : null;
           if (!nickname || !rank || (format !== 'singles' && !teamName) || currentCount >= gameResult.rows[0].max_participants) {
             skipped += 1;
             continue;
@@ -1096,9 +1098,9 @@ async function handleApi(req, res, requestPath) {
             : { rows: [] };
           const userId = memberResult.rows[0]?.id || null;
           await client.query(
-            `insert into public.registrations (game_id, format, user_id, nickname, member_id, rank, team_name, registered_by, registration_source)
-             values ($1, $2, $3, $4, $5, $6, $7, $8, 'bulk')`,
-            [gameId, format, userId, nickname, memberId, rank, teamName || null, user.id]
+            `insert into public.registrations (game_id, format, user_id, nickname, gender, member_id, rank, team_name, registered_by, registration_source)
+             values ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'bulk')`,
+            [gameId, format, userId, nickname, gender, memberId, rank, teamName || null, user.id]
           );
           currentCount += 1;
           added += 1;
@@ -1125,9 +1127,10 @@ async function handleApi(req, res, requestPath) {
       const format = String(body.format || '');
       const nickname = String(body.nickname || '').trim();
       const memberId = String(body.memberId || '').trim();
+      const gender = String(body.gender || '').trim();
       const rank = String(body.rank || '').trim();
       const teamName = String(body.teamName || '').trim();
-      if (!['singles', 'doubles', 'team'].includes(format) || !nickname || !rank || (format !== 'singles' && !teamName)) {
+      if (!['singles', 'doubles', 'team'].includes(format) || !nickname || !['male', 'female'].includes(gender) || !rank || (format !== 'singles' && !teamName)) {
         return sendJson(res, 400, { error: '개별등록 정보를 확인해 주세요.' });
       }
       const gameResult = await pool.query(
@@ -1149,13 +1152,13 @@ async function handleApi(req, res, requestPath) {
       );
       if (duplicate.rows[0]) return sendJson(res, 409, { error: '같은 선수명 또는 아이디가 이미 등록되어 있습니다.' });
       const memberResult = memberId
-        ? await pool.query('select id from public.users where lower(member_id) = lower($1) limit 1', [memberId])
+        ? await pool.query('select id, gender from public.users where lower(member_id) = lower($1) limit 1', [memberId])
         : { rows: [] };
       const userId = memberResult.rows[0]?.id || null;
       const result = await pool.query(
-        `insert into public.registrations (game_id, format, user_id, nickname, member_id, rank, team_name, registered_by, registration_source)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, 'manual') returning *`,
-        [gameId, format, userId, nickname, memberId || null, rank, teamName || null, user.id]
+        `insert into public.registrations (game_id, format, user_id, nickname, gender, member_id, rank, team_name, registered_by, registration_source)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'manual') returning *`,
+        [gameId, format, userId, nickname, memberResult.rows[0]?.gender || gender, memberId || null, rank, teamName || null, user.id]
       );
       return sendJson(res, 201, { registration: result.rows[0] });
     }
@@ -1227,15 +1230,15 @@ async function handleApi(req, res, requestPath) {
       let result;
       if (existing.rows[0]) {
         result = await pool.query(
-          `update public.registrations set nickname = $1, member_id = $2, rank = $3, team_name = $4, registration_source = 'online', updated_at = now()
-            where id = $5 returning *`,
-          [String(body.nickname).trim(), String(body.memberId || '').trim() || null, String(body.rank).trim(), String(body.teamName || '').trim() || null, existing.rows[0].id]
+          `update public.registrations set nickname = $1, gender = $2, member_id = $3, rank = $4, team_name = $5, registration_source = 'online', updated_at = now()
+            where id = $6 returning *`,
+          [String(body.nickname).trim(), user.gender, String(body.memberId || '').trim() || null, String(body.rank).trim(), String(body.teamName || '').trim() || null, existing.rows[0].id]
         );
       } else {
         result = await pool.query(
-          `insert into public.registrations (game_id, format, user_id, nickname, member_id, rank, team_name, registered_by, registration_source)
-           values ($1, $2, $3, $4, $5, $6, $7, $3, 'online') returning *`,
-          [gameId, format, user.id, String(body.nickname).trim(), String(body.memberId || '').trim() || null, String(body.rank).trim(), String(body.teamName || '').trim() || null]
+          `insert into public.registrations (game_id, format, user_id, nickname, gender, member_id, rank, team_name, registered_by, registration_source)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $3, 'online') returning *`,
+          [gameId, format, user.id, String(body.nickname).trim(), user.gender, String(body.memberId || '').trim() || null, String(body.rank).trim(), String(body.teamName || '').trim() || null]
         );
       }
       return sendJson(res, 201, { registration: result.rows[0] });

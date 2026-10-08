@@ -1370,6 +1370,12 @@
     const bulkCount = registrations.filter((registration) => getRegistrationSource(registration).key === 'bulk').length;
     const manualCount = registrations.filter((registration) => getRegistrationSource(registration).key === 'manual').length;
     const onlineCount = registrations.length - bulkCount - manualCount;
+    const memberUsers = [...state.users, ...state.adminUsers]
+      .filter((user, index, users) => user.memberId && users.findIndex((item) => item.memberIdKey === user.memberIdKey) === index);
+    const memberSuggestions = memberUsers
+      .filter((user) => user.memberId)
+      .map((user) => `<option value="${escapeHtml(user.memberId)}">${escapeHtml(user.nickname)} · ${escapeHtml(genderLabel(user.gender))}</option>`)
+      .join('');
     const registrationList = registrations.length
       ? `<div class="roster-list-table-wrap"><table class="roster-list-table"><thead><tr><th>번호</th><th>소속팀</th><th>선수명</th><th>성별</th><th>아이디</th><th>통합부수</th><th>등록방법</th><th>관리</th></tr></thead><tbody>${registrations.map((registration, index) => { const source = getRegistrationSource(registration); const editing = state.editingRegistrationId === registration.id; const canEdit = !registrationClosed && registration.id; const value = (field) => escapeHtml(registration[field] || ''); return `<tr>${editing ? `<td>${index + 1}</td><td><input class="roster-edit-input" data-registration-field="teamName" data-registration-id="${escapeHtml(registration.id)}" value="${value('teamName')}" /></td><td><input class="roster-edit-input" data-registration-field="nickname" data-registration-id="${escapeHtml(registration.id)}" value="${value('nickname')}" /></td><td>${escapeHtml(genderLabel(registration.gender))}</td><td><input class="roster-edit-input" data-registration-field="memberId" data-registration-id="${escapeHtml(registration.id)}" value="${value('memberId')}" /></td><td><input class="roster-edit-input" data-registration-field="rank" data-registration-id="${escapeHtml(registration.id)}" value="${value('rank')}" /></td><td><span class="registration-source registration-source--${source.key}">${source.label}</span></td><td><span class="roster-edit-actions"><button type="button" class="roster-edit-button" data-save-registration="${escapeHtml(registration.id)}">저장</button><button type="button" class="roster-edit-button roster-edit-button--muted" data-cancel-registration>취소</button></span></td>` : `<td>${index + 1}</td><td>${escapeHtml(registration.teamName || '-')}</td><td>${escapeHtml(registration.nickname || '-')}</td><td>${escapeHtml(genderLabel(registration.gender))}</td><td>${escapeHtml(registration.memberId || '-')}</td><td>${escapeHtml(registration.rank || '-')}</td><td><span class="registration-source registration-source--${source.key}">${source.label}</span></td><td>${canEdit ? `<span class="roster-edit-actions"><button type="button" class="roster-edit-button" data-edit-registration="${escapeHtml(registration.id)}">수정</button><button type="button" class="roster-edit-button roster-edit-button--danger" data-delete-registration="${escapeHtml(registration.id)}">삭제</button></span>` : '-'}</td>`}</tr>`; }).join('')}</tbody></table></div>`
       : '<div class="empty-state">아직 등록된 선수가 없습니다.</div>';
@@ -1379,7 +1385,7 @@
           <div class="field"><label for="operationRosterGame">게임</label><select id="operationRosterGame" data-operation-game>${games.map((item) => `<option value="${escapeHtml(item.id)}" ${item.id === game.id ? 'selected' : ''}>${escapeHtml(item.title)}</option>`).join('')}</select></div>
           <div class="field"><label for="operationRosterFormat">경기종목</label><select id="operationRosterFormat" data-operation-format data-roster-format="${escapeHtml(game.id)}">${formats.map((item) => `<option value="${escapeHtml(item)}" ${item === format ? 'selected' : ''}>${escapeHtml(FORMAT_LABELS[item])}</option>`).join('')}</select></div>
         </div>
-        <section class="roster-manual-registration"><div class="roster-list-heading"><div><p class="section-kicker">개별 등록</p><h2>${escapeHtml(FORMAT_LABELS[format])} 선수 직접등록</h2></div></div><form class="roster-manual-form" data-form="operator-registration" data-game-id="${escapeHtml(game.id)}" data-format="${escapeHtml(format)}"><div class="field"><label for="manualTeamName">소속팀 <span class="optional-label">${format === 'singles' ? '(선택)' : '(필수)'}</span></label><input id="manualTeamName" name="teamName" type="text" ${format !== 'singles' ? 'required' : ''} /></div><div class="field"><label for="manualNickname">선수명</label><input id="manualNickname" name="nickname" type="text" required /></div><div class="field"><label for="manualMemberId">아이디 <span class="optional-label">(선택)</span></label><input id="manualMemberId" name="memberId" type="text" /></div><div class="field"><label for="manualRank">부수</label><input id="manualRank" name="rank" type="text" required /></div><button type="submit" class="game-list-action game-list-action--primary" ${registrationClosed ? 'disabled' : ''}><span>개별 선수등록</span></button></form></section>
+        <section class="roster-manual-registration"><div class="roster-list-heading"><div><p class="section-kicker">개별 등록</p><h2>${escapeHtml(FORMAT_LABELS[format])} 선수 직접등록</h2></div></div><form class="roster-manual-form" data-form="operator-registration" data-game-id="${escapeHtml(game.id)}" data-format="${escapeHtml(format)}"><div class="field"><label for="manualTeamName">소속팀 <span class="optional-label">${format === 'singles' ? '(선택)' : '(필수)'}</span></label><input id="manualTeamName" name="teamName" type="text" ${format !== 'singles' ? 'required' : ''} /></div><div class="field"><label for="manualNickname">선수명</label><input id="manualNickname" name="nickname" data-manual-nickname type="text" required /></div><div class="field"><label for="manualMemberId">아이디 <span class="optional-label">(선택)</span></label><input id="manualMemberId" name="memberId" data-manual-member-id list="manualMemberSuggestions" type="text" /></div><datalist id="manualMemberSuggestions">${memberSuggestions}</datalist><div class="field"><label for="manualGender">성별</label><select id="manualGender" name="gender" data-manual-gender required><option value="">성별 선택</option><option value="male">남자</option><option value="female">여자</option></select></div><div class="field"><label for="manualRank">부수</label><input id="manualRank" name="rank" data-manual-rank type="text" required /></div><button type="submit" class="game-list-action game-list-action--primary" ${registrationClosed ? 'disabled' : ''}><span>개별 선수등록</span></button></form></section>
         <div class="roster-import roster-import--standalone">
           <div class="roster-import-heading"><h2><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true">${getFormatIconSvg(format)}</svg>${escapeHtml(FORMAT_LABELS[format])} 참가선수 일괄등록</span></h2></div>
           <div class="roster-upload-actions"><label class="game-list-action game-list-action--primary file-button" for="operationRosterFile"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M8 8l4-4 4 4M5 14v5h14v-5"></path></svg><span>명부 파일 선택</span></label><input id="operationRosterFile" class="file-input" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" data-roster-upload="${escapeHtml(game.id)}" data-roster-format="${escapeHtml(format)}" /><button type="button" class="game-list-action" data-download-roster-template><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 11l4 4 4-4M5 20h14"></path></svg><span>양식 다운로드</span></button></div>
@@ -3281,6 +3287,15 @@
     const format = form.dataset.format;
     if (!currentUser || !game || game.operatorId !== currentUser.id || !format) return;
     const values = Object.fromEntries(new FormData(form).entries());
+    const nickname = trimValue(values.nickname);
+    const gender = trimValue(values.gender);
+    const rank = trimValue(values.rank);
+    const teamName = trimValue(values.teamName);
+    if (!nickname || !gender || !rank || (format !== 'singles' && !teamName)) {
+      setFlash('이름, 성별, 부수와 경기형식에 필요한 팀명을 입력해 주세요. ID는 선택입니다.', 'error');
+      render();
+      return;
+    }
     try {
       await apiRequest(`/api/games/${encodeURIComponent(game.id)}/registrations/manual`, {
         method: 'POST',
@@ -4477,6 +4492,26 @@
     if (input.id === 'signupPhone') {
       const formatted = formatPhoneNumber(input.value);
       if (input.value !== formatted) input.value = formatted;
+      return;
+    }
+    if (input.matches('[data-manual-member-id], [data-manual-nickname]')) {
+      const key = input.matches('[data-manual-member-id]')
+        ? normalizeId(input.value)
+        : normalizeParticipantName(input.value);
+      const member = [...state.users, ...state.adminUsers].find((user) => (input.matches('[data-manual-member-id]')
+        ? user.memberIdKey === key
+        : normalizeParticipantName(user.nickname) === key));
+      if (member) {
+        const form = input.closest('form');
+        const nicknameInput = form?.querySelector('[data-manual-nickname]');
+        const memberIdInput = form?.querySelector('[data-manual-member-id]');
+        const genderInput = form?.querySelector('[data-manual-gender]');
+        const rankInput = form?.querySelector('[data-manual-rank]');
+        if (nicknameInput && input !== nicknameInput) nicknameInput.value = member.nickname || '';
+        if (memberIdInput && input !== memberIdInput) memberIdInput.value = member.memberId || '';
+        if (genderInput) genderInput.value = member.gender || '';
+        if (rankInput) rankInput.value = member.rank || '';
+      }
       return;
     }
     if (input.matches('[data-venue-name]')) {

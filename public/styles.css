@@ -236,6 +236,36 @@ html[data-theme="light"] .tournament-bracket--split .tournament-center-bracket .
   border-color: rgba(15, 118, 110, 0.7);
 }
 
+html[data-theme="light"] .format-registration-card,
+html[data-theme="light"] .roster-manual-registration,
+html[data-theme="light"] .roster-schema,
+html[data-theme="light"] .roster-import,
+html[data-theme="light"] .participant-status-card,
+html[data-theme="light"] .application-summary,
+html[data-theme="light"] .qualifying-standings-card,
+html[data-theme="light"] .tournament-result-input-panel,
+html[data-theme="light"] .schedule-group-block {
+  border-color: rgba(46, 74, 96, 0.28);
+  background: #f3f7f9;
+}
+
+html[data-theme="light"] .roster-list-table th,
+html[data-theme="light"] .schedule-matrix th {
+  border-color: rgba(46, 74, 96, 0.28);
+  background: #e5eef3;
+}
+
+html[data-theme="light"] .roster-edit-input,
+html[data-theme="light"] .roster-format-select {
+  border-color: rgba(46, 74, 96, 0.3);
+  background: #ffffff;
+}
+
+html[data-theme="light"] .roster-list-table td,
+html[data-theme="light"] .schedule-matrix td {
+  border-color: rgba(46, 74, 96, 0.2);
+}
+
 .competition-progress-toolbar .format-selector__item {
   font-size: 1.05rem;
 }
@@ -3675,7 +3705,7 @@ html[data-theme="light"] .brand-mark__image--light {
 
 .roster-manual-form {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
   gap: 10px;
   align-items: end;
 }
