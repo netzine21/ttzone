@@ -312,6 +312,14 @@ html[data-theme="light"] .public-league-entry.rank-row--3 {
   background: #eef2f4;
 }
 
+html[data-theme="dark"] .public-league-entry,
+html[data-theme="dark"] .public-league-entry.rank-row--1,
+html[data-theme="dark"] .public-league-entry.rank-row--2,
+html[data-theme="dark"] .public-league-entry.rank-row--3 {
+  border: 1px solid rgba(165, 190, 214, 0.3);
+  background: rgba(16, 29, 47, 0.82);
+}
+
 html[data-theme="light"] .public-participant-table th,
 html[data-theme="light"] .public-participant-table td {
   border: 1px solid rgba(46, 74, 96, 0.24);
@@ -3492,6 +3500,35 @@ html[data-theme="light"] .public-apply-cta .btn-primary {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (min-width: 821px) {
+  .public-game-detail .public-league-summary th,
+  .public-game-detail .public-league-summary td {
+    padding: 10px 8px;
+  }
+
+  .public-game-detail .public-league-summary__group {
+    font-size: 1.1rem;
+  }
+
+  .public-game-detail .public-league-entry {
+    min-height: 46px;
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+
+  .public-game-detail .public-league-entry strong {
+    font-size: 1.05rem;
+  }
+
+  .public-game-detail .public-league-entry__skill {
+    font-size: 1rem;
+  }
+
+  .public-game-detail .public-league-entry small {
+    font-size: 0.84rem;
+  }
 }
 
 .public-league-entry__record {
