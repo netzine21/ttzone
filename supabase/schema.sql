@@ -20,6 +20,22 @@ create table if not exists public.users (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.venues (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  address text not null,
+  phone text,
+  region text,
+  map_url text,
+  status text not null default 'pending',
+  created_by uuid references public.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create unique index if not exists venues_name_address_key
+  on public.venues (lower(name), lower(address));
+
 create table if not exists public.games (
   id uuid primary key default gen_random_uuid(),
   operator_id uuid not null references public.users(id) on delete restrict,
@@ -35,11 +51,36 @@ create table if not exists public.games (
 );
 
 alter table public.games
+  add column if not exists venue_id uuid references public.venues(id) on delete set null,
+  add column if not exists venue_name text,
+  add column if not exists venue_address text,
+  add column if not exists venue_phone text;
+
+alter table public.games
   add column if not exists qualifying_groups jsonb not null default '{}'::jsonb,
   add column if not exists preliminary_matches jsonb not null default '{}'::jsonb,
   add column if not exists tournaments jsonb not null default '{}'::jsonb,
   add column if not exists registration_closed jsonb not null default '{}'::jsonb,
   add column if not exists format_modes jsonb not null default '{}'::jsonb;
+
+create table if not exists public.league_series (
+  id uuid primary key default gen_random_uuid(),
+  venue_id uuid not null references public.venues(id) on delete cascade,
+  owner_id uuid not null references public.users(id) on delete restrict,
+  name text not null,
+  schedule_label text,
+  description text,
+  default_formats jsonb not null default '["singles"]'::jsonb,
+  default_format_modes jsonb not null default '{}'::jsonb,
+  default_max_participants integer check (default_max_participants is null or default_max_participants > 0),
+  status text not null default 'active' check (status in ('active', 'archived')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.games
+  add column if not exists series_id uuid references public.league_series(id) on delete set null,
+  add column if not exists series_round integer;
 
 create table if not exists public.game_formats (
   game_id uuid not null references public.games(id) on delete cascade,
@@ -141,6 +182,9 @@ create table if not exists public.sessions (
 
 create index if not exists games_operator_id_idx on public.games(operator_id);
 create index if not exists games_scheduled_at_idx on public.games(scheduled_at);
+create index if not exists league_series_venue_id_idx on public.league_series(venue_id);
+create index if not exists league_series_owner_id_idx on public.league_series(owner_id);
+create index if not exists games_series_id_idx on public.games(series_id);
 create index if not exists registrations_game_format_idx on public.registrations(game_id, format);
 create index if not exists groups_game_format_idx on public.groups(game_id, format);
 create index if not exists sessions_user_id_idx on public.sessions(user_id);
@@ -162,6 +206,7 @@ create index if not exists visitor_sessions_user_id_idx on public.visitor_sessio
 -- Keep tables protected from direct browser access until explicit policies exist.
 alter table public.users enable row level security;
 alter table public.games enable row level security;
+alter table public.league_series enable row level security;
 alter table public.game_formats enable row level security;
 alter table public.registrations enable row level security;
 alter table public.groups enable row level security;

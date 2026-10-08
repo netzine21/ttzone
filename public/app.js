@@ -71,6 +71,7 @@
     venueRegionFilter: 'all',
     venueSearch: '',
     venues: [],
+    leagueSeries: [],
     games: [],
     sessionUserId: null,
     authTab: 'signup',
@@ -96,6 +97,8 @@
     operationMenu: 'groups',
     operationSubmenu: 'qualifying',
     showCreateGame: false,
+    showLeagueSeries: false,
+    selectedSeriesId: null,
     pendingGameId: null,
     signupCompleted: false,
     gameFilter: 'all',
@@ -297,6 +300,7 @@
     let session = null;
     let games = null;
     let venues = null;
+    let leagueSeries = null;
     try {
       session = await apiRequest('/api/auth/me');
     } catch {
@@ -312,6 +316,11 @@
     } catch {
       // The local venue history remains available if the directory API is unavailable.
     }
+    try {
+      leagueSeries = await apiRequest('/api/league-series');
+    } catch {
+      // Older/local deployments can continue without the optional series directory.
+    }
     if (games) {
       const currentUser = session?.user || null;
       state.users = currentUser ? [currentUser] : [];
@@ -323,6 +332,7 @@
       });
       state.sessionUserId = currentUser?.id || null;
       state.venues = Array.isArray(venues?.venues) ? venues.venues : [];
+      state.leagueSeries = Array.isArray(leagueSeries?.series) ? leagueSeries.series : [];
       return;
     }
 
@@ -333,6 +343,7 @@
     const storedSession = readJson(STORAGE_KEYS.session, null);
     state.sessionUserId = storedSession && typeof storedSession.userId === 'string' ? storedSession.userId : null;
     state.venues = Array.isArray(venues?.venues) ? venues.venues : [];
+    state.leagueSeries = Array.isArray(leagueSeries?.series) ? leagueSeries.series : [];
 
     const existingUser = getCurrentUser();
     if (state.sessionUserId && !existingUser) {
@@ -373,6 +384,8 @@
       operationMenu: state.operationMenu,
       operationSubmenu: state.operationSubmenu,
       showCreateGame: state.showCreateGame,
+      showLeagueSeries: state.showLeagueSeries,
+      selectedSeriesId: state.selectedSeriesId,
       authTab: state.authTab,
     };
   }
@@ -416,6 +429,8 @@
       operationMenu: route.operationMenu || 'groups',
       operationSubmenu: route.operationSubmenu || 'qualifying',
       showCreateGame: Boolean(route.showCreateGame),
+      showLeagueSeries: Boolean(route.showLeagueSeries),
+      selectedSeriesId: route.selectedSeriesId || null,
       authTab: route.authTab || 'signup',
     });
   }
@@ -970,7 +985,7 @@
     const formatStatuses = getGameFormats(game).map((format) => { const status = getFormatStatus(game, format); return `<span class="game-format-status game-format-status--${status.key}">${escapeHtml(FORMAT_LABELS[format])} ${escapeHtml(status.label)}</span>`; }).join('');
     return `
       <article class="game-card game-list-item" data-game-open="${escapeHtml(game.id)}">
-        <div class="game-list-item__body"><div class="game-list-item__title-row"><span class="game-status game-status--${gameStatus.key}">${gameStatus.label}</span><h3 class="game-title-link" data-game-open="${escapeHtml(game.id)}">${escapeHtml(game.title)}</h3></div><div class="game-format-status-list">${formatStatuses}</div><time class="game-list-item__date" datetime="${escapeHtml(game.scheduledAt)}">${escapeHtml(formatDateTime(game.scheduledAt))}</time></div>
+        <div class="game-list-item__body"><div class="game-list-item__title-row"><span class="game-status game-status--${gameStatus.key}">${gameStatus.label}</span><h3 class="game-title-link" data-game-open="${escapeHtml(game.id)}">${escapeHtml(game.title)}</h3></div>${game.seriesName ? `<div class="game-series-label">${escapeHtml(game.seriesName)}${game.seriesRound ? ` · ${escapeHtml(String(game.seriesRound))}회차` : ''}</div>` : ''}<div class="game-format-status-list">${formatStatuses}</div><time class="game-list-item__date" datetime="${escapeHtml(game.scheduledAt)}">${escapeHtml(formatDateTime(game.scheduledAt))}</time></div>
       </article>
     `;
   }
@@ -1264,6 +1279,54 @@
     </div>`;
   }
 
+  function getKnownVenues() {
+    const venues = [...state.venues];
+    state.games.forEach((game) => {
+      if (!game.venueId || !game.venueName) return;
+      if (venues.some((venue) => venue.id === game.venueId)) return;
+      venues.push({ id: game.venueId, name: game.venueName, address: game.venueAddress || '', phone: game.venuePhone || '', status: 'approved' });
+    });
+    return venues.sort((left, right) => String(left.name).localeCompare(String(right.name), 'ko'));
+  }
+
+  function renderSeriesOptions(selectedId = '') {
+    const currentUser = getCurrentUser();
+    const options = state.leagueSeries
+      .filter((series) => series.status === 'active' && (currentUser?.role === 'admin' || series.ownerId === currentUser?.id))
+      .map((series) => `<option value="${escapeHtml(series.id)}" ${series.id === selectedId ? 'selected' : ''}>${escapeHtml(series.venueName)} · ${escapeHtml(series.name)}</option>`)
+      .join('');
+    return `<option value="">정기리그 없이 독립 경기</option>${options}`;
+  }
+
+  function renderLeagueSeriesPage(currentUser) {
+    const venues = getKnownVenues();
+    const ownedSeries = state.leagueSeries.filter((series) => series.ownerId === currentUser.id || currentUser.role === 'admin');
+    return `
+      <section class="panel section-card league-series-page">
+        <div class="section-heading">
+          <div><p class="section-kicker">정기 경기 관리</p><h1>정기리그 관리</h1><p class="section-note">탁구장별 정기리그를 등록해 두고 매 회차 경기를 연결해서 운영할 수 있습니다.</p></div>
+          <button type="button" class="create-game-close" aria-label="정기리그 관리 닫기" data-back-dashboard><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg></button>
+        </div>
+        <form class="league-series-create" data-form="league-series">
+          <div class="league-series-create__heading"><strong>새 정기리그 등록</strong><span>금요리그, 월정기리그처럼 반복 운영하는 경기 묶음입니다.</span></div>
+          <div class="field-grid league-series-create__fields">
+            <div class="field"><label for="leagueSeriesVenue">탁구장</label><select id="leagueSeriesVenue" name="venueId" required><option value="">탁구장 선택</option>${venues.map((venue) => `<option value="${escapeHtml(venue.id)}">${escapeHtml(venue.name)} · ${escapeHtml(venue.address || '주소 미입력')}</option>`).join('')}</select></div>
+            <div class="field"><label for="leagueSeriesName">정기리그명</label><input id="leagueSeriesName" name="name" required placeholder="예: 금요리그" /></div>
+            <div class="field"><label for="leagueSeriesSchedule">운영 일정</label><input id="leagueSeriesSchedule" name="scheduleLabel" placeholder="예: 매주 금요일" /></div>
+            <div class="field"><label for="leagueSeriesMax">기본 참가인원</label><input id="leagueSeriesMax" name="defaultMaxParticipants" type="number" min="1" placeholder="선택 입력" /></div>
+          </div>
+          <div class="field"><label for="leagueSeriesDescription">운영 안내</label><textarea id="leagueSeriesDescription" name="description" placeholder="정기리그 운영 규칙이나 참가 안내"></textarea></div>
+          <div class="field"><span class="field-label">기본 경기형식</span><div class="choice-row"><label class="choice-option">개인전 <input type="checkbox" name="defaultFormats" value="singles" checked /></label><label class="choice-option">복식 <input type="checkbox" name="defaultFormats" value="doubles" /></label><label class="choice-option">단체전 <input type="checkbox" name="defaultFormats" value="team" /></label></div></div>
+          <div class="button-row"><button class="btn btn-primary" type="submit">정기리그 등록</button></div>
+        </form>
+        <div class="league-series-list">
+          <div class="section-heading"><div><p class="section-kicker">등록된 정기리그</p><h2>정기리그 목록</h2></div><span class="subtle-note">${ownedSeries.length}개</span></div>
+          ${ownedSeries.length ? ownedSeries.map((series) => `<article class="league-series-card"><div class="league-series-card__body"><strong>${escapeHtml(series.name)}</strong><span>${escapeHtml(series.venueName)} · ${escapeHtml(series.scheduleLabel || '운영 일정 미입력')}</span><small>${escapeHtml(series.description || '운영 안내가 없습니다.')} · ${series.gameCount}회 운영</small></div><button type="button" class="btn btn-secondary" data-series-create-game="${escapeHtml(series.id)}">이번 회차 경기 생성</button></article>`).join('') : '<div class="empty-state">등록된 정기리그가 없습니다. 위에서 첫 정기리그를 등록해 주세요.</div>'}
+        </div>
+      </section>
+    `;
+  }
+
   function renderGamesSection(currentUser) {
     const allGames = state.games
       .slice()
@@ -1309,6 +1372,7 @@
           </div>
           <div class="game-list-actions" aria-label="게임 목록 작업">
             <button type="button" class="game-list-action game-list-action--primary" data-show-create-game><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg><span>게임 생성</span></button>
+            <button type="button" class="game-list-action" data-show-league-series><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="8" cy="6" r="1.5" /><circle cx="14" cy="12" r="1.5" /><circle cx="10" cy="18" r="1.5" /></svg><span>정기리그 관리</span></button>
             ${gameFilterAction}
           </div>
         </div>
@@ -1321,7 +1385,13 @@
     `;
   }
 
-  function renderCreateGameForm() {
+  function renderCreateGameForm(currentUser) {
+    const selectedSeries = state.leagueSeries.find((series) => series.id === state.selectedSeriesId) || null;
+    const selectedVenue = selectedSeries ? getKnownVenues().find((venue) => venue.id === selectedSeries.venueId) : null;
+    const seriesDefaults = selectedSeries ? {
+      formats: selectedSeries.defaultFormats,
+      formatModes: selectedSeries.defaultFormatModes,
+    } : null;
     return `
       <section class="panel section-card create-game-panel">
         <div class="section-heading create-game-heading">
@@ -1339,30 +1409,36 @@
 
           <div class="field">
             <label for="gameVenueName"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>탁구장명</span></label>
-            <input id="gameVenueName" name="venueName" type="search" list="gameVenueSuggestions" data-venue-name data-venue-address-target="gameVenueAddress" data-venue-phone-target="gameVenuePhone" required placeholder="탁구장 이름 검색" />
+            <input id="gameVenueName" name="venueName" type="search" list="gameVenueSuggestions" data-venue-name data-venue-address-target="gameVenueAddress" data-venue-phone-target="gameVenuePhone" required value="${escapeHtml(selectedVenue?.name || '')}" placeholder="탁구장 이름 검색" />
             <datalist id="gameVenueSuggestions">${renderVenueSuggestions()}</datalist>
           </div>
 
           <div class="field">
             <label for="gameVenueAddress"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>탁구장 주소</span></label>
-            <input id="gameVenueAddress" name="venueAddress" type="text" required placeholder="도로명 주소를 입력하세요" />
+            <input id="gameVenueAddress" name="venueAddress" type="text" required value="${escapeHtml(selectedVenue?.address || '')}" placeholder="도로명 주소를 입력하세요" />
             <small class="field-hint">등록된 탁구장을 선택하면 주소가 자동으로 입력됩니다.</small>
           </div>
 
           <div class="field">
             <label for="gameVenuePhone"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h3l1.2 4-2 1.5a14 14 0 0 0 5.3 5.3l1.5-2 4 1.2v3c0 1.1-.9 2-2 2C11.4 19 5 12.6 5 5c0-1.1.9-2 2-2z" /></svg>탁구장 전화번호</span></label>
-            <input id="gameVenuePhone" name="venuePhone" type="tel" placeholder="예: 032-123-4567" />
+            <input id="gameVenuePhone" name="venuePhone" type="tel" value="${escapeHtml(selectedVenue?.phone || '')}" placeholder="예: 032-123-4567" />
+          </div>
+
+          <div class="field">
+            <label for="gameSeriesId"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="8" cy="6" r="1.5" /><circle cx="14" cy="12" r="1.5" /><circle cx="10" cy="18" r="1.5" /></svg>정기리그 연결</span></label>
+            <select id="gameSeriesId" name="seriesId">${renderSeriesOptions(state.selectedSeriesId || '')}</select>
+            <small class="field-hint">정기리그를 선택하면 이 경기가 해당 탁구장의 회차로 관리됩니다.</small>
           </div>
 
           <div class="field">
             <span class="field-label"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c3 0 5 2 5 5v4M17 20c-3 0-5-2-5-5V9" /><ellipse cx="7" cy="4" rx="3" ry="2" /><ellipse cx="17" cy="20" rx="3" ry="2" /></svg>경기형식</span></span>
-            ${renderFormatOptionsWithModes()}
+            ${renderFormatOptionsWithModes(seriesDefaults)}
           </div>
 
           <div class="field-grid create-game-date-row">
             <div class="field">
               <label for="gameMaxParticipants"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3" /><path d="M5 20c.8-3.3 3.2-5 7-5s6.2 1.7 7 5" /></svg>최대참가인원</span></label>
-              <input id="gameMaxParticipants" name="maxParticipants" type="number" min="1" step="1" required />
+              <input id="gameMaxParticipants" name="maxParticipants" type="number" min="1" step="1" required value="${escapeHtml(String(selectedSeries?.defaultMaxParticipants || ''))}" />
             </div>
             <div class="field">
               <label for="gameScheduledAt"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M8 3v4M16 3v4M4 10h16" /></svg>게임일시</span></label>
@@ -1413,6 +1489,10 @@
           <div class="field">
             <label for="editGameVenuePhone"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h3l1.2 4-2 1.5a14 14 0 0 0 5.3 5.3l1.5-2 4 1.2v3c0 1.1-.9 2-2 2C11.4 19 5 12.6 5 5c0-1.1.9-2 2-2z" /></svg>탁구장 전화번호</span></label>
             <input id="editGameVenuePhone" name="venuePhone" type="tel" value="${escapeHtml(game.venuePhone || '')}" placeholder="예: 032-123-4567" />
+          </div>
+          <div class="field">
+            <label for="editGameSeriesId"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="8" cy="6" r="1.5" /><circle cx="14" cy="12" r="1.5" /><circle cx="10" cy="18" r="1.5" /></svg>정기리그 연결</span></label>
+            <select id="editGameSeriesId" name="seriesId">${renderSeriesOptions(game.seriesId || '')}</select>
           </div>
           <div class="field">
               <span class="field-label"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c3 0 5 2 5 5v4M17 20c-3 0-5-2-5-5V9" /><ellipse cx="7" cy="4" rx="3" ry="2" /><ellipse cx="17" cy="20" rx="3" ry="2" /></svg>경기형식</span></span>
@@ -2590,11 +2670,12 @@
   }
 
   function renderDashboard(currentUser) {
-    const createPanel = state.showCreateGame ? renderCreateGameForm() : '';
+    const createPanel = state.showCreateGame ? renderCreateGameForm(currentUser) : '';
     const selectedGame = state.games.find((game) => game.id === state.selectedGameId);
     const editingGame = state.games.find((game) => game.id === state.editingGameId);
 
     if (state.page === 'admin' && currentUser.role === 'admin') return renderAdminPage(currentUser);
+    if (state.showLeagueSeries) return renderLeagueSeriesPage(currentUser);
     if (state.operationGameId) {
       const operationGame = state.games.find((game) => game.id === state.operationGameId);
       if (operationGame?.operatorId === currentUser.id) {
@@ -3776,6 +3857,34 @@
     render();
   }
 
+  async function handleLeagueSeriesCreate(form) {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+    const submittedData = new FormData(form);
+    const defaultFormats = submittedData.getAll('defaultFormats').map(trimValue).filter(Boolean);
+    const payload = {
+      venueId: trimValue(submittedData.get('venueId')),
+      name: trimValue(submittedData.get('name')),
+      scheduleLabel: trimValue(submittedData.get('scheduleLabel')),
+      description: trimValue(submittedData.get('description')),
+      defaultMaxParticipants: trimValue(submittedData.get('defaultMaxParticipants')) || null,
+      defaultFormats,
+    };
+    if (!payload.venueId || !payload.name || !defaultFormats.length) {
+      setFlash('탁구장, 정기리그명, 기본 경기형식을 입력해 주세요.', 'error');
+      render();
+      return;
+    }
+    try {
+      await apiRequest('/api/league-series', { method: 'POST', body: JSON.stringify(payload) });
+      await loadState();
+      setFlash('정기리그가 등록되었습니다. 이제 해당 리그에서 회차 경기를 생성할 수 있습니다.', 'success');
+    } catch (error) {
+      setFlash(error.message || '정기리그 등록에 실패했습니다.', 'error');
+    }
+    render();
+  }
+
   async function handleGameCreate(form) {
     const currentUser = getCurrentUser();
     if (!currentUser) {
@@ -3790,6 +3899,8 @@
     const venueName = trimValue(formData.venueName);
     const venueAddress = trimValue(formData.venueAddress);
     const venuePhone = trimValue(formData.venuePhone);
+    const seriesId = trimValue(formData.seriesId);
+    const selectedSeries = state.leagueSeries.find((series) => series.id === seriesId);
     const location = venueName && venueAddress ? `${venueName} · ${venueAddress}` : venueName;
     const formats = submittedData.getAll('formats').map(trimValue);
     const formatModes = Object.fromEntries(formats.map((format) => [format, submittedData.get(`formatMode_${format}`) === 'leagueOnly' ? 'leagueOnly' : 'leagueTournament']));
@@ -3814,11 +3925,12 @@
     try {
       await apiRequest('/api/games', {
         method: 'POST',
-        body: JSON.stringify({ title, location, venueName, venueAddress, venuePhone, formats, formatModes, scheduledAt, maxParticipants, note }),
+        body: JSON.stringify({ title, location, venueName, venueAddress, venuePhone, seriesId: seriesId || null, formats, formatModes, scheduledAt, maxParticipants, note }),
       });
       await loadState();
       form.reset();
       state.showCreateGame = false;
+      state.selectedSeriesId = null;
       setFlash('새 게임이 생성되었습니다. 생성한 회원이 해당 게임의 운영자입니다.', 'success');
       render();
       return;
@@ -3837,6 +3949,9 @@
       venueName,
       venueAddress,
       venuePhone,
+      seriesId: seriesId || null,
+      seriesName: selectedSeries?.name || '',
+      seriesScheduleLabel: selectedSeries?.scheduleLabel || '',
       formats,
       formatModes,
       format: formats[0],
@@ -3852,6 +3967,7 @@
     persistGames();
     form.reset();
     state.showCreateGame = false;
+    state.selectedSeriesId = null;
     setFlash('새 게임이 생성되었습니다. 생성한 회원이 해당 게임의 운영자입니다.', 'success');
     render();
   }
@@ -3871,6 +3987,8 @@
     const venueName = trimValue(formData.venueName);
     const venueAddress = trimValue(formData.venueAddress);
     const venuePhone = trimValue(formData.venuePhone);
+    const seriesId = trimValue(formData.seriesId);
+    const selectedSeries = state.leagueSeries.find((series) => series.id === seriesId);
     const location = venueName && venueAddress ? `${venueName} · ${venueAddress}` : venueName;
     const formats = submittedData.getAll('formats').map(trimValue);
     const formatModes = Object.fromEntries(formats.map((format) => [format, submittedData.get(`formatMode_${format}`) === 'leagueOnly' ? 'leagueOnly' : 'leagueTournament']));
@@ -3895,7 +4013,7 @@
     try {
       const savedPayload = await apiRequest(`/api/games/${encodeURIComponent(game.id)}`, {
         method: 'PATCH',
-        body: JSON.stringify({ title, location, venueName, venueAddress, venuePhone, formats, formatModes, scheduledAt, maxParticipants, note }),
+        body: JSON.stringify({ title, location, venueName, venueAddress, venuePhone, seriesId: seriesId || null, seriesRound: game.seriesRound || null, formats, formatModes, scheduledAt, maxParticipants, note }),
       });
       const savedFormats = savedPayload.game?.formats;
       if (!Array.isArray(savedFormats) || savedFormats.length !== formats.length || formats.some((format) => !savedFormats.includes(format))) {
@@ -3915,7 +4033,7 @@
       }
     }
 
-    Object.assign(game, { title, location, venueName, venueAddress, venuePhone, formats, formatModes, format: formats[0], scheduledAt, maxParticipants, note });
+    Object.assign(game, { title, location, venueName, venueAddress, venuePhone, seriesId: seriesId || null, seriesName: selectedSeries?.name || '', seriesScheduleLabel: selectedSeries?.scheduleLabel || '', seriesRound: game.seriesRound || null, formats, formatModes, format: formats[0], scheduledAt, maxParticipants, note });
     persistGames();
     state.editingGameId = null;
     state.selectedGameId = game.id;
@@ -4104,6 +4222,27 @@
     const showCreateGameButton = event.target.closest('[data-show-create-game]');
     if (showCreateGameButton) {
       state.showCreateGame = true;
+      state.showLeagueSeries = false;
+      state.selectedSeriesId = null;
+      state.selectedGameId = null;
+      render();
+      return;
+    }
+
+    const showLeagueSeriesButton = event.target.closest('[data-show-league-series]');
+    if (showLeagueSeriesButton) {
+      state.showLeagueSeries = true;
+      state.showCreateGame = false;
+      state.selectedGameId = null;
+      render();
+      return;
+    }
+
+    const seriesCreateGameButton = event.target.closest('[data-series-create-game]');
+    if (seriesCreateGameButton) {
+      state.showLeagueSeries = false;
+      state.showCreateGame = true;
+      state.selectedSeriesId = seriesCreateGameButton.dataset.seriesCreateGame || null;
       state.selectedGameId = null;
       render();
       return;
@@ -4112,6 +4251,7 @@
     const cancelCreateGameButton = event.target.closest('[data-cancel-create-game]');
     if (cancelCreateGameButton) {
       state.showCreateGame = false;
+      state.selectedSeriesId = null;
       render();
       return;
     }
@@ -4119,6 +4259,9 @@
     const backDashboardButton = event.target.closest('[data-back-dashboard]');
     if (backDashboardButton) {
       state.page = 'dashboard';
+      state.showLeagueSeries = false;
+      state.showCreateGame = false;
+      state.selectedSeriesId = null;
       state.operationGameId = null;
       state.operationFormat = null;
       state.selectedScheduleGroup = null;
@@ -4507,6 +4650,11 @@
 
     if (form.dataset.form === 'profile') {
       await handleProfileUpdate(form);
+      return;
+    }
+
+    if (form.dataset.form === 'league-series') {
+      await handleLeagueSeriesCreate(form);
       return;
     }
 

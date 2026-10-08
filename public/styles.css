@@ -1499,6 +1499,92 @@ html[data-theme="light"] .brand-mark__image--light {
   padding: clamp(20px, 3vw, 28px);
 }
 
+.league-series-page {
+  padding: clamp(20px, 3vw, 30px);
+}
+
+.league-series-create {
+  margin-top: 22px;
+  padding: clamp(18px, 3vw, 26px);
+  border: 1px solid rgba(165, 190, 214, 0.18);
+  border-radius: 18px;
+  background: rgba(6, 13, 24, 0.38);
+}
+
+.league-series-create__heading,
+.league-series-list > .section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.league-series-create__heading span {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.league-series-create__fields {
+  margin-top: 16px;
+}
+
+.league-series-create textarea {
+  min-height: 86px;
+}
+
+.league-series-list {
+  margin-top: 28px;
+}
+
+.league-series-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 10px;
+  padding: 16px 18px;
+  border: 1px solid rgba(165, 190, 214, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.league-series-card__body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.league-series-card__body strong {
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.league-series-card__body span,
+.league-series-card__body small {
+  color: var(--muted);
+}
+
+html[data-theme="light"] .league-series-create {
+  border-color: #9bb0bc;
+  background: #f3f7f9;
+}
+
+html[data-theme="light"] .league-series-card {
+  border-color: #b4c3cc;
+  background: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .league-series-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .league-series-card .btn {
+    width: 100%;
+  }
+}
+
 .create-game-panel .game-form {
   margin-top: 18px;
 }
@@ -2801,6 +2887,13 @@ html[data-theme="light"] .brand-mark__image--light {
   font-size: 0.76rem;
   line-height: 1.25;
   white-space: nowrap;
+}
+
+.game-series-label {
+  margin-top: 4px;
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .game-format-status-list {
