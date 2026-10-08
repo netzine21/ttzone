@@ -73,6 +73,40 @@ html[data-theme="light"] .auth-login-form .field input::placeholder {
   color: #7890a2;
 }
 
+html[data-theme="light"] .admin-venues-section .admin-venue-create,
+html[data-theme="light"] .admin-venues-section .admin-venue-bulk-import,
+html[data-theme="light"] .admin-venues-section .admin-venue-card {
+  border-color: #8ca3b2;
+  background: #f3f7f9;
+  box-shadow: 0 4px 14px rgba(46, 74, 96, 0.06);
+}
+
+html[data-theme="light"] .admin-venues-section .admin-venue-bulk-import {
+  border-style: solid;
+  background: #eef4f7;
+}
+
+html[data-theme="light"] .admin-venues-section .admin-venue-search,
+html[data-theme="light"] .admin-venues-section .admin-venue-toolbar select,
+html[data-theme="light"] .admin-venues-section .admin-venue-view-toolbar select {
+  border-color: #8ca3b2;
+  background: #ffffff;
+  color: var(--text);
+}
+
+html[data-theme="light"] .admin-venues-section .admin-users-table {
+  background: #ffffff;
+}
+
+html[data-theme="light"] .admin-venues-section .admin-users-table th,
+html[data-theme="light"] .admin-venues-section .admin-users-table td {
+  border: 1px solid #b4c3cc;
+}
+
+html[data-theme="light"] .admin-venues-section .admin-users-table th {
+  background: #e5eef3;
+}
+
 html[data-theme="light"] input,
 html[data-theme="light"] select,
 html[data-theme="light"] textarea {
