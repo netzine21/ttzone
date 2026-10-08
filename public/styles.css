@@ -1528,6 +1528,13 @@ html[data-theme="light"] .brand-mark__image--light {
   margin-top: 16px;
 }
 
+.league-series-create__fields .field input:not([type="hidden"]),
+.league-series-create__fields .field select {
+  box-sizing: border-box;
+  height: 52px;
+  min-height: 52px;
+}
+
 .league-series-create textarea {
   min-height: 86px;
 }
