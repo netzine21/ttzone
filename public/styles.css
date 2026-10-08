@@ -4085,7 +4085,13 @@ html[data-theme="light"] .public-apply-cta .btn-primary {
 
 .schedule-results-table th,
 .schedule-results-table td {
+  border: 1px solid rgba(165, 190, 214, 0.18);
   text-align: center;
+}
+
+html[data-theme="light"] .schedule-results-table th,
+html[data-theme="light"] .schedule-results-table td {
+  border-color: rgba(46, 74, 96, 0.28);
 }
 
 .schedule-results-table .schedule-matchup {
@@ -4573,6 +4579,38 @@ html[data-theme="light"] .public-apply-cta .btn-primary {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.7;
+}
+
+@media (min-width: 821px) {
+  .schedule-panel:not(.schedule-panel--results) .schedule-group-matrices {
+    width: 100%;
+    max-width: none;
+  }
+
+  .schedule-panel:not(.schedule-panel--results) .schedule-group-block {
+    padding: 20px 24px;
+  }
+
+  .schedule-panel:not(.schedule-panel--results) .schedule-matrix th,
+  .schedule-panel:not(.schedule-panel--results) .schedule-matrix td,
+  .schedule-panel:not(.schedule-panel--results) .schedule-results-table th,
+  .schedule-panel:not(.schedule-panel--results) .schedule-results-table td {
+    padding: 12px 10px;
+    font-size: 0.9rem;
+  }
+
+  .schedule-panel:not(.schedule-panel--results) .schedule-result-print {
+    min-height: 40px;
+    height: 40px;
+    padding: 7px 11px;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .schedule-panel:not(.schedule-panel--results) .schedule-result-print svg {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 .qualifying-standings-overview {
