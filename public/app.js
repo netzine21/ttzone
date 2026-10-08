@@ -72,6 +72,7 @@
     venueSearch: '',
     venues: [],
     leagueSeries: [],
+    selectedPublicSeriesId: null,
     games: [],
     sessionUserId: null,
     authTab: 'signup',
@@ -372,6 +373,7 @@
     return {
       page: state.page,
       selectedPublicGameId: state.selectedPublicGameId,
+      selectedPublicSeriesId: state.selectedPublicSeriesId,
       selectedGameId: state.selectedGameId,
       detailTab: state.detailTab,
       statusSubtab: state.statusSubtab,
@@ -417,6 +419,7 @@
     Object.assign(state, {
       page: route.page || 'public',
       selectedPublicGameId: route.selectedPublicGameId || null,
+      selectedPublicSeriesId: route.selectedPublicSeriesId || null,
       selectedGameId: route.selectedGameId || null,
       detailTab: route.detailTab || 'status',
       statusSubtab: route.statusSubtab || 'info',
@@ -990,6 +993,59 @@
     `;
   }
 
+  function getPublicSeries() {
+    return state.leagueSeries
+      .filter((series) => series.status === 'active')
+      .sort((left, right) => String(left.venueName || '').localeCompare(String(right.venueName || ''), 'ko') || String(left.name || '').localeCompare(String(right.name || ''), 'ko'));
+  }
+
+  function renderPublicSeriesCard(series) {
+    const seriesGames = state.games.filter((game) => game.seriesId === series.id);
+    const activeGames = seriesGames.filter((game) => getGameStatus(game).key !== 'done');
+    const initial = String(series.venueName || series.name || '리').trim().charAt(0) || '리';
+    return `
+      <button type="button" class="series-directory-card" data-public-series="${escapeHtml(series.id)}">
+        <span class="series-directory-card__mark" aria-hidden="true">${escapeHtml(initial)}</span>
+        <span class="series-directory-card__body">
+          <strong>${escapeHtml(series.name)}</strong>
+          <span>${escapeHtml(series.venueName)}${series.venueAddress ? ` · ${escapeHtml(series.venueAddress)}` : ''}</span>
+          <small>${escapeHtml(series.scheduleLabel || '정기 운영')} · ${seriesGames.length}회차${activeGames.length ? ` · 진행/예정 ${activeGames.length}회` : ''}</small>
+        </span>
+        <svg class="series-directory-card__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
+      </button>
+    `;
+  }
+
+  function renderSeriesDirectory() {
+    const series = getPublicSeries();
+    if (!series.length) return '';
+    return `
+      <section class="series-directory" aria-labelledby="seriesDirectoryTitle">
+        <div class="series-directory__heading"><div><p class="section-kicker">정기적으로 진행되는 경기</p><h2 id="seriesDirectoryTitle">탁구장별 정기리그</h2></div><span class="subtle-note">${series.length}개 리그</span></div>
+        <div class="series-directory__grid">${series.map(renderPublicSeriesCard).join('')}</div>
+      </section>
+    `;
+  }
+
+  function renderPublicSeriesDetail(series) {
+    const games = state.games
+      .filter((game) => game.seriesId === series.id)
+      .sort((left, right) => new Date(left.scheduledAt) - new Date(right.scheduledAt));
+    const gameList = games.length
+      ? games.map((game) => renderGameCard(game, null, true)).join('')
+      : '<div class="empty-state">아직 생성된 회차 경기가 없습니다.</div>';
+    return `
+      <section class="panel section-card series-detail-page">
+        <div class="section-heading public-game-list-heading">
+          <div><p class="section-kicker">${escapeHtml(series.venueName)}</p><h1>${escapeHtml(series.name)}</h1><p class="subtle-note">${escapeHtml(series.scheduleLabel || '정기 운영')} · ${escapeHtml(series.description || '정기리그 경기 목록')}</p></div>
+          <button type="button" class="btn btn-secondary" data-public-series-back>정기리그 목록</button>
+        </div>
+        <div class="series-detail-page__summary"><strong>${games.length}회차 경기</strong><span>${escapeHtml(series.venueAddress || '주소 미입력')}</span></div>
+        <div class="game-list">${gameList}</div>
+      </section>
+    `;
+  }
+
   function renderPublicGamesPage() {
     const allGames = state.games
       .slice()
@@ -1006,6 +1062,7 @@
             <h2>탁구경기 목록</h2>
           </div>
         </div>
+        ${renderSeriesDirectory()}
         ${renderGameStatusFilters(allGames)}
         <div class="game-list">${gameList}</div>
       </section>
@@ -1376,6 +1433,7 @@
             ${gameFilterAction}
           </div>
         </div>
+        ${state.gameFilter === 'mine' ? '' : renderSeriesDirectory()}
         ${state.gameFilter === 'mine' ? '' : renderGameStatusFilters(allGames)}
         <div class="game-list">
           ${gameList}
@@ -2893,6 +2951,7 @@
     state.page = 'admin';
     state.selectedGameId = null;
     state.selectedPublicGameId = null;
+    state.selectedPublicSeriesId = null;
     state.operationGameId = null;
     state.operationFormat = null;
     const savedAdminTab = readJson(STORAGE_KEYS.adminTab, 'users');
@@ -3365,8 +3424,9 @@
     if (!app) return;
 
     const publicGame = state.games.find((game) => game.id === state.selectedPublicGameId);
+    const publicSeries = state.leagueSeries.find((series) => series.id === state.selectedPublicSeriesId);
     app.className = currentUser ? 'app app--dashboard' : state.page === 'auth' ? 'app app--auth' : 'app app--public';
-    const showPublicHome = !currentUser && state.page === 'public' && !state.selectedGameId && !publicGame;
+    const showPublicHome = !currentUser && state.page === 'public' && !state.selectedGameId && !publicGame && !publicSeries;
     const fullscreenTarget = document.fullscreenElement?.classList.contains('public-game-detail') ? document.fullscreenElement : null;
     const fullscreenGame = state.games.find((game) => game.id === (state.selectedPublicGameId || state.selectedGameId));
     if (fullscreenTarget && fullscreenGame) {
@@ -3375,7 +3435,7 @@
       const nextSection = template.content.firstElementChild;
       if (nextSection) fullscreenTarget.replaceChildren(...Array.from(nextSection.childNodes));
     } else {
-      app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : state.page === 'venues' ? renderVenueFinderPage(currentUser) : showPublicHome ? renderPublicGamesPage() : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : state.page === 'auth' ? renderAuthPage() : publicGame ? renderPublicGameDetail(publicGame) : renderPublicGamesPage()}`;
+      app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : state.page === 'venues' ? renderVenueFinderPage(currentUser) : showPublicHome ? renderPublicGamesPage() : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : state.page === 'auth' ? renderAuthPage() : publicSeries ? renderPublicSeriesDetail(publicSeries) : publicGame ? renderPublicGameDetail(publicGame) : renderPublicGamesPage()}`;
     }
     updateProgressFullscreenButton();
     window.requestAnimationFrame(() => {
@@ -3392,6 +3452,7 @@
     event?.preventDefault();
     state.page = getCurrentUser() ? 'dashboard' : 'public';
     state.selectedPublicGameId = null;
+    state.selectedPublicSeriesId = null;
     state.selectedGameId = null;
     state.editingGameId = null;
     state.operationGameId = null;
@@ -4463,6 +4524,24 @@
     const gameOpenButton = event.target.closest('[data-game-open]');
     if (gameOpenButton) {
       openGameFromCard(gameOpenButton.dataset.gameOpen);
+      return;
+    }
+
+    const publicSeriesButton = event.target.closest('[data-public-series]');
+    if (publicSeriesButton) {
+      state.selectedPublicSeriesId = publicSeriesButton.dataset.publicSeries || null;
+      state.selectedPublicGameId = null;
+      state.page = 'public';
+      render();
+      return;
+    }
+
+    const publicSeriesBackButton = event.target.closest('[data-public-series-back]');
+    if (publicSeriesBackButton) {
+      state.selectedPublicSeriesId = null;
+      state.selectedPublicGameId = null;
+      state.page = 'public';
+      render();
       return;
     }
 

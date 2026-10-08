@@ -2532,6 +2532,137 @@ html[data-theme="light"] .league-series-card {
   margin-top: 4px;
 }
 
+.series-directory {
+  position: relative;
+  z-index: 1;
+  margin: 22px 0 26px;
+  padding: 18px;
+  border: 1px solid rgba(165, 190, 214, 0.22);
+  border-radius: 20px;
+  background: rgba(6, 13, 24, 0.34);
+}
+
+.series-directory__heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.series-directory__heading h2 {
+  margin: 0;
+}
+
+.series-directory__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.series-directory-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid rgba(165, 190, 214, 0.24);
+  border-radius: 16px;
+  color: var(--text);
+  background: linear-gradient(135deg, rgba(15, 31, 48, 0.82), rgba(6, 13, 24, 0.64));
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.series-directory-card:hover,
+.series-directory-card:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  transform: translateY(-2px);
+}
+
+.series-directory-card__mark {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 14px;
+  color: #07151e;
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.series-directory-card__body {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.series-directory-card__body strong,
+.series-directory-card__body span,
+.series-directory-card__body small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.series-directory-card__body strong {
+  font-size: 1rem;
+}
+
+.series-directory-card__body span,
+.series-directory-card__body small {
+  color: var(--muted-2);
+  font-size: 0.78rem;
+}
+
+.series-directory-card__arrow {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: var(--muted-2);
+  stroke-width: 1.8;
+}
+
+.series-detail-page {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.series-detail-page__summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+  padding: 12px 14px;
+  border: 1px solid rgba(165, 190, 214, 0.2);
+  border-radius: 14px;
+  color: var(--muted-2);
+}
+
+.series-detail-page__summary strong {
+  color: var(--text);
+}
+
+html[data-theme="light"] .series-directory {
+  border-color: rgba(40, 74, 102, 0.22);
+  background: rgba(235, 242, 247, 0.72);
+}
+
+html[data-theme="light"] .series-directory-card {
+  border-color: rgba(40, 74, 102, 0.24);
+  background: linear-gradient(135deg, #ffffff, #edf3f7);
+  box-shadow: 0 5px 16px rgba(44, 66, 86, 0.08);
+}
+
+html[data-theme="light"] .series-directory-card__mark {
+  color: #ffffff;
+  background: linear-gradient(135deg, #2d617d, #1f4a63);
+}
+
 .public-game-list-count {
   color: var(--muted-2);
   font-size: 0.72em;
@@ -2677,6 +2808,21 @@ html[data-theme="light"] .league-series-card {
   display: grid;
   gap: 4px;
   margin-top: 14px;
+}
+
+@media (max-width: 720px) {
+  .series-directory {
+    padding: 14px;
+  }
+
+  .series-directory__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .series-detail-page__summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 .game-card {
