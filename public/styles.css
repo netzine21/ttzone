@@ -1556,6 +1556,28 @@ html[data-theme="light"] .brand-mark__image--light {
   background: rgba(255, 255, 255, 0.035);
 }
 
+.league-series-card__logo {
+  display: grid;
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 14px;
+  color: #07151e;
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.league-series-card__logo img {
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.92);
+}
+
 .league-series-card__body {
   display: grid;
   gap: 4px;
@@ -1591,6 +1613,11 @@ html[data-theme="light"] .league-series-create {
 html[data-theme="light"] .league-series-card {
   border-color: #b4c3cc;
   background: #ffffff;
+}
+
+html[data-theme="light"] .league-series-card__logo {
+  color: #ffffff;
+  background: linear-gradient(135deg, #2d617d, #1f4a63);
 }
 
 @media (max-width: 640px) {
@@ -2621,8 +2648,10 @@ html[data-theme="light"] .league-series-card {
 .series-directory-card__mark img {
   width: 100%;
   height: 100%;
+  padding: 4px;
   border-radius: inherit;
-  object-fit: cover;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .series-directory-card__body {
@@ -2685,12 +2714,23 @@ html[data-theme="light"] .league-series-card {
   width: 100%;
 }
 
-.series-detail-page__brand > img {
+.series-detail-page__logo {
+  display: grid;
   width: 58px;
   height: 58px;
+  flex: 0 0 58px;
+  overflow: hidden;
+  place-items: center;
   border: 1px solid rgba(165, 190, 214, 0.25);
   border-radius: 14px;
-  object-fit: cover;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.series-detail-page__logo img {
+  width: 100%;
+  height: 100%;
+  padding: 5px;
+  object-fit: contain;
 }
 
 .series-detail-page__brand > div {
@@ -2713,7 +2753,7 @@ html[data-theme="light"] .series-directory-card__mark {
   background: linear-gradient(135deg, #2d617d, #1f4a63);
 }
 
-html[data-theme="light"] .series-detail-page__brand > img {
+html[data-theme="light"] .series-detail-page__logo {
   border-color: rgba(40, 74, 102, 0.24);
 }
 

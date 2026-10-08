@@ -1006,17 +1006,17 @@
     return String(series.logoUrl || series.logo_url || '').trim();
   }
 
+  function renderSeriesLogoMark(series, className) {
+    const logo = getSeriesLogo(series) || 'public/favicon.svg?v=20260928-02';
+    return `<span class="${className}" aria-hidden="true"><img src="${escapeHtml(logo)}" alt="" /></span>`;
+  }
+
   function renderPublicSeriesCard(series) {
     const seriesGames = state.games.filter((game) => game.seriesId === series.id);
     const activeGames = seriesGames.filter((game) => getGameStatus(game).key !== 'done');
-    const initial = String(series.name || '리').trim().charAt(0) || '리';
-    const seriesLogo = getSeriesLogo(series);
-    const logo = seriesLogo
-      ? `<img src="${escapeHtml(seriesLogo)}" alt="" />`
-      : escapeHtml(initial);
     return `
       <button type="button" class="series-directory-card" data-public-series="${escapeHtml(series.id)}">
-        <span class="series-directory-card__mark" aria-hidden="true">${logo}</span>
+        ${renderSeriesLogoMark(series, 'series-directory-card__mark')}
         <span class="series-directory-card__body">
           <strong>${escapeHtml(series.name)}</strong>
           <span>${escapeHtml(series.scheduleLabel || '정기 운영')}</span>
@@ -1048,7 +1048,7 @@
     return `
       <section class="panel section-card series-detail-page">
         <div class="section-heading public-game-list-heading">
-          <div class="series-detail-page__brand">${getSeriesLogo(series) ? `<img src="${escapeHtml(getSeriesLogo(series))}" alt="" />` : ''}<div><p class="section-kicker">정기리그</p><h1>${escapeHtml(series.name)}</h1><p class="subtle-note">${escapeHtml(series.scheduleLabel || '정기 운영')} · ${escapeHtml(series.description || '정기리그 경기 목록')}</p></div></div>
+          <div class="series-detail-page__brand">${renderSeriesLogoMark(series, 'series-detail-page__logo')}<div><p class="section-kicker">정기리그</p><h1>${escapeHtml(series.name)}</h1><p class="subtle-note">${escapeHtml(series.scheduleLabel || '정기 운영')} · ${escapeHtml(series.description || '정기리그 경기 목록')}</p></div></div>
           <button type="button" class="btn btn-secondary" data-public-series-back>정기리그 목록</button>
         </div>
         <div class="series-detail-page__summary"><strong>${games.length}회차 경기</strong><span>${escapeHtml(series.scheduleLabel || '정기 운영')}</span></div>
@@ -1401,14 +1401,14 @@
             <div class="field"><label for="editLeagueSeriesSchedule">운영 일정</label><input id="editLeagueSeriesSchedule" name="scheduleLabel" value="${escapeHtml(editingSeries.scheduleLabel || '')}" /></div>
             <div class="field"><label for="editLeagueSeriesMax">기본 참가인원</label><input id="editLeagueSeriesMax" name="defaultMaxParticipants" type="number" min="1" value="${escapeHtml(String(editingSeries.defaultMaxParticipants || ''))}" /></div>
           </div>
-          <div class="field"><label for="editLeagueSeriesLogo">리그 대표 로고</label><input id="editLeagueSeriesLogo" name="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-league-series-logo /><input type="hidden" name="logoUrl" value="${escapeHtml(editingSeries.logoUrl || '')}" /><small class="field-hint">새 이미지를 선택하지 않으면 기존 로고가 유지됩니다.</small></div>
+          <div class="field"><label for="editLeagueSeriesLogo">리그 대표 로고</label><input id="editLeagueSeriesLogo" name="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-league-series-logo /><input type="hidden" name="logoUrl" value="${escapeHtml(getSeriesLogo(editingSeries))}" /><small class="field-hint">새 이미지를 선택하지 않으면 기존 로고가 유지됩니다.</small></div>
           <div class="field"><label for="editLeagueSeriesDescription">운영 안내</label><textarea id="editLeagueSeriesDescription" name="description">${escapeHtml(editingSeries.description || '')}</textarea></div>
           <div class="field"><span class="field-label">기본 경기형식</span><div class="choice-row"><label class="choice-option">개인전 <input type="checkbox" name="defaultFormats" value="singles" ${editingFormats.includes('singles') ? 'checked' : ''} /></label><label class="choice-option">복식 <input type="checkbox" name="defaultFormats" value="doubles" ${editingFormats.includes('doubles') ? 'checked' : ''} /></label><label class="choice-option">단체전 <input type="checkbox" name="defaultFormats" value="team" ${editingFormats.includes('team') ? 'checked' : ''} /></label></div></div>
           <div class="button-row"><button class="btn btn-primary" type="submit">변경사항 저장</button></div>
         </form>` : ''}
         <div class="league-series-list">
           <div class="section-heading"><div><p class="section-kicker">등록된 정기리그</p><h2>정기리그 목록</h2></div><span class="subtle-note">${ownedSeries.length}개</span></div>
-          ${ownedSeries.length ? ownedSeries.map((series) => `<article class="league-series-card"><div class="league-series-card__body"><strong>${escapeHtml(series.name)}</strong><span>${escapeHtml(series.venueName)} · ${escapeHtml(series.scheduleLabel || '운영 일정 미입력')}</span><small>${escapeHtml(series.description || '운영 안내가 없습니다.')} · ${series.gameCount}회 운영</small></div><div class="league-series-card__actions"><button type="button" class="btn btn-secondary" data-edit-series="${escapeHtml(series.id)}">수정</button><button type="button" class="btn btn-secondary" data-series-create-game="${escapeHtml(series.id)}">이번 회차 경기 생성</button></div></article>`).join('') : '<div class="empty-state">등록된 정기리그가 없습니다. 위에서 첫 정기리그를 등록해 주세요.</div>'}
+          ${ownedSeries.length ? ownedSeries.map((series) => `<article class="league-series-card">${renderSeriesLogoMark(series, 'league-series-card__logo')}<div class="league-series-card__body"><strong>${escapeHtml(series.name)}</strong><span>${escapeHtml(series.venueName)} · ${escapeHtml(series.scheduleLabel || '운영 일정 미입력')}</span><small>${escapeHtml(series.description || '운영 안내가 없습니다.')} · ${series.gameCount}회 운영</small></div><div class="league-series-card__actions"><button type="button" class="btn btn-secondary" data-edit-series="${escapeHtml(series.id)}">수정</button><button type="button" class="btn btn-secondary" data-series-create-game="${escapeHtml(series.id)}">이번 회차 경기 생성</button></div></article>`).join('') : '<div class="empty-state">등록된 정기리그가 없습니다. 위에서 첫 정기리그를 등록해 주세요.</div>'}
         </div>
       </section>
     `;
