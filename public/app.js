@@ -1031,6 +1031,16 @@
     `;
   }
 
+  function renderPublicSeriesGameTable(games) {
+    if (!games.length) return '<div class="empty-state">아직 생성된 회차 경기가 없습니다.</div>';
+    const rows = games.map((game) => {
+      const status = getGameStatus(game);
+      const venue = game.venueName || game.location || '장소 미정';
+      return `<tr data-game-open="${escapeHtml(game.id)}" tabindex="0"><td><span class="game-status game-status--${status.key}">${escapeHtml(status.label)}</span></td><td class="series-game-table__title">${escapeHtml(game.title)}</td><td>${escapeHtml(venue)}</td><td><time datetime="${escapeHtml(game.scheduledAt)}">${escapeHtml(formatDateTime(game.scheduledAt))}</time></td></tr>`;
+    }).join('');
+    return `<div class="series-game-table-wrap"><table class="series-game-table"><caption class="sr-only">정기리그 회차 경기 목록</caption><thead><tr><th scope="col">게임상태</th><th scope="col">경기제목</th><th scope="col">경기장소</th><th scope="col">경기일시</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+
   function renderSeriesDirectory() {
     const series = getPublicSeries();
     if (!series.length) return '';
@@ -1046,9 +1056,7 @@
     const games = state.games
       .filter((game) => isSameEntityId(game.seriesId, series.id))
       .sort((left, right) => new Date(left.scheduledAt) - new Date(right.scheduledAt));
-    const gameList = games.length
-      ? games.map((game) => renderGameCard(game, null, true)).join('')
-      : '<div class="empty-state">아직 생성된 회차 경기가 없습니다.</div>';
+    const gameList = renderPublicSeriesGameTable(games);
     return `
       <section class="panel section-card series-detail-page">
         <div class="section-heading public-game-list-heading">
