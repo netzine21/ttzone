@@ -1572,6 +1572,17 @@ html[data-theme="light"] .brand-mark__image--light {
   color: var(--muted);
 }
 
+.league-series-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.league-series-edit {
+  border-color: rgba(118, 240, 196, 0.35);
+}
+
 html[data-theme="light"] .league-series-create {
   border-color: #9bb0bc;
   background: #f3f7f9;
@@ -1590,6 +1601,10 @@ html[data-theme="light"] .league-series-card {
 
   .league-series-card .btn {
     width: 100%;
+  }
+
+  .league-series-card__actions {
+    flex-direction: column;
   }
 }
 

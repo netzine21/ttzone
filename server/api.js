@@ -884,17 +884,27 @@ async function handleApi(req, res, requestPath) {
       const user = await findSession(req);
       if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
       const body = await readBody(req);
+      const venueId = String(body.venueId || '').trim();
       const name = String(body.name || '').trim();
       const scheduleLabel = String(body.scheduleLabel || '').trim();
       const description = String(body.description || '').trim();
+      const formats = Array.isArray(body.defaultFormats) ? [...new Set(body.defaultFormats)] : ['singles'];
+      const formatModes = normalizeFormatModes(body.defaultFormatModes, formats);
+      const defaultMaxParticipants = body.defaultMaxParticipants ? Number(body.defaultMaxParticipants) : null;
       const status = body.status === 'archived' ? 'archived' : 'active';
-      if (!name) return sendJson(res, 400, { error: '정기리그명을 입력해 주세요.' });
+      if (!venueId || !name || !formats.length || formats.some((format) => !['singles', 'doubles', 'team'].includes(format)) || (defaultMaxParticipants !== null && (!Number.isInteger(defaultMaxParticipants) || defaultMaxParticipants < 1))) {
+        return sendJson(res, 400, { error: '탁구장, 정기리그명, 기본 설정을 확인해 주세요.' });
+      }
+      const venueResult = await pool.query('select id from public.venues where id = $1 and status <> \'archived\'', [venueId]);
+      if (!venueResult.rows[0]) return sendJson(res, 404, { error: '선택한 탁구장을 찾을 수 없습니다.' });
       const result = await pool.query(
         `update public.league_series
-            set name = $1, schedule_label = $2, description = $3, status = $4, updated_at = now()
-          where id = $5 and (owner_id = $6 or exists (select 1 from public.users where id = $6 and role = 'admin'))
+            set venue_id = $1, name = $2, schedule_label = $3, description = $4,
+                default_formats = $5, default_format_modes = $6,
+                default_max_participants = $7, status = $8, updated_at = now()
+          where id = $9 and (owner_id = $10 or exists (select 1 from public.users where id = $10 and role = 'admin'))
           returning id`,
-        [name, scheduleLabel || null, description || null, status, leagueSeriesMatch[1], user.id]
+        [venueId, name, scheduleLabel || null, description || null, JSON.stringify(formats), JSON.stringify(formatModes), defaultMaxParticipants, status, leagueSeriesMatch[1], user.id]
       );
       if (!result.rows[0]) return sendJson(res, 404, { error: '수정할 정기리그를 찾을 수 없거나 권한이 없습니다.' });
       const series = (await getLeagueSeries(user.id)).find((item) => item.id === result.rows[0].id);
