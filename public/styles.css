@@ -1636,6 +1636,7 @@ html[data-theme="light"] .brand-mark__image--light {
 .public-apply-action {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   margin-top: 18px;
   padding-top: 18px;
@@ -2818,12 +2819,22 @@ html[data-theme="light"] .brand-mark__image--light {
 .public-apply-cta .btn-primary {
   flex: 0 0 auto;
   white-space: nowrap;
-  padding: 8px 2px;
-  border: 0;
-  border-radius: 0;
-  color: var(--primary);
-  background: transparent;
-  box-shadow: none;
+  min-width: 132px;
+  padding: 12px 26px;
+  border: 1px solid var(--primary-strong);
+  border-radius: 12px;
+  color: #04101a;
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  box-shadow: 0 10px 22px rgba(55, 214, 154, 0.2);
+  text-align: center;
+}
+
+html[data-theme="light"] .public-apply-action .btn-primary,
+html[data-theme="light"] .public-apply-cta .btn-primary {
+  color: #ffffff;
+  border-color: #0b5e56;
+  background: linear-gradient(135deg, #0f766e, #0b5e56);
+  box-shadow: 0 10px 22px rgba(15, 118, 110, 0.18);
 }
 
 .public-apply-cta {
@@ -3682,18 +3693,24 @@ html[data-theme="light"] .brand-mark__image--light {
 }
 
 .roster-registration-status--bottom {
-  justify-items: end;
+  justify-items: center;
   margin-top: 14px;
-  text-align: right;
+  text-align: center;
 }
 
 .roster-registration-status--bottom .roster-registration-close {
-  justify-content: flex-end;
+  justify-content: center;
+  width: 100%;
 }
 
 .roster-registration-close {
   display: flex;
   justify-content: center;
+}
+
+.roster-registration-close .game-list-action {
+  max-width: 100%;
+  white-space: nowrap;
 }
 
 .roster-schema {
@@ -3906,6 +3923,21 @@ html[data-theme="light"] .brand-mark__image--light {
 
 .roster-edit-button--danger {
   color: #ff9b9b;
+}
+
+@media (min-width: 821px) {
+  .roster-list-table {
+    font-size: 0.95rem;
+  }
+
+  .roster-list-table th,
+  .roster-list-table td {
+    padding: 10px 9px;
+  }
+
+  .roster-list-table th {
+    font-size: 1rem;
+  }
 }
 
 .schedule-panel {
