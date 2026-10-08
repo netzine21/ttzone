@@ -107,6 +107,32 @@ html[data-theme="light"] .admin-venues-section .admin-users-table th {
   background: #e5eef3;
 }
 
+html[data-theme="light"] .create-game-panel .format-options label,
+html[data-theme="light"] .create-game-panel .format-option-with-mode {
+  border-color: #9bb0bc;
+  background: #f3f7f9;
+  box-shadow: 0 2px 8px rgba(46, 74, 96, 0.05);
+}
+
+html[data-theme="light"] .create-game-panel .format-options label:has(input:checked),
+html[data-theme="light"] .create-game-panel .format-option-with-mode:has(input:checked) {
+  border-color: #0f766e;
+  background: #e4f2ef;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.12);
+}
+
+html[data-theme="light"] .create-game-panel .format-mode-options {
+  border-color: #b4c3cc;
+  background: #eef4f7;
+}
+
+html[data-theme="light"] .create-game-panel .field input:focus,
+html[data-theme="light"] .create-game-panel .field select:focus,
+html[data-theme="light"] .create-game-panel .field textarea:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+}
+
 html[data-theme="light"] input,
 html[data-theme="light"] select,
 html[data-theme="light"] textarea {
