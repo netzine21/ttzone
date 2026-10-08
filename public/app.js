@@ -1145,7 +1145,8 @@
   }
 
   function getLeagueBaseZoom() {
-    return isTabletDevice() ? 1.4 : 1.6;
+    // PC에서는 화면 너비에 맞춘 결과표를 다시 확대하지 않아 카드가 화면 밖으로 밀리지 않게 한다.
+    return isTabletDevice() ? 1.4 : 1;
   }
 
   function renderPublicTournamentBracket(bracket, includeFullscreen = false) {

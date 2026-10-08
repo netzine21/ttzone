@@ -5359,6 +5359,27 @@ html[data-theme="light"] .public-apply-cta .btn-primary {
   color: var(--muted);
 }
 
+@media (min-width: 821px) {
+  .public-league-results-controls .game-list-action,
+  .public-tournament-results-controls .game-list-action {
+    min-height: 40px;
+    padding: 7px 11px;
+    font-size: 1rem;
+  }
+
+  .public-league-results-controls .zoom-value-control,
+  .public-tournament-results-controls .zoom-value-control {
+    min-width: 92px;
+    font-size: 1rem;
+  }
+
+  .public-league-results-controls .game-list-action__icon,
+  .public-tournament-results-controls .game-list-action__icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+
 .tournament-bracket-viewport {
   width: 100%;
   overflow: auto;
