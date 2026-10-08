@@ -1170,6 +1170,7 @@ async function handleApi(req, res, requestPath) {
       const registrationId = registrationUpdateMatch[2];
       const nickname = String(body.nickname || '').trim();
       const memberId = String(body.memberId || '').trim();
+      const gender = String(body.gender || '').trim();
       const rank = String(body.rank || '').trim();
       const teamName = String(body.teamName || '').trim();
       const registration = await pool.query(
@@ -1182,17 +1183,17 @@ async function handleApi(req, res, requestPath) {
       const row = registration.rows[0];
       if (!row) return sendJson(res, 404, { error: '수정할 참가선수를 찾을 수 없습니다.' });
       if (row.registration_closed?.[row.format] === true) return sendJson(res, 400, { error: '선수등록이 마감되어 수정할 수 없습니다.' });
-      if (!nickname || !rank || (row.format !== 'singles' && !teamName)) return sendJson(res, 400, { error: '선수명, 부수와 팀명을 확인해 주세요.' });
+      if (!nickname || !['male', 'female'].includes(gender) || !rank || (row.format !== 'singles' && !teamName)) return sendJson(res, 400, { error: '선수명, 성별, 부수와 팀명을 확인해 주세요.' });
       const memberResult = memberId
-        ? await pool.query('select id from public.users where lower(member_id) = lower($1) limit 1', [memberId])
+        ? await pool.query('select id, gender from public.users where lower(member_id) = lower($1) limit 1', [memberId])
         : { rows: [] };
       const userId = memberResult.rows[0]?.id || null;
       const updated = await pool.query(
         `update public.registrations
-            set user_id = coalesce($1, user_id), nickname = $2, member_id = $3, rank = $4, team_name = $5, updated_at = now()
-          where id = $6 and game_id = $7
+            set user_id = coalesce($1, user_id), nickname = $2, gender = coalesce($3, gender), member_id = $4, rank = $5, team_name = $6, updated_at = now()
+          where id = $7 and game_id = $8
           returning *`,
-        [userId, nickname, memberId || null, rank, teamName || null, registrationId, gameId]
+        [userId, nickname, memberResult.rows[0]?.gender || gender, memberId || null, rank, teamName || null, registrationId, gameId]
       );
       return sendJson(res, 200, { registration: updated.rows[0] });
     }

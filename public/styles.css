@@ -3711,6 +3711,8 @@ html[data-theme="light"] .brand-mark__image--light {
 }
 
 .roster-manual-form .game-list-action {
+  grid-column: 1 / -1;
+  justify-self: center;
   min-height: 40px;
   white-space: nowrap;
 }
@@ -3780,7 +3782,7 @@ html[data-theme="light"] .brand-mark__image--light {
 .roster-list-table th {
   color: var(--muted);
   background: rgba(6, 13, 24, 0.45);
-  font-size: 0.76rem;
+  font-size: 0.86rem;
 }
 
 .roster-list-table tbody tr:last-child td {
@@ -6260,7 +6262,7 @@ html[data-theme="light"] .brand-mark__image--light {
   }
 
   .roster-list-table th {
-    font-size: 0.68rem;
+    font-size: 0.78rem;
   }
 
   .roster-list-table .registration-source {
