@@ -1541,6 +1541,7 @@ html[data-theme="light"] .brand-mark__image--light {
 }
 
 .league-series-create[data-form="league-series"] > .button-row {
+  margin-top: 18px;
   justify-content: center;
 }
 
