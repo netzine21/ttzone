@@ -2692,7 +2692,7 @@ html[data-theme="light"] .league-series-card__logo {
 }
 
 .series-detail-page {
-  max-width: 980px;
+  max-width: var(--max-width);
   margin: 0 auto;
 }
 
