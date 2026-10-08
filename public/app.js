@@ -594,11 +594,8 @@
     return cells;
   }
 
-  function parseRosterText(text) {
-    const lines = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).filter((line) => line.trim());
-    if (!lines.length) return { rows: [], error: '등록할 참가선수 데이터가 없습니다.' };
-    const delimiter = lines[0].includes('\t') ? '\t' : ',';
-    const rows = lines.map((line) => parseDelimitedLine(line, delimiter));
+  function parseRosterRows(rows) {
+    if (!rows.length) return { rows: [], error: '등록할 참가선수 데이터가 없습니다.' };
     const header = rows[0].map((cell) => normalizeParticipantName(cell));
     const nicknameIndex = header.findIndex((cell) => ['닉네임', '선수명', '이름', 'name', 'nickname'].includes(cell));
     const memberIdIndex = header.findIndex((cell) => ['아이디', 'id', 'memberid'].includes(cell));
@@ -623,6 +620,13 @@
     })), error: '' };
   }
 
+  function parseRosterText(text) {
+    const lines = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).filter((line) => line.trim());
+    if (!lines.length) return { rows: [], error: '등록할 참가선수 데이터가 없습니다.' };
+    const delimiter = lines[0].includes('\t') ? '\t' : ',';
+    return parseRosterRows(lines.map((line) => parseDelimitedLine(line, delimiter)));
+  }
+
   function normalizeRosterGender(value) {
     const normalized = normalizeParticipantName(value);
     if (['남자', '남', 'male', 'm'].includes(normalized)) return 'male';
@@ -630,15 +634,162 @@
     return '';
   }
 
+  function xmlEscape(value) {
+    return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+  }
+
+  function crc32(bytes) {
+    let crc = 0xffffffff;
+    for (const byte of bytes) {
+      crc ^= byte;
+      for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+    }
+    return (crc ^ 0xffffffff) >>> 0;
+  }
+
+  function concatBytes(chunks) {
+    const size = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+    const result = new Uint8Array(size);
+    let offset = 0;
+    chunks.forEach((chunk) => { result.set(chunk, offset); offset += chunk.length; });
+    return result;
+  }
+
+  function writeUint16(value) {
+    return new Uint8Array([value & 255, (value >>> 8) & 255]);
+  }
+
+  function writeUint32(value) {
+    return new Uint8Array([value & 255, (value >>> 8) & 255, (value >>> 16) & 255, (value >>> 24) & 255]);
+  }
+
+  function createStoredZip(files) {
+    const encoder = new TextEncoder();
+    const localChunks = [];
+    const centralChunks = [];
+    let offset = 0;
+    files.forEach(([name, content]) => {
+      const nameBytes = encoder.encode(name);
+      const data = encoder.encode(content);
+      const checksum = crc32(data);
+      const local = concatBytes([
+        writeUint32(0x04034b50), writeUint16(20), writeUint16(0x800), writeUint16(0), writeUint16(0), writeUint16(0),
+        writeUint32(checksum), writeUint32(data.length), writeUint32(data.length), writeUint16(nameBytes.length), writeUint16(0), nameBytes, data,
+      ]);
+      const central = concatBytes([
+        writeUint32(0x02014b50), writeUint16(20), writeUint16(20), writeUint16(0x800), writeUint16(0), writeUint16(0), writeUint16(0),
+        writeUint32(checksum), writeUint32(data.length), writeUint32(data.length), writeUint16(nameBytes.length), writeUint16(0), writeUint16(0), writeUint16(0), writeUint16(0), writeUint32(0), writeUint32(offset), nameBytes,
+      ]);
+      localChunks.push(local);
+      centralChunks.push(central);
+      offset += local.length;
+    });
+    const central = concatBytes(centralChunks);
+    const locals = concatBytes(localChunks);
+    const end = concatBytes([
+      writeUint32(0x06054b50), writeUint16(0), writeUint16(0), writeUint16(files.length), writeUint16(files.length), writeUint32(central.length), writeUint32(locals.length), writeUint16(0),
+    ]);
+    return concatBytes([locals, central, end]);
+  }
+
+  function buildRosterWorkbook() {
+    const sheetRows = [
+      ['팀명', '닉네임', '아이디', '성별', '부수'],
+      ['탁구팀A', '홍길동', 'hong123', '남자', '3부'],
+      ['', '김탁구', '', '여자', '4부'],
+      ...Array.from({ length: 97 }, () => ['', '', '', '', '']),
+    ];
+    const sheetXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr/><dimension ref="A1:E100"/><sheetViews><sheetView workbookViewId="0"/></sheetViews><sheetFormatPr defaultRowHeight="20"/><cols><col min="1" max="1" width="18" customWidth="1"/><col min="2" max="2" width="18" customWidth="1"/><col min="3" max="3" width="18" customWidth="1"/><col min="4" max="4" width="12" customWidth="1"/><col min="5" max="5" width="12" customWidth="1"/></cols><sheetData>${sheetRows.map((row, rowIndex) => `<row r="${rowIndex + 1}">${row.map((value, columnIndex) => { const ref = `${String.fromCharCode(65 + columnIndex)}${rowIndex + 1}`; const style = rowIndex === 0 ? '1' : '2'; return `<c r="${ref}" t="inlineStr" s="${style}"><is><t>${xmlEscape(value)}</t></is></c>`; }).join('')}</row>`).join('')}</sheetData><sheetProtection sheet="1" objects="1" scenarios="1"/><pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/></worksheet>`;
+    const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="0"/><fonts count="2"><font><sz val="11"/><name val="맑은 고딕"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="맑은 고딕"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1F6F78"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyAlignment="1" applyProtection="1"><alignment horizontal="center" vertical="center"/><protection locked="0"/></xf></cellXfs></styleSheet>`;
+    const files = [
+      ['[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
+      ['_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+      ['xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="참가선수명부" sheetId="1" r:id="rId1"/></sheets></workbook>'],
+      ['xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'],
+      ['xl/styles.xml', stylesXml],
+      ['xl/worksheets/sheet1.xml', sheetXml],
+    ];
+    return createStoredZip(files);
+  }
+
   function downloadRosterTemplate() {
-    const csv = '\uFEFF팀명,닉네임,아이디,성별,부수\n탁구팀A,홍길동,hong123,남자,3부\n,김탁구,,여자,4부\n';
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([buildRosterWorkbook()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = '참가선수명부_양식.csv';
+    link.download = '참가선수명부_양식.xlsx';
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function readZipEntry(bytes, targetName) {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    let endOffset = -1;
+    for (let offset = bytes.length - 22; offset >= 0; offset -= 1) {
+      if (view.getUint32(offset, true) === 0x06054b50) {
+        endOffset = offset;
+        break;
+      }
+    }
+    if (endOffset < 0) return null;
+    const entryCount = view.getUint16(endOffset + 10, true);
+    const centralOffset = view.getUint32(endOffset + 16, true);
+    let offset = centralOffset;
+    const decoder = new TextDecoder();
+    for (let index = 0; index < entryCount; index += 1) {
+      if (view.getUint32(offset, true) !== 0x02014b50) return null;
+      const method = view.getUint16(offset + 10, true);
+      const compressedSize = view.getUint32(offset + 20, true);
+      const nameLength = view.getUint16(offset + 28, true);
+      const extraLength = view.getUint16(offset + 30, true);
+      const commentLength = view.getUint16(offset + 32, true);
+      const name = decoder.decode(bytes.slice(offset + 46, offset + 46 + nameLength));
+      const localOffset = view.getUint32(offset + 42, true);
+      if (name === targetName) {
+        const localNameLength = view.getUint16(localOffset + 26, true);
+        const localExtraLength = view.getUint16(localOffset + 28, true);
+        const dataStart = localOffset + 30 + localNameLength + localExtraLength;
+        const compressed = bytes.slice(dataStart, dataStart + compressedSize);
+        if (method === 0) return compressed;
+        if (method === 8 && 'DecompressionStream' in window) {
+          const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+          return new Uint8Array(await new Response(stream).arrayBuffer());
+        }
+        return null;
+      }
+      offset += 46 + nameLength + extraLength + commentLength;
+    }
+    return null;
+  }
+
+  function xlsxColumnIndex(reference) {
+    const letters = String(reference || '').match(/^[A-Z]+/i)?.[0]?.toUpperCase() || '';
+    return [...letters].reduce((value, letter) => value * 26 + letter.charCodeAt(0) - 64, 0) - 1;
+  }
+
+  async function parseRosterXlsx(file) {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const sheetBytes = await readZipEntry(bytes, 'xl/worksheets/sheet1.xml');
+    if (!sheetBytes) return { rows: [], error: '엑셀 양식의 첫 번째 시트를 읽을 수 없습니다.' };
+    const decoder = new TextDecoder();
+    const sheetDocument = new DOMParser().parseFromString(decoder.decode(sheetBytes), 'application/xml');
+    if (sheetDocument.querySelector('parsererror')) return { rows: [], error: '엑셀 양식의 내용을 읽을 수 없습니다.' };
+    const sharedBytes = await readZipEntry(bytes, 'xl/sharedStrings.xml');
+    const sharedDocument = sharedBytes ? new DOMParser().parseFromString(decoder.decode(sharedBytes), 'application/xml') : null;
+    const sharedStrings = sharedDocument ? [...sharedDocument.getElementsByTagName('si')].map((item) => [...item.getElementsByTagName('t')].map((node) => node.textContent).join('')) : [];
+    const rows = [...sheetDocument.getElementsByTagName('row')].map((row) => {
+      const cells = [];
+      [...row.getElementsByTagName('c')].forEach((cell) => {
+        const column = xlsxColumnIndex(cell.getAttribute('r'));
+        const type = cell.getAttribute('t');
+        const valueNode = cell.getElementsByTagName(type === 'inlineStr' ? 't' : 'v')[0];
+        let value = valueNode?.textContent || '';
+        if (type === 's') value = sharedStrings[Number(value)] || '';
+        cells[column] = value;
+      });
+      return cells.map((value) => value || '');
+    });
+    return parseRosterRows(rows);
   }
 
   function getFlashClass(type) {
@@ -1404,7 +1555,7 @@
         <section class="roster-manual-registration"><div class="roster-list-heading"><div><p class="section-kicker">개별 등록</p><h2>${escapeHtml(FORMAT_LABELS[format])} 선수 직접등록</h2></div></div><form class="roster-manual-form" data-form="operator-registration" data-game-id="${escapeHtml(game.id)}" data-format="${escapeHtml(format)}"><div class="field"><label for="manualTeamName">소속팀 <span class="optional-label">${format === 'singles' ? '(선택)' : '(필수)'}</span></label><input id="manualTeamName" name="teamName" type="text" ${format !== 'singles' ? 'required' : ''} /></div><div class="field"><label for="manualNickname">선수명</label><input id="manualNickname" name="nickname" data-manual-nickname type="text" required /></div><div class="field"><label for="manualMemberId">아이디 <span class="optional-label">(선택)</span></label><input id="manualMemberId" name="memberId" data-manual-member-id list="manualMemberSuggestions" type="text" /></div><datalist id="manualMemberSuggestions">${memberSuggestions}</datalist><div class="field"><label for="manualGender">성별</label><select id="manualGender" name="gender" data-manual-gender required><option value="">성별 선택</option><option value="male">남자</option><option value="female">여자</option></select></div><div class="field"><label for="manualRank">부수</label><input id="manualRank" name="rank" data-manual-rank type="text" required /></div><button type="submit" class="game-list-action game-list-action--primary" ${registrationClosed ? 'disabled' : ''}><span>선수등록</span></button></form></section>
         <div class="roster-import roster-import--standalone">
           <div class="roster-import-heading"><h2><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true">${getFormatIconSvg(format)}</svg>${escapeHtml(FORMAT_LABELS[format])} 참가선수 일괄등록</span></h2></div>
-          <div class="roster-upload-actions"><label class="game-list-action game-list-action--primary file-button" for="operationRosterFile"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M8 8l4-4 4 4M5 14v5h14v-5"></path></svg><span>명부 파일 선택</span></label><input id="operationRosterFile" class="file-input" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" data-roster-upload="${escapeHtml(game.id)}" data-roster-format="${escapeHtml(format)}" /><button type="button" class="game-list-action" data-download-roster-template><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 11l4 4 4-4M5 20h14"></path></svg><span>양식 다운로드</span></button></div>
+          <div class="roster-upload-actions"><label class="game-list-action game-list-action--primary file-button" for="operationRosterFile"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M8 8l4-4 4 4M5 14v5h14v-5"></path></svg><span>엑셀 명부 선택</span></label><input id="operationRosterFile" class="file-input" type="file" accept=".xlsx,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/tab-separated-values" data-roster-upload="${escapeHtml(game.id)}" data-roster-format="${escapeHtml(format)}" /><button type="button" class="game-list-action" data-download-roster-template><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 11l4 4 4-4M5 20h14"></path></svg><span>엑셀 양식 다운로드</span></button></div>
           <div class="roster-registration-status roster-registration-status--upload"><div class="roster-registration-close">${registrationClosed ? `<button type="button" class="game-list-action" data-close-registration="${escapeHtml(game.id)}" data-close-registration-format="${escapeHtml(format)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"></path><path d="M9 14h6"></path></svg><span>선수등록 마감 취소</span></button>` : `<button type="button" class="game-list-action" data-close-registration="${escapeHtml(game.id)}" data-close-registration-format="${escapeHtml(format)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"></path></svg><span>선수등록 마감</span></button>`}</div></div>
         </div>
         <section class="roster-list-panel"><div class="roster-list-heading"><div><p class="section-kicker">등록 현황</p><h2>${escapeHtml(FORMAT_LABELS[format])} 참가선수 명부</h2></div><span>${registrations.length}명(팀)</span></div><div class="roster-list-summary"><span class="registration-source registration-source--bulk">일괄등록 ${bulkCount}</span><span class="registration-source registration-source--online">온라인등록 ${onlineCount}</span><span class="registration-source registration-source--manual">개별등록 ${manualCount}</span></div>${registrationList}<div class="roster-registration-status roster-registration-status--bottom"><div class="roster-registration-close">${registrationClosed ? `<button type="button" class="game-list-action" data-close-registration="${escapeHtml(game.id)}" data-close-registration-format="${escapeHtml(format)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"></path><path d="M9 14h6"></path></svg><span>선수등록 마감 취소</span></button>` : `<button type="button" class="game-list-action" data-close-registration="${escapeHtml(game.id)}" data-close-registration-format="${escapeHtml(format)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5z"></path></svg><span>선수등록 마감</span></button>`}</div></div></section>
@@ -3343,15 +3494,17 @@
     const file = input.files?.[0];
     if (!file) return;
     const extension = file.name.toLowerCase().split('.').pop();
-    if (!['csv', 'tsv', 'txt'].includes(extension)) {
-      setFlash('CSV 또는 TSV 파일을 업로드해 주세요. 엑셀 파일은 CSV 형식으로 저장하면 됩니다.', 'error');
+    if (!['xlsx', 'csv', 'tsv', 'txt'].includes(extension)) {
+      setFlash('엑셀(.xlsx), CSV 또는 TSV 파일을 업로드해 주세요.', 'error');
       render();
       return;
     }
 
     const formatSelect = document.querySelector(`[data-roster-format="${CSS.escape(game.id)}"]`);
     const format = formatSelect?.value || rosterFormat;
-    const parsedRoster = parseRosterText(await file.text());
+    const parsedRoster = extension === 'xlsx'
+      ? await parseRosterXlsx(file)
+      : parseRosterText(await file.text());
     if (parsedRoster.error) {
       setFlash(parsedRoster.error, 'error');
       render();
