@@ -68,6 +68,7 @@ create table if not exists public.league_series (
   venue_id uuid not null references public.venues(id) on delete cascade,
   owner_id uuid not null references public.users(id) on delete restrict,
   name text not null,
+  logo_url text,
   schedule_label text,
   description text,
   default_formats jsonb not null default '["singles"]'::jsonb,
@@ -77,6 +78,9 @@ create table if not exists public.league_series (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.league_series
+  add column if not exists logo_url text;
 
 alter table public.games
   add column if not exists series_id uuid references public.league_series(id) on delete set null,

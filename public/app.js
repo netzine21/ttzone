@@ -1005,14 +1005,17 @@
   function renderPublicSeriesCard(series) {
     const seriesGames = state.games.filter((game) => game.seriesId === series.id);
     const activeGames = seriesGames.filter((game) => getGameStatus(game).key !== 'done');
-    const initial = String(series.venueName || series.name || '리').trim().charAt(0) || '리';
+    const initial = String(series.name || '리').trim().charAt(0) || '리';
+    const logo = series.logoUrl
+      ? `<img src="${escapeHtml(series.logoUrl)}" alt="" />`
+      : escapeHtml(initial);
     return `
       <button type="button" class="series-directory-card" data-public-series="${escapeHtml(series.id)}">
-        <span class="series-directory-card__mark" aria-hidden="true">${escapeHtml(initial)}</span>
+        <span class="series-directory-card__mark" aria-hidden="true">${logo}</span>
         <span class="series-directory-card__body">
           <strong>${escapeHtml(series.name)}</strong>
-          <span>${escapeHtml(series.venueName)}${series.venueAddress ? ` · ${escapeHtml(series.venueAddress)}` : ''}</span>
-          <small>${escapeHtml(series.scheduleLabel || '정기 운영')} · ${seriesGames.length}회차${activeGames.length ? ` · 진행/예정 ${activeGames.length}회` : ''}</small>
+          <span>${escapeHtml(series.scheduleLabel || '정기 운영')}</span>
+          <small>${seriesGames.length}회차${activeGames.length ? ` · 진행/예정 ${activeGames.length}회` : ''}</small>
         </span>
         <svg class="series-directory-card__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
       </button>
@@ -1040,10 +1043,10 @@
     return `
       <section class="panel section-card series-detail-page">
         <div class="section-heading public-game-list-heading">
-          <div><p class="section-kicker">${escapeHtml(series.venueName)}</p><h1>${escapeHtml(series.name)}</h1><p class="subtle-note">${escapeHtml(series.scheduleLabel || '정기 운영')} · ${escapeHtml(series.description || '정기리그 경기 목록')}</p></div>
+          <div class="series-detail-page__brand">${series.logoUrl ? `<img src="${escapeHtml(series.logoUrl)}" alt="" />` : ''}<div><p class="section-kicker">정기리그</p><h1>${escapeHtml(series.name)}</h1><p class="subtle-note">${escapeHtml(series.scheduleLabel || '정기 운영')} · ${escapeHtml(series.description || '정기리그 경기 목록')}</p></div></div>
           <button type="button" class="btn btn-secondary" data-public-series-back>정기리그 목록</button>
         </div>
-        <div class="series-detail-page__summary"><strong>${games.length}회차 경기</strong><span>${escapeHtml(series.venueAddress || '주소 미입력')}</span></div>
+        <div class="series-detail-page__summary"><strong>${games.length}회차 경기</strong><span>${escapeHtml(series.scheduleLabel || '정기 운영')}</span></div>
         <div class="game-list">${gameList}</div>
       </section>
     `;
@@ -1380,6 +1383,7 @@
             <div class="field"><label for="leagueSeriesSchedule">운영 일정</label><input id="leagueSeriesSchedule" name="scheduleLabel" placeholder="예: 매주 금요일" /></div>
             <div class="field"><label for="leagueSeriesMax">기본 참가인원</label><input id="leagueSeriesMax" name="defaultMaxParticipants" type="number" min="1" placeholder="선택 입력" /></div>
           </div>
+          <div class="field"><label for="leagueSeriesLogo">리그 대표 로고</label><input id="leagueSeriesLogo" name="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-league-series-logo /><small class="field-hint">PNG, JPG, WEBP, SVG 이미지 · 최대 700KB</small></div>
           <div class="field"><label for="leagueSeriesDescription">운영 안내</label><textarea id="leagueSeriesDescription" name="description" placeholder="정기리그 운영 규칙이나 참가 안내"></textarea></div>
           <div class="field"><span class="field-label">기본 경기형식</span><div class="choice-row"><label class="choice-option">개인전 <input type="checkbox" name="defaultFormats" value="singles" checked /></label><label class="choice-option">복식 <input type="checkbox" name="defaultFormats" value="doubles" /></label><label class="choice-option">단체전 <input type="checkbox" name="defaultFormats" value="team" /></label></div></div>
           <div class="button-row"><button class="btn btn-primary" type="submit">정기리그 등록</button></div>
@@ -1392,6 +1396,7 @@
             <div class="field"><label for="editLeagueSeriesSchedule">운영 일정</label><input id="editLeagueSeriesSchedule" name="scheduleLabel" value="${escapeHtml(editingSeries.scheduleLabel || '')}" /></div>
             <div class="field"><label for="editLeagueSeriesMax">기본 참가인원</label><input id="editLeagueSeriesMax" name="defaultMaxParticipants" type="number" min="1" value="${escapeHtml(String(editingSeries.defaultMaxParticipants || ''))}" /></div>
           </div>
+          <div class="field"><label for="editLeagueSeriesLogo">리그 대표 로고</label><input id="editLeagueSeriesLogo" name="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-league-series-logo /><input type="hidden" name="logoUrl" value="${escapeHtml(editingSeries.logoUrl || '')}" /><small class="field-hint">새 이미지를 선택하지 않으면 기존 로고가 유지됩니다.</small></div>
           <div class="field"><label for="editLeagueSeriesDescription">운영 안내</label><textarea id="editLeagueSeriesDescription" name="description">${escapeHtml(editingSeries.description || '')}</textarea></div>
           <div class="field"><span class="field-label">기본 경기형식</span><div class="choice-row"><label class="choice-option">개인전 <input type="checkbox" name="defaultFormats" value="singles" ${editingFormats.includes('singles') ? 'checked' : ''} /></label><label class="choice-option">복식 <input type="checkbox" name="defaultFormats" value="doubles" ${editingFormats.includes('doubles') ? 'checked' : ''} /></label><label class="choice-option">단체전 <input type="checkbox" name="defaultFormats" value="team" ${editingFormats.includes('team') ? 'checked' : ''} /></label></div></div>
           <div class="button-row"><button class="btn btn-primary" type="submit">변경사항 저장</button></div>
@@ -3938,14 +3943,37 @@
     render();
   }
 
+  async function readLeagueSeriesLogo(form) {
+    const file = form.querySelector('[data-league-series-logo]')?.files?.[0];
+    const existingLogo = trimValue(new FormData(form).get('logoUrl'));
+    if (!file) return existingLogo;
+    if (file.size > 700 * 1024) throw new Error('리그 로고 이미지는 700KB 이하로 선택해 주세요.');
+    if (!file.type.startsWith('image/')) throw new Error('리그 로고는 이미지 파일만 선택할 수 있습니다.');
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('리그 로고 이미지를 읽지 못했습니다.'));
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function handleLeagueSeriesCreate(form) {
     const currentUser = getCurrentUser();
     if (!currentUser) return;
     const submittedData = new FormData(form);
     const defaultFormats = submittedData.getAll('defaultFormats').map(trimValue).filter(Boolean);
+    let logoUrl = '';
+    try {
+      logoUrl = await readLeagueSeriesLogo(form);
+    } catch (error) {
+      setFlash(error.message, 'error');
+      render();
+      return;
+    }
     const payload = {
       venueId: trimValue(submittedData.get('venueId')),
       name: trimValue(submittedData.get('name')),
+      logoUrl,
       scheduleLabel: trimValue(submittedData.get('scheduleLabel')),
       description: trimValue(submittedData.get('description')),
       defaultMaxParticipants: trimValue(submittedData.get('defaultMaxParticipants')) || null,
@@ -3971,9 +3999,18 @@
     if (!currentUser) return;
     const submittedData = new FormData(form);
     const defaultFormats = submittedData.getAll('defaultFormats').map(trimValue).filter(Boolean);
+    let logoUrl = '';
+    try {
+      logoUrl = await readLeagueSeriesLogo(form);
+    } catch (error) {
+      setFlash(error.message, 'error');
+      render();
+      return;
+    }
     const payload = {
       venueId: trimValue(submittedData.get('venueId')),
       name: trimValue(submittedData.get('name')),
+      logoUrl,
       scheduleLabel: trimValue(submittedData.get('scheduleLabel')),
       description: trimValue(submittedData.get('description')),
       defaultMaxParticipants: trimValue(submittedData.get('defaultMaxParticipants')) || null,
