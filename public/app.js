@@ -1388,7 +1388,7 @@
             <div class="field"><label for="leagueSeriesSchedule">운영 일정</label><input id="leagueSeriesSchedule" name="scheduleLabel" placeholder="예: 매주 금요일" /></div>
             <div class="field"><label for="leagueSeriesMax">기본 참가인원</label><input id="leagueSeriesMax" name="defaultMaxParticipants" type="number" min="1" placeholder="선택 입력" /></div>
           </div>
-          <div class="field"><label for="leagueSeriesLogo">리그 대표 로고</label><input id="leagueSeriesLogo" name="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-league-series-logo /><small class="field-hint">PNG, JPG, WEBP, SVG 이미지 · 최대 700KB</small></div>
+          <div class="field"><label for="leagueSeriesLogo">리그 대표 로고</label><input id="leagueSeriesLogo" name="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-league-series-logo /><small class="field-hint">PNG, JPG, WEBP, SVG 이미지 · 최대 2MB</small></div>
           <div class="field"><label for="leagueSeriesDescription">운영 안내</label><textarea id="leagueSeriesDescription" name="description" placeholder="정기리그 운영 규칙이나 참가 안내"></textarea></div>
           <div class="field"><span class="field-label">기본 경기형식</span><div class="choice-row"><label class="choice-option">개인전 <input type="checkbox" name="defaultFormats" value="singles" checked /></label><label class="choice-option">복식 <input type="checkbox" name="defaultFormats" value="doubles" /></label><label class="choice-option">단체전 <input type="checkbox" name="defaultFormats" value="team" /></label></div></div>
           <div class="button-row"><button class="btn btn-primary" type="submit">정기리그 등록</button></div>
@@ -3952,7 +3952,7 @@
     const file = form.querySelector('[data-league-series-logo]')?.files?.[0];
     const existingLogo = trimValue(new FormData(form).get('logoUrl'));
     if (!file) return existingLogo;
-    if (file.size > 700 * 1024) throw new Error('리그 로고 이미지는 700KB 이하로 선택해 주세요.');
+    if (file.size > 2 * 1024 * 1024) throw new Error('리그 로고 이미지는 2MB 이하로 선택해 주세요.');
     if (!file.type.startsWith('image/')) throw new Error('리그 로고는 이미지 파일만 선택할 수 있습니다.');
     return new Promise((resolve, reject) => {
       const reader = new FileReader();

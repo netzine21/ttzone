@@ -868,7 +868,7 @@ async function handleApi(req, res, requestPath) {
       const formats = Array.isArray(body.defaultFormats) ? [...new Set(body.defaultFormats)] : ['singles'];
       const formatModes = normalizeFormatModes(body.defaultFormatModes, formats);
       const defaultMaxParticipants = body.defaultMaxParticipants ? Number(body.defaultMaxParticipants) : null;
-      if (!venueId || !name || logoUrl.length > 1400000 || (logoUrl && !/^(https?:\/\/|data:image\/)/i.test(logoUrl)) || !formats.length || formats.some((format) => !['singles', 'doubles', 'team'].includes(format)) || (defaultMaxParticipants !== null && (!Number.isInteger(defaultMaxParticipants) || defaultMaxParticipants < 1))) {
+      if (!venueId || !name || logoUrl.length > 3000000 || (logoUrl && !/^(https?:\/\/|data:image\/)/i.test(logoUrl)) || !formats.length || formats.some((format) => !['singles', 'doubles', 'team'].includes(format)) || (defaultMaxParticipants !== null && (!Number.isInteger(defaultMaxParticipants) || defaultMaxParticipants < 1))) {
         return sendJson(res, 400, { error: '정기리그명, 탁구장, 경기형식 정보를 확인해 주세요.' });
       }
       const venueResult = await pool.query('select id from public.venues where id = $1 and status <> \'archived\'', [venueId]);
@@ -898,7 +898,7 @@ async function handleApi(req, res, requestPath) {
       const formatModes = normalizeFormatModes(body.defaultFormatModes, formats);
       const defaultMaxParticipants = body.defaultMaxParticipants ? Number(body.defaultMaxParticipants) : null;
       const status = body.status === 'archived' ? 'archived' : 'active';
-      if (!venueId || !name || logoUrl.length > 1400000 || (logoUrl && !/^(https?:\/\/|data:image\/)/i.test(logoUrl)) || !formats.length || formats.some((format) => !['singles', 'doubles', 'team'].includes(format)) || (defaultMaxParticipants !== null && (!Number.isInteger(defaultMaxParticipants) || defaultMaxParticipants < 1))) {
+      if (!venueId || !name || logoUrl.length > 3000000 || (logoUrl && !/^(https?:\/\/|data:image\/)/i.test(logoUrl)) || !formats.length || formats.some((format) => !['singles', 'doubles', 'team'].includes(format)) || (defaultMaxParticipants !== null && (!Number.isInteger(defaultMaxParticipants) || defaultMaxParticipants < 1))) {
         return sendJson(res, 400, { error: '탁구장, 정기리그명, 기본 설정을 확인해 주세요.' });
       }
       const venueResult = await pool.query('select id from public.venues where id = $1 and status <> \'archived\'', [venueId]);
