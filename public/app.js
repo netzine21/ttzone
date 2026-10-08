@@ -228,7 +228,7 @@
 
   function getVenueSuggestions() {
     const savedVenues = readJson(STORAGE_KEYS.venues, []);
-    const directoryNames = state.venues.map((venue) => venue.name).filter(Boolean);
+    const directoryNames = [...state.venues, ...state.adminVenues].map((venue) => venue.name).filter(Boolean);
     const gameLocations = state.games.map((game) => game.location).filter(Boolean);
     return [...new Set([...directoryNames, ...(Array.isArray(savedVenues) ? savedVenues : []), ...gameLocations])]
       .map(trimValue)
@@ -249,7 +249,7 @@
 
   function findVenueByName(name) {
     const key = trimValue(name).toLowerCase();
-    return state.venues.find((venue) => trimValue(venue.name).toLowerCase() === key) || null;
+    return [...state.adminVenues, ...state.venues].find((venue) => trimValue(venue.name).toLowerCase() === key) || null;
   }
 
   function formatPhoneNumber(value) {
