@@ -3268,7 +3268,7 @@
     if (existingRegistration) {
       Object.assign(existingRegistration, { nickname, memberId, rank, teamName, registrationSource: 'online', appliedAt: new Date().toISOString() });
     } else {
-      game.registrations = [...registrations, { userId: currentUser.id, nickname, memberId, rank, teamName, format, registrationSource: 'online', appliedAt: new Date().toISOString() }];
+      game.registrations = [...registrations, { userId: currentUser.id, nickname, gender: currentUser.gender || '', memberId, rank, teamName, format, registrationSource: 'online', appliedAt: new Date().toISOString() }];
     }
     persistGames();
     setFlash(`${FORMAT_LABELS[format]} 참가신청 내용이 ${existingRegistration ? '수정' : '등록'}되었습니다.`, 'success');
@@ -3342,6 +3342,7 @@
       const registration = {
         userId: matchedUser?.id || null,
         nickname: matchedUser?.nickname || row.nickname,
+        gender: matchedUser?.gender || '',
         memberId: row.memberId,
         rank: row.rank || matchedUser?.rank || '',
         teamName: row.teamName || '',

@@ -329,10 +329,14 @@ async function getGames(viewerId = null) {
   const formats = await pool.query('select game_id, format from public.game_formats');
   const registrations = await pool.query(
     `select r.id, r.game_id, r.format, r.user_id, r.nickname, r.member_id, r.rank, r.team_name,
-            u.gender,
+            coalesce(u.gender, member.gender) as gender,
             r.registered_by, r.registration_source, r.applied_at, r.updated_at
        from public.registrations r
        left join public.users u on u.id = r.user_id
+       left join public.users member
+         on r.user_id is null
+        and r.member_id is not null
+        and lower(member.member_id) = lower(r.member_id)
       order by r.applied_at`
   );
   return games.rows.map((game) => publicGame(
@@ -1087,10 +1091,14 @@ async function handleApi(req, res, requestPath) {
             skipped += 1;
             continue;
           }
+          const memberResult = memberId
+            ? await client.query('select id from public.users where lower(member_id) = lower($1) limit 1', [memberId])
+            : { rows: [] };
+          const userId = memberResult.rows[0]?.id || null;
           await client.query(
             `insert into public.registrations (game_id, format, user_id, nickname, member_id, rank, team_name, registered_by, registration_source)
-             values ($1, $2, null, $3, $4, $5, $6, $7, 'bulk')`,
-            [gameId, format, nickname, memberId, rank, teamName || null, user.id]
+             values ($1, $2, $3, $4, $5, $6, $7, $8, 'bulk')`,
+            [gameId, format, userId, nickname, memberId, rank, teamName || null, user.id]
           );
           currentCount += 1;
           added += 1;
@@ -1140,10 +1148,14 @@ async function handleApi(req, res, requestPath) {
         [gameId, format, nickname, memberId]
       );
       if (duplicate.rows[0]) return sendJson(res, 409, { error: '같은 선수명 또는 아이디가 이미 등록되어 있습니다.' });
+      const memberResult = memberId
+        ? await pool.query('select id from public.users where lower(member_id) = lower($1) limit 1', [memberId])
+        : { rows: [] };
+      const userId = memberResult.rows[0]?.id || null;
       const result = await pool.query(
         `insert into public.registrations (game_id, format, user_id, nickname, member_id, rank, team_name, registered_by, registration_source)
-         values ($1, $2, null, $3, $4, $5, $6, $7, 'manual') returning *`,
-        [gameId, format, nickname, memberId || null, rank, teamName || null, user.id]
+         values ($1, $2, $3, $4, $5, $6, $7, $8, 'manual') returning *`,
+        [gameId, format, userId, nickname, memberId || null, rank, teamName || null, user.id]
       );
       return sendJson(res, 201, { registration: result.rows[0] });
     }
@@ -1168,12 +1180,16 @@ async function handleApi(req, res, requestPath) {
       if (!row) return sendJson(res, 404, { error: '수정할 참가선수를 찾을 수 없습니다.' });
       if (row.registration_closed?.[row.format] === true) return sendJson(res, 400, { error: '선수등록이 마감되어 수정할 수 없습니다.' });
       if (!nickname || !rank || (row.format !== 'singles' && !teamName)) return sendJson(res, 400, { error: '선수명, 부수와 팀명을 확인해 주세요.' });
+      const memberResult = memberId
+        ? await pool.query('select id from public.users where lower(member_id) = lower($1) limit 1', [memberId])
+        : { rows: [] };
+      const userId = memberResult.rows[0]?.id || null;
       const updated = await pool.query(
         `update public.registrations
-            set nickname = $1, member_id = $2, rank = $3, team_name = $4, updated_at = now()
-          where id = $5 and game_id = $6
+            set user_id = coalesce($1, user_id), nickname = $2, member_id = $3, rank = $4, team_name = $5, updated_at = now()
+          where id = $6 and game_id = $7
           returning *`,
-        [nickname, memberId || null, rank, teamName || null, registrationId, gameId]
+        [userId, nickname, memberId || null, rank, teamName || null, registrationId, gameId]
       );
       return sendJson(res, 200, { registration: updated.rows[0] });
     }
