@@ -1358,6 +1358,7 @@
   function renderLeagueSeriesPage(currentUser) {
     const venues = getKnownVenues();
     const ownedSeries = state.leagueSeries.filter((series) => series.ownerId === currentUser.id || currentUser.role === 'admin');
+    const venueOptions = venues.map((venue) => `<option value="${escapeHtml(`${venue.name} · ${venue.address || '주소 미입력'}`)}"></option>`).join('');
     return `
       <section class="panel section-card league-series-page">
         <div class="section-heading">
@@ -1367,7 +1368,7 @@
         <form class="league-series-create" data-form="league-series">
           <div class="league-series-create__heading"><strong>새 정기리그 등록</strong><span>금요리그, 월정기리그처럼 반복 운영하는 경기 묶음입니다.</span></div>
           <div class="field-grid league-series-create__fields">
-            <div class="field"><label for="leagueSeriesVenue">탁구장</label><select id="leagueSeriesVenue" name="venueId" required><option value="">탁구장 선택</option>${venues.map((venue) => `<option value="${escapeHtml(venue.id)}">${escapeHtml(venue.name)} · ${escapeHtml(venue.address || '주소 미입력')}</option>`).join('')}</select></div>
+            <div class="field"><label for="leagueSeriesVenueSearch">탁구장 검색</label><input id="leagueSeriesVenueSearch" name="venueSearch" type="search" list="leagueSeriesVenueSuggestions" data-league-series-venue-search required autocomplete="off" placeholder="탁구장명 또는 주소 입력" /><input name="venueId" type="hidden" data-league-series-venue-id required /><datalist id="leagueSeriesVenueSuggestions">${venueOptions}</datalist><small class="field-hint">탁구장명이나 주소를 입력한 후 목록에서 정확한 탁구장을 선택해 주세요.</small></div>
             <div class="field"><label for="leagueSeriesName">정기리그명</label><input id="leagueSeriesName" name="name" required placeholder="예: 금요리그" /></div>
             <div class="field"><label for="leagueSeriesSchedule">운영 일정</label><input id="leagueSeriesSchedule" name="scheduleLabel" placeholder="예: 매주 금요일" /></div>
             <div class="field"><label for="leagueSeriesMax">기본 참가인원</label><input id="leagueSeriesMax" name="defaultMaxParticipants" type="number" min="1" placeholder="선택 입력" /></div>
@@ -4915,6 +4916,13 @@
         if (genderInput) genderInput.value = member.gender || '';
         if (rankInput) rankInput.value = member.rank || '';
       }
+      return;
+    }
+    if (input.matches('[data-league-series-venue-search]')) {
+      const form = input.closest('form');
+      const venueIdInput = form?.querySelector('[data-league-series-venue-id]');
+      const venue = getKnownVenues().find((item) => `${item.name} · ${item.address || '주소 미입력'}` === input.value);
+      if (venueIdInput) venueIdInput.value = venue?.id || '';
       return;
     }
     if (input.matches('[data-venue-name]')) {
