@@ -1006,13 +1006,17 @@
     return String(series.logoUrl || series.logo_url || '').trim();
   }
 
+  function isSameEntityId(left, right) {
+    return left != null && right != null && String(left) === String(right);
+  }
+
   function renderSeriesLogoMark(series, className) {
     const logo = getSeriesLogo(series) || 'public/favicon.svg?v=20260928-02';
     return `<span class="${className}" aria-hidden="true"><img src="${escapeHtml(logo)}" alt="" /></span>`;
   }
 
   function renderPublicSeriesCard(series) {
-    const seriesGames = state.games.filter((game) => game.seriesId === series.id);
+    const seriesGames = state.games.filter((game) => isSameEntityId(game.seriesId, series.id));
     const activeGames = seriesGames.filter((game) => getGameStatus(game).key !== 'done');
     return `
       <button type="button" class="series-directory-card" data-public-series="${escapeHtml(series.id)}">
@@ -1040,7 +1044,7 @@
 
   function renderPublicSeriesDetail(series) {
     const games = state.games
-      .filter((game) => game.seriesId === series.id)
+      .filter((game) => isSameEntityId(game.seriesId, series.id))
       .sort((left, right) => new Date(left.scheduledAt) - new Date(right.scheduledAt));
     const gameList = games.length
       ? games.map((game) => renderGameCard(game, null, true)).join('')
@@ -4635,6 +4639,7 @@
       state.selectedPublicSeriesId = publicSeriesButton.dataset.publicSeries || null;
       state.selectedPublicGameId = null;
       state.page = 'public';
+      await loadState();
       render();
       return;
     }
