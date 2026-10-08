@@ -3466,7 +3466,7 @@
       const nextSection = template.content.firstElementChild;
       if (nextSection) fullscreenTarget.replaceChildren(...Array.from(nextSection.childNodes));
     } else {
-      app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : state.page === 'venues' ? renderVenueFinderPage(currentUser) : showPublicHome ? renderPublicGamesPage() : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : state.page === 'auth' ? renderAuthPage() : publicSeries ? renderPublicSeriesDetail(publicSeries) : publicGame ? renderPublicGameDetail(publicGame) : renderPublicGamesPage()}`;
+      app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : state.page === 'venues' ? renderVenueFinderPage(currentUser) : showPublicHome ? renderPublicGamesPage() : publicSeries ? renderPublicSeriesDetail(publicSeries) : publicGame ? renderPublicGameDetail(publicGame) : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : state.page === 'auth' ? renderAuthPage() : renderPublicGamesPage()}`;
     }
     updateProgressFullscreenButton();
     window.requestAnimationFrame(() => {
