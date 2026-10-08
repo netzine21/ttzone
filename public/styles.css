@@ -1526,6 +1526,7 @@ html[data-theme="light"] .brand-mark__image--light {
 
 .league-series-create__fields {
   margin-top: 16px;
+  align-items: start;
 }
 
 .league-series-create__fields .field input:not([type="hidden"]),
