@@ -999,7 +999,7 @@
   function getPublicSeries() {
     return state.leagueSeries
       .filter((series) => series.status === 'active')
-      .sort((left, right) => String(left.venueName || '').localeCompare(String(right.venueName || ''), 'ko') || String(left.name || '').localeCompare(String(right.name || ''), 'ko'));
+      .sort((left, right) => String(left.name || '').localeCompare(String(right.name || ''), 'ko'));
   }
 
   function getSeriesLogo(series) {
@@ -1361,18 +1361,14 @@
     const currentUser = getCurrentUser();
     const options = state.leagueSeries
       .filter((series) => series.status === 'active' && (currentUser?.role === 'admin' || series.ownerId === currentUser?.id))
-      .map((series) => `<option value="${escapeHtml(series.id)}" ${series.id === selectedId ? 'selected' : ''}>${escapeHtml(series.venueName)} · ${escapeHtml(series.name)}</option>`)
+      .map((series) => `<option value="${escapeHtml(series.id)}" ${series.id === selectedId ? 'selected' : ''}>${escapeHtml(series.name)}</option>`)
       .join('');
     return `<option value="">정기리그 없이 독립 경기</option>${options}`;
   }
 
   function renderLeagueSeriesPage(currentUser) {
-    const venues = getKnownVenues();
     const ownedSeries = state.leagueSeries.filter((series) => series.ownerId === currentUser.id || currentUser.role === 'admin');
-    const venueOptions = venues.map((venue) => `<option value="${escapeHtml(`${venue.name} · ${venue.address || '주소 미입력'}`)}"></option>`).join('');
     const editingSeries = ownedSeries.find((series) => series.id === state.editingSeriesId) || null;
-    const editingVenue = editingSeries ? venues.find((venue) => venue.id === editingSeries.venueId) : null;
-    const editingVenueValue = editingVenue ? `${editingVenue.name} · ${editingVenue.address || '주소 미입력'}` : '';
     const editingFormats = editingSeries?.defaultFormats || [];
     return `
       <section class="panel section-card league-series-page">
@@ -1383,7 +1379,6 @@
         <form class="league-series-create" data-form="league-series">
           <div class="league-series-create__heading"><strong>새 정기리그 등록</strong><span>금요리그, 월정기리그처럼 반복 운영하는 경기 묶음입니다.</span></div>
           <div class="field-grid league-series-create__fields">
-            <div class="field"><label for="leagueSeriesVenueSearch">탁구장 검색</label><input id="leagueSeriesVenueSearch" name="venueSearch" type="search" list="leagueSeriesVenueSuggestions" data-league-series-venue-search required autocomplete="off" placeholder="탁구장명 또는 주소 입력" /><input name="venueId" type="hidden" data-league-series-venue-id required /><datalist id="leagueSeriesVenueSuggestions">${venueOptions}</datalist><small class="field-hint">탁구장명이나 주소를 입력한 후 목록에서 정확한 탁구장을 선택해 주세요.</small></div>
             <div class="field"><label for="leagueSeriesName">정기리그명</label><input id="leagueSeriesName" name="name" required placeholder="예: 금요리그" /></div>
             <div class="field"><label for="leagueSeriesSchedule">운영 일정</label><input id="leagueSeriesSchedule" name="scheduleLabel" placeholder="예: 매주 금요일" /></div>
             <div class="field"><label for="leagueSeriesMax">기본 참가인원</label><input id="leagueSeriesMax" name="defaultMaxParticipants" type="number" min="1" placeholder="선택 입력" /></div>
@@ -1396,7 +1391,6 @@
         ${editingSeries ? `<form class="league-series-create league-series-edit" data-form="league-series-edit" data-series-id="${escapeHtml(editingSeries.id)}">
           <div class="league-series-create__heading"><strong>정기리그 정보 수정</strong><button type="button" class="btn btn-secondary" data-cancel-series-edit>수정 취소</button></div>
           <div class="field-grid league-series-create__fields">
-            <div class="field"><label for="editLeagueSeriesVenueSearch">탁구장 검색</label><input id="editLeagueSeriesVenueSearch" name="venueSearch" type="search" list="editLeagueSeriesVenueSuggestions" data-league-series-venue-search required autocomplete="off" value="${escapeHtml(editingVenueValue)}" placeholder="탁구장명 또는 주소 입력" /><input name="venueId" type="hidden" data-league-series-venue-id required value="${escapeHtml(editingSeries.venueId || '')}" /><datalist id="editLeagueSeriesVenueSuggestions">${venueOptions}</datalist></div>
             <div class="field"><label for="editLeagueSeriesName">정기리그명</label><input id="editLeagueSeriesName" name="name" required value="${escapeHtml(editingSeries.name)}" /></div>
             <div class="field"><label for="editLeagueSeriesSchedule">운영 일정</label><input id="editLeagueSeriesSchedule" name="scheduleLabel" value="${escapeHtml(editingSeries.scheduleLabel || '')}" /></div>
             <div class="field"><label for="editLeagueSeriesMax">기본 참가인원</label><input id="editLeagueSeriesMax" name="defaultMaxParticipants" type="number" min="1" value="${escapeHtml(String(editingSeries.defaultMaxParticipants || ''))}" /></div>
@@ -1408,7 +1402,7 @@
         </form>` : ''}
         <div class="league-series-list">
           <div class="section-heading"><div><p class="section-kicker">등록된 정기리그</p><h2>정기리그 목록</h2></div><span class="subtle-note">${ownedSeries.length}개</span></div>
-          ${ownedSeries.length ? ownedSeries.map((series) => `<article class="league-series-card">${renderSeriesLogoMark(series, 'league-series-card__logo')}<div class="league-series-card__body"><strong>${escapeHtml(series.name)}</strong><span>${escapeHtml(series.venueName)} · ${escapeHtml(series.scheduleLabel || '운영 일정 미입력')}</span><small>${escapeHtml(series.description || '운영 안내가 없습니다.')} · ${series.gameCount}회 운영</small></div><div class="league-series-card__actions"><button type="button" class="btn btn-secondary" data-edit-series="${escapeHtml(series.id)}">수정</button><button type="button" class="btn btn-secondary" data-series-create-game="${escapeHtml(series.id)}">이번 회차 경기 생성</button></div></article>`).join('') : '<div class="empty-state">등록된 정기리그가 없습니다. 위에서 첫 정기리그를 등록해 주세요.</div>'}
+          ${ownedSeries.length ? ownedSeries.map((series) => `<article class="league-series-card">${renderSeriesLogoMark(series, 'league-series-card__logo')}<div class="league-series-card__body"><strong>${escapeHtml(series.name)}</strong><span>${escapeHtml(series.scheduleLabel || '운영 일정 미입력')}</span><small>${escapeHtml(series.description || '운영 안내가 없습니다.')} · ${series.gameCount}회 운영</small></div><div class="league-series-card__actions"><button type="button" class="btn btn-secondary" data-edit-series="${escapeHtml(series.id)}">수정</button><button type="button" class="btn btn-secondary" data-series-create-game="${escapeHtml(series.id)}">이번 회차 경기 생성</button></div></article>`).join('') : '<div class="empty-state">등록된 정기리그가 없습니다. 위에서 첫 정기리그를 등록해 주세요.</div>'}
         </div>
       </section>
     `;
@@ -1475,7 +1469,6 @@
 
   function renderCreateGameForm(currentUser) {
     const selectedSeries = state.leagueSeries.find((series) => series.id === state.selectedSeriesId) || null;
-    const selectedVenue = selectedSeries ? getKnownVenues().find((venue) => venue.id === selectedSeries.venueId) : null;
     const seriesDefaults = selectedSeries ? {
       formats: selectedSeries.defaultFormats,
       formatModes: selectedSeries.defaultFormatModes,
@@ -1497,19 +1490,19 @@
 
           <div class="field">
             <label for="gameVenueName"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>탁구장명</span></label>
-            <input id="gameVenueName" name="venueName" type="search" list="gameVenueSuggestions" data-venue-name data-venue-address-target="gameVenueAddress" data-venue-phone-target="gameVenuePhone" required value="${escapeHtml(selectedVenue?.name || '')}" placeholder="탁구장 이름 검색" />
+            <input id="gameVenueName" name="venueName" type="search" list="gameVenueSuggestions" data-venue-name data-venue-address-target="gameVenueAddress" data-venue-phone-target="gameVenuePhone" required placeholder="탁구장 이름 검색" />
             <datalist id="gameVenueSuggestions">${renderVenueSuggestions()}</datalist>
           </div>
 
           <div class="field">
             <label for="gameVenueAddress"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>탁구장 주소</span></label>
-            <input id="gameVenueAddress" name="venueAddress" type="text" required value="${escapeHtml(selectedVenue?.address || '')}" placeholder="도로명 주소를 입력하세요" />
+            <input id="gameVenueAddress" name="venueAddress" type="text" required placeholder="도로명 주소를 입력하세요" />
             <small class="field-hint">등록된 탁구장을 선택하면 주소가 자동으로 입력됩니다.</small>
           </div>
 
           <div class="field">
             <label for="gameVenuePhone"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h3l1.2 4-2 1.5a14 14 0 0 0 5.3 5.3l1.5-2 4 1.2v3c0 1.1-.9 2-2 2C11.4 19 5 12.6 5 5c0-1.1.9-2 2-2z" /></svg>탁구장 전화번호</span></label>
-            <input id="gameVenuePhone" name="venuePhone" type="tel" value="${escapeHtml(selectedVenue?.phone || '')}" placeholder="예: 032-123-4567" />
+            <input id="gameVenuePhone" name="venuePhone" type="tel" placeholder="예: 032-123-4567" />
           </div>
 
           <div class="field">
@@ -3976,7 +3969,6 @@
       return;
     }
     const payload = {
-      venueId: trimValue(submittedData.get('venueId')),
       name: trimValue(submittedData.get('name')),
       logoUrl,
       scheduleLabel: trimValue(submittedData.get('scheduleLabel')),
@@ -3984,8 +3976,8 @@
       defaultMaxParticipants: trimValue(submittedData.get('defaultMaxParticipants')) || null,
       defaultFormats,
     };
-    if (!payload.venueId || !payload.name || !defaultFormats.length) {
-      setFlash('탁구장, 정기리그명, 기본 경기형식을 입력해 주세요.', 'error');
+    if (!payload.name || !defaultFormats.length) {
+      setFlash('정기리그명과 기본 경기형식을 입력해 주세요.', 'error');
       render();
       return;
     }
@@ -4013,7 +4005,6 @@
       return;
     }
     const payload = {
-      venueId: trimValue(submittedData.get('venueId')),
       name: trimValue(submittedData.get('name')),
       logoUrl,
       scheduleLabel: trimValue(submittedData.get('scheduleLabel')),
@@ -4021,8 +4012,8 @@
       defaultMaxParticipants: trimValue(submittedData.get('defaultMaxParticipants')) || null,
       defaultFormats,
     };
-    if (!payload.venueId || !payload.name || !defaultFormats.length) {
-      setFlash('탁구장, 정기리그명, 기본 경기형식을 입력해 주세요.', 'error');
+    if (!payload.name || !defaultFormats.length) {
+      setFlash('정기리그명과 기본 경기형식을 입력해 주세요.', 'error');
       render();
       return;
     }
@@ -5032,13 +5023,6 @@
         if (genderInput) genderInput.value = member.gender || '';
         if (rankInput) rankInput.value = member.rank || '';
       }
-      return;
-    }
-    if (input.matches('[data-league-series-venue-search]')) {
-      const form = input.closest('form');
-      const venueIdInput = form?.querySelector('[data-league-series-venue-id]');
-      const venue = getKnownVenues().find((item) => `${item.name} · ${item.address || '주소 미입력'}` === input.value);
-      if (venueIdInput) venueIdInput.value = venue?.id || '';
       return;
     }
     if (input.matches('[data-venue-name]')) {

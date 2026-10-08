@@ -65,7 +65,7 @@ alter table public.games
 
 create table if not exists public.league_series (
   id uuid primary key default gen_random_uuid(),
-  venue_id uuid not null references public.venues(id) on delete cascade,
+  venue_id uuid references public.venues(id) on delete set null,
   owner_id uuid not null references public.users(id) on delete restrict,
   name text not null,
   logo_url text,
@@ -81,6 +81,9 @@ create table if not exists public.league_series (
 
 alter table public.league_series
   add column if not exists logo_url text;
+
+alter table public.league_series
+  alter column venue_id drop not null;
 
 alter table public.games
   add column if not exists series_id uuid references public.league_series(id) on delete set null,

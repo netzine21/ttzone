@@ -77,7 +77,7 @@ async function ensureLeagueSeriesColumns() {
     leagueSeriesColumnsPromise = getPool().query(
       `create table if not exists public.league_series (
          id uuid primary key default gen_random_uuid(),
-         venue_id uuid not null references public.venues(id) on delete cascade,
+         venue_id uuid references public.venues(id) on delete set null,
          owner_id uuid not null references public.users(id) on delete restrict,
          name text not null,
          logo_url text,
@@ -92,6 +92,8 @@ async function ensureLeagueSeriesColumns() {
        );
        alter table public.league_series
          add column if not exists logo_url text;
+       alter table public.league_series
+         alter column venue_id drop not null;
        alter table public.games
          add column if not exists series_id uuid references public.league_series(id) on delete set null,
          add column if not exists series_round integer;
@@ -297,7 +299,7 @@ async function getLeagueSeries(viewerId = null) {
             u.nickname as owner_nickname,
             count(g.id)::int as game_count
        from public.league_series s
-       join public.venues v on v.id = s.venue_id
+       left join public.venues v on v.id = s.venue_id
        join public.users u on u.id = s.owner_id
        left join public.games g on g.series_id = s.id and g.deleted_at is null
       where s.status = 'active' or s.owner_id = $1
@@ -860,7 +862,6 @@ async function handleApi(req, res, requestPath) {
       const user = await findSession(req);
       if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
       const body = await readBody(req);
-      const venueId = String(body.venueId || '').trim();
       const name = String(body.name || '').trim();
       const logoUrl = String(body.logoUrl || '').trim();
       const scheduleLabel = String(body.scheduleLabel || '').trim();
@@ -868,16 +869,14 @@ async function handleApi(req, res, requestPath) {
       const formats = Array.isArray(body.defaultFormats) ? [...new Set(body.defaultFormats)] : ['singles'];
       const formatModes = normalizeFormatModes(body.defaultFormatModes, formats);
       const defaultMaxParticipants = body.defaultMaxParticipants ? Number(body.defaultMaxParticipants) : null;
-      if (!venueId || !name || logoUrl.length > 3000000 || (logoUrl && !/^(https?:\/\/|data:image\/)/i.test(logoUrl)) || !formats.length || formats.some((format) => !['singles', 'doubles', 'team'].includes(format)) || (defaultMaxParticipants !== null && (!Number.isInteger(defaultMaxParticipants) || defaultMaxParticipants < 1))) {
-        return sendJson(res, 400, { error: '정기리그명, 탁구장, 경기형식 정보를 확인해 주세요.' });
+      if (!name || logoUrl.length > 3000000 || (logoUrl && !/^(https?:\/\/|data:image\/)/i.test(logoUrl)) || !formats.length || formats.some((format) => !['singles', 'doubles', 'team'].includes(format)) || (defaultMaxParticipants !== null && (!Number.isInteger(defaultMaxParticipants) || defaultMaxParticipants < 1))) {
+        return sendJson(res, 400, { error: '정기리그명과 기본 경기형식 정보를 확인해 주세요.' });
       }
-      const venueResult = await pool.query('select id from public.venues where id = $1 and status <> \'archived\'', [venueId]);
-      if (!venueResult.rows[0]) return sendJson(res, 404, { error: '선택한 탁구장을 찾을 수 없습니다.' });
       const result = await pool.query(
-        `insert into public.league_series (venue_id, owner_id, name, logo_url, schedule_label, description, default_formats, default_format_modes, default_max_participants)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `insert into public.league_series (owner_id, name, logo_url, schedule_label, description, default_formats, default_format_modes, default_max_participants)
+         values ($1, $2, $3, $4, $5, $6, $7, $8)
          returning id`,
-        [venueId, user.id, name, logoUrl || null, scheduleLabel || null, description || null, JSON.stringify(formats), JSON.stringify(formatModes), defaultMaxParticipants]
+        [user.id, name, logoUrl || null, scheduleLabel || null, description || null, JSON.stringify(formats), JSON.stringify(formatModes), defaultMaxParticipants]
       );
       const series = (await getLeagueSeries(user.id)).find((item) => item.id === result.rows[0].id);
       return sendJson(res, 201, { series });
@@ -889,7 +888,6 @@ async function handleApi(req, res, requestPath) {
       const user = await findSession(req);
       if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
       const body = await readBody(req);
-      const venueId = String(body.venueId || '').trim();
       const name = String(body.name || '').trim();
       const logoUrl = String(body.logoUrl || '').trim();
       const scheduleLabel = String(body.scheduleLabel || '').trim();
@@ -898,19 +896,17 @@ async function handleApi(req, res, requestPath) {
       const formatModes = normalizeFormatModes(body.defaultFormatModes, formats);
       const defaultMaxParticipants = body.defaultMaxParticipants ? Number(body.defaultMaxParticipants) : null;
       const status = body.status === 'archived' ? 'archived' : 'active';
-      if (!venueId || !name || logoUrl.length > 3000000 || (logoUrl && !/^(https?:\/\/|data:image\/)/i.test(logoUrl)) || !formats.length || formats.some((format) => !['singles', 'doubles', 'team'].includes(format)) || (defaultMaxParticipants !== null && (!Number.isInteger(defaultMaxParticipants) || defaultMaxParticipants < 1))) {
-        return sendJson(res, 400, { error: '탁구장, 정기리그명, 기본 설정을 확인해 주세요.' });
+      if (!name || logoUrl.length > 3000000 || (logoUrl && !/^(https?:\/\/|data:image\/)/i.test(logoUrl)) || !formats.length || formats.some((format) => !['singles', 'doubles', 'team'].includes(format)) || (defaultMaxParticipants !== null && (!Number.isInteger(defaultMaxParticipants) || defaultMaxParticipants < 1))) {
+        return sendJson(res, 400, { error: '정기리그명과 기본 설정을 확인해 주세요.' });
       }
-      const venueResult = await pool.query('select id from public.venues where id = $1 and status <> \'archived\'', [venueId]);
-      if (!venueResult.rows[0]) return sendJson(res, 404, { error: '선택한 탁구장을 찾을 수 없습니다.' });
       const result = await pool.query(
         `update public.league_series
-            set venue_id = $1, name = $2, logo_url = $3, schedule_label = $4, description = $5,
-                default_formats = $6, default_format_modes = $7,
-                default_max_participants = $8, status = $9, updated_at = now()
-          where id = $10 and (owner_id = $11 or exists (select 1 from public.users where id = $11 and role = 'admin'))
+            set name = $1, logo_url = $2, schedule_label = $3, description = $4,
+                default_formats = $5, default_format_modes = $6,
+                default_max_participants = $7, status = $8, updated_at = now()
+          where id = $9 and (owner_id = $10 or exists (select 1 from public.users where id = $10 and role = 'admin'))
           returning id`,
-        [venueId, name, logoUrl || null, scheduleLabel || null, description || null, JSON.stringify(formats), JSON.stringify(formatModes), defaultMaxParticipants, status, leagueSeriesMatch[1], user.id]
+        [name, logoUrl || null, scheduleLabel || null, description || null, JSON.stringify(formats), JSON.stringify(formatModes), defaultMaxParticipants, status, leagueSeriesMatch[1], user.id]
       );
       if (!result.rows[0]) return sendJson(res, 404, { error: '수정할 정기리그를 찾을 수 없거나 권한이 없습니다.' });
       const series = (await getLeagueSeries(user.id)).find((item) => item.id === result.rows[0].id);
@@ -958,13 +954,13 @@ async function handleApi(req, res, requestPath) {
         if (seriesId) {
           const seriesResult = await client.query(
             `select id from public.league_series
-              where id = $1 and venue_id = $2 and status = 'active'
-                and (owner_id = $3 or exists (select 1 from public.users where id = $3 and role = 'admin'))`,
-            [seriesId, venueId, user.id]
+              where id = $1 and status = 'active'
+                and (owner_id = $2 or exists (select 1 from public.users where id = $2 and role = 'admin'))`,
+            [seriesId, user.id]
           );
           if (!seriesResult.rows[0]) {
             await client.query('rollback');
-            return sendJson(res, 403, { error: '선택한 정기리그를 사용할 권한이 없거나 탁구장이 일치하지 않습니다.' });
+            return sendJson(res, 403, { error: '선택한 정기리그를 사용할 권한이 없습니다.' });
           }
           if (!resolvedSeriesRound) {
             const nextRoundResult = await client.query(
@@ -1034,13 +1030,13 @@ async function handleApi(req, res, requestPath) {
         if (seriesId) {
           const seriesResult = await client.query(
             `select id from public.league_series
-              where id = $1 and venue_id = $2 and status = 'active'
-                and (owner_id = $3 or exists (select 1 from public.users where id = $3 and role = 'admin'))`,
-            [seriesId, venueId, user.id]
+              where id = $1 and status = 'active'
+                and (owner_id = $2 or exists (select 1 from public.users where id = $2 and role = 'admin'))`,
+            [seriesId, user.id]
           );
           if (!seriesResult.rows[0]) {
             await client.query('rollback');
-            return sendJson(res, 403, { error: '선택한 정기리그를 사용할 권한이 없거나 탁구장이 일치하지 않습니다.' });
+            return sendJson(res, 403, { error: '선택한 정기리그를 사용할 권한이 없습니다.' });
           }
         }
         const gameResult = await client.query(
