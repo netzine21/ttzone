@@ -1002,12 +1002,17 @@
       .sort((left, right) => String(left.venueName || '').localeCompare(String(right.venueName || ''), 'ko') || String(left.name || '').localeCompare(String(right.name || ''), 'ko'));
   }
 
+  function getSeriesLogo(series) {
+    return String(series.logoUrl || series.logo_url || '').trim();
+  }
+
   function renderPublicSeriesCard(series) {
     const seriesGames = state.games.filter((game) => game.seriesId === series.id);
     const activeGames = seriesGames.filter((game) => getGameStatus(game).key !== 'done');
     const initial = String(series.name || '리').trim().charAt(0) || '리';
-    const logo = series.logoUrl
-      ? `<img src="${escapeHtml(series.logoUrl)}" alt="" />`
+    const seriesLogo = getSeriesLogo(series);
+    const logo = seriesLogo
+      ? `<img src="${escapeHtml(seriesLogo)}" alt="" />`
       : escapeHtml(initial);
     return `
       <button type="button" class="series-directory-card" data-public-series="${escapeHtml(series.id)}">
@@ -1043,7 +1048,7 @@
     return `
       <section class="panel section-card series-detail-page">
         <div class="section-heading public-game-list-heading">
-          <div class="series-detail-page__brand">${series.logoUrl ? `<img src="${escapeHtml(series.logoUrl)}" alt="" />` : ''}<div><p class="section-kicker">정기리그</p><h1>${escapeHtml(series.name)}</h1><p class="subtle-note">${escapeHtml(series.scheduleLabel || '정기 운영')} · ${escapeHtml(series.description || '정기리그 경기 목록')}</p></div></div>
+          <div class="series-detail-page__brand">${getSeriesLogo(series) ? `<img src="${escapeHtml(getSeriesLogo(series))}" alt="" />` : ''}<div><p class="section-kicker">정기리그</p><h1>${escapeHtml(series.name)}</h1><p class="subtle-note">${escapeHtml(series.scheduleLabel || '정기 운영')} · ${escapeHtml(series.description || '정기리그 경기 목록')}</p></div></div>
           <button type="button" class="btn btn-secondary" data-public-series-back>정기리그 목록</button>
         </div>
         <div class="series-detail-page__summary"><strong>${games.length}회차 경기</strong><span>${escapeHtml(series.scheduleLabel || '정기 운영')}</span></div>
