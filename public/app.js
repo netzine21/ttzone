@@ -1032,7 +1032,7 @@
     if (!series.length) return '';
     return `
       <section class="series-directory" aria-labelledby="seriesDirectoryTitle">
-        <div class="series-directory__heading"><div><p class="section-kicker">정기적으로 진행되는 경기</p><h2 id="seriesDirectoryTitle">탁구장별 정기리그</h2></div><span class="subtle-note">${series.length}개 리그</span></div>
+        <div class="series-directory__heading"><div><p class="section-kicker">정기적으로 진행되는 경기</p><h2 id="seriesDirectoryTitle">정기리그 목록</h2></div><span class="subtle-note">${series.length}개 리그</span></div>
         <div class="series-directory__grid">${series.map(renderPublicSeriesCard).join('')}</div>
       </section>
     `;
@@ -1373,7 +1373,7 @@
     return `
       <section class="panel section-card league-series-page">
         <div class="section-heading">
-          <div><p class="section-kicker">정기 경기 관리</p><h1>정기리그 관리</h1><p class="section-note">탁구장별 정기리그를 등록해 두고 매 회차 경기를 연결해서 운영할 수 있습니다.</p></div>
+          <div><p class="section-kicker">정기 경기 관리</p><h1>정기리그 관리</h1><p class="section-note">정기리그를 등록해 두고 매 회차 경기를 연결해서 운영할 수 있습니다.</p></div>
           <button type="button" class="create-game-close" aria-label="정기리그 관리 닫기" data-back-dashboard><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg></button>
         </div>
         <form class="league-series-create" data-form="league-series">

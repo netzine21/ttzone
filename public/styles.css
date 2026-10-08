@@ -1540,6 +1540,10 @@ html[data-theme="light"] .brand-mark__image--light {
   min-height: 86px;
 }
 
+.league-series-create[data-form="league-series"] > .button-row {
+  justify-content: center;
+}
+
 .league-series-list {
   margin-top: 28px;
 }
@@ -6514,6 +6518,34 @@ html[data-theme="light"] .schedule-results-table td {
 
 .nowrap {
   white-space: nowrap;
+}
+
+/* Use the available desktop width without changing the compact mobile layout. */
+@media (min-width: 1200px) {
+  :root {
+    --max-width: 1680px;
+  }
+
+  .page-shell,
+  .noscript {
+    width: min(var(--max-width), calc(100% - 48px));
+  }
+
+  .public-game-detail,
+  .series-detail-page,
+  .game-detail {
+    max-width: none;
+  }
+
+  .series-directory__grid,
+  .game-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .game-list .empty-state {
+    grid-column: 1 / -1;
+  }
 }
 
 @keyframes drift {
