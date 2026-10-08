@@ -2745,6 +2745,7 @@ html[data-theme="light"] .league-series-card__logo {
 }
 
 .series-game-table-wrap {
+  width: 100%;
   margin-top: 22px;
   overflow-x: auto;
   border: 1px solid var(--border-strong);
@@ -2766,7 +2767,7 @@ html[data-theme="light"] .league-series-card__logo {
   padding: 14px 16px;
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
-  text-align: left;
+  text-align: center;
   vertical-align: middle;
 }
 
@@ -2813,6 +2814,10 @@ html[data-theme="light"] .league-series-card__logo {
 
 .series-game-table__title {
   font-weight: 750;
+}
+
+.series-detail-page > .game-list {
+  display: block;
 }
 
 .series-game-table tbody tr {
@@ -6655,6 +6660,10 @@ html[data-theme="light"] .schedule-results-table td {
 
   .game-list .empty-state {
     grid-column: 1 / -1;
+  }
+
+  .series-detail-page > .game-list {
+    display: block;
   }
 }
 
