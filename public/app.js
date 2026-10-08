@@ -1322,7 +1322,7 @@
 
   function renderCreateGameForm() {
     return `
-      <section class="panel section-card">
+      <section class="panel section-card create-game-panel">
         <div class="section-heading create-game-heading">
           <div>
             <h2>새 게임 생성</h2>

@@ -107,28 +107,28 @@ html[data-theme="light"] .admin-venues-section .admin-users-table th {
   background: #e5eef3;
 }
 
-html[data-theme="light"] .create-game-panel .format-options label,
-html[data-theme="light"] .create-game-panel .format-option-with-mode {
+html[data-theme="light"] .format-options label,
+html[data-theme="light"] .format-option-with-mode {
   border-color: #9bb0bc;
   background: #f3f7f9;
   box-shadow: 0 2px 8px rgba(46, 74, 96, 0.05);
 }
 
-html[data-theme="light"] .create-game-panel .format-options label:has(input:checked),
-html[data-theme="light"] .create-game-panel .format-option-with-mode:has(input:checked) {
+html[data-theme="light"] .format-options label:has(input:checked),
+html[data-theme="light"] .format-option-with-mode:has(input:checked) {
   border-color: #0f766e;
   background: #e4f2ef;
   box-shadow: 0 4px 12px rgba(15, 118, 110, 0.12);
 }
 
-html[data-theme="light"] .create-game-panel .format-mode-options {
+html[data-theme="light"] .format-mode-options {
   border-color: #b4c3cc;
   background: #eef4f7;
 }
 
-html[data-theme="light"] .create-game-panel .field input:focus,
-html[data-theme="light"] .create-game-panel .field select:focus,
-html[data-theme="light"] .create-game-panel .field textarea:focus {
+html[data-theme="light"] .format-options ~ .field input:focus,
+html[data-theme="light"] .format-options select:focus,
+html[data-theme="light"] .format-mode-options select:focus {
   border-color: #0f766e;
   box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
 }
@@ -3926,6 +3926,29 @@ html[data-theme="light"] .public-apply-cta .btn-primary {
 }
 
 @media (min-width: 821px) {
+  .create-game-panel .field label,
+  .create-game-panel .field-label {
+    font-size: 1.02rem;
+  }
+
+  .create-game-panel .field input,
+  .create-game-panel .field select,
+  .create-game-panel .field textarea {
+    font-size: 1rem;
+  }
+
+  .create-game-panel .field-hint {
+    font-size: 0.86rem;
+  }
+
+  .create-game-panel .format-option-with-mode__choice {
+    font-size: 0.98rem;
+  }
+
+  .create-game-panel .format-option-with-mode select {
+    font-size: 0.86rem;
+  }
+
   .roster-list-table {
     font-size: 0.95rem;
   }
