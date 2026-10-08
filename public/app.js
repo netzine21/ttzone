@@ -596,26 +596,42 @@
 
   function parseRosterText(text) {
     const lines = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).filter((line) => line.trim());
-    if (!lines.length) return [];
+    if (!lines.length) return { rows: [], error: '등록할 참가선수 데이터가 없습니다.' };
     const delimiter = lines[0].includes('\t') ? '\t' : ',';
     const rows = lines.map((line) => parseDelimitedLine(line, delimiter));
     const header = rows[0].map((cell) => normalizeParticipantName(cell));
     const nicknameIndex = header.findIndex((cell) => ['닉네임', '선수명', '이름', 'name', 'nickname'].includes(cell));
     const memberIdIndex = header.findIndex((cell) => ['아이디', 'id', 'memberid'].includes(cell));
+    const genderIndex = header.findIndex((cell) => ['성별', 'gender', 'sex'].includes(cell));
     const rankIndex = header.findIndex((cell) => ['부수', 'rank'].includes(cell));
     const teamNameIndex = header.findIndex((cell) => ['팀명', 'team', 'teamname'].includes(cell));
     const hasHeader = nicknameIndex >= 0;
+    if (hasHeader) {
+      const expectedHeaders = ['팀명', '닉네임', '아이디', '성별', '부수'];
+      const isFixedTemplate = expectedHeaders.every((value, index) => header[index] === normalizeParticipantName(value));
+      if (!isFixedTemplate) {
+        return { rows: [], error: '다운로드한 양식의 첫 번째 헤더 행은 수정하지 말고 그대로 사용해 주세요.' };
+      }
+    }
     const dataRows = hasHeader ? rows.slice(1) : rows;
-    return dataRows.map((row) => ({
+    return { rows: dataRows.map((row) => ({
       nickname: trimValue(row[hasHeader ? nicknameIndex : 0]),
       memberId: hasHeader && memberIdIndex >= 0 ? trimValue(row[memberIdIndex]) : '',
+      gender: hasHeader && genderIndex >= 0 ? normalizeRosterGender(row[genderIndex]) : '',
       rank: hasHeader && rankIndex >= 0 ? trimValue(row[rankIndex]) : '',
       teamName: hasHeader && teamNameIndex >= 0 ? trimValue(row[teamNameIndex]) : '',
-    }));
+    })), error: '' };
+  }
+
+  function normalizeRosterGender(value) {
+    const normalized = normalizeParticipantName(value);
+    if (['남자', '남', 'male', 'm'].includes(normalized)) return 'male';
+    if (['여자', '여', 'female', 'f'].includes(normalized)) return 'female';
+    return '';
   }
 
   function downloadRosterTemplate() {
-    const csv = '\uFEFF팀명,닉네임,아이디,부수\n탁구팀A,홍길동,hong123,3부\n,김탁구,,4부\n';
+    const csv = '\uFEFF팀명,닉네임,아이디,성별,부수\n탁구팀A,홍길동,hong123,남자,3부\n,김탁구,,여자,4부\n';
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -3335,7 +3351,13 @@
 
     const formatSelect = document.querySelector(`[data-roster-format="${CSS.escape(game.id)}"]`);
     const format = formatSelect?.value || rosterFormat;
-    const rows = parseRosterText(await file.text());
+    const parsedRoster = parseRosterText(await file.text());
+    if (parsedRoster.error) {
+      setFlash(parsedRoster.error, 'error');
+      render();
+      return;
+    }
+    const rows = parsedRoster.rows;
     const registrations = getGameRegistrations(game);
     const formatRegistrations = getGameRegistrations(game, format);
     const existingKeys = new Set(formatRegistrations.map((participant) => participant.userId || `name:${normalizeParticipantName(participant.nickname)}`));
@@ -3357,7 +3379,7 @@
       const registration = {
         userId: matchedUser?.id || null,
         nickname: matchedUser?.nickname || row.nickname,
-        gender: matchedUser?.gender || '',
+        gender: matchedUser?.gender || row.gender || '',
         memberId: row.memberId,
         rank: row.rank || matchedUser?.rank || '',
         teamName: row.teamName || '',
