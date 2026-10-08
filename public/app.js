@@ -1061,7 +1061,7 @@
       <section class="panel section-card series-detail-page">
         <div class="section-heading public-game-list-heading">
           <div class="series-detail-page__brand">${renderSeriesLogoMark(series, 'series-detail-page__logo')}<div><p class="section-kicker">정기리그</p><h1>${escapeHtml(series.name)}</h1><p class="subtle-note">${escapeHtml(series.scheduleLabel || '정기 운영')} · ${escapeHtml(series.description || '정기리그 경기 목록')}</p></div></div>
-          <button type="button" class="btn btn-secondary" data-public-series-back>정기리그 목록</button>
+          <button type="button" class="btn btn-secondary series-detail-page__close" data-public-series-back aria-label="정기리그 상세 닫기">Close</button>
         </div>
         <div class="series-detail-page__summary"><strong>${games.length}회차 경기</strong><span>${escapeHtml(series.scheduleLabel || '정기 운영')}</span></div>
         <div class="game-list">${gameList}</div>

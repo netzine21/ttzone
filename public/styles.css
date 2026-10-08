@@ -2744,6 +2744,11 @@ html[data-theme="light"] .league-series-card__logo {
   min-width: 0;
 }
 
+.series-detail-page__close {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .series-game-table-wrap {
   width: 100%;
   margin-top: 22px;
