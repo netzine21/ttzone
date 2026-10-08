@@ -1063,6 +1063,7 @@
 
   function renderPublicGamesPage() {
     const allGames = state.games
+      .filter((game) => !game.seriesId)
       .slice()
       .sort((left, right) => new Date(left.scheduledAt) - new Date(right.scheduledAt));
     const games = filterGamesByStatus(allGames, state.gameFilter);
@@ -1416,9 +1417,12 @@
     const allGames = state.games
       .slice()
       .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt));
+    const listedGames = state.gameFilter === 'mine'
+      ? allGames
+      : allGames.filter((game) => !game.seriesId);
     const filteredGames = state.gameFilter === 'mine'
-      ? allGames.filter((game) => game.operatorId === currentUser.id)
-      : filterGamesByStatus(allGames, state.gameFilter);
+      ? listedGames.filter((game) => game.operatorId === currentUser.id)
+      : filterGamesByStatus(listedGames, state.gameFilter);
 
     const gamesPerPage = 10;
     const totalPages = Math.max(1, Math.ceil(filteredGames.length / gamesPerPage));
@@ -1462,7 +1466,7 @@
           </div>
         </div>
         ${state.gameFilter === 'mine' ? '' : renderSeriesDirectory()}
-        ${state.gameFilter === 'mine' ? '' : renderGameStatusFilters(allGames)}
+        ${state.gameFilter === 'mine' ? '' : renderGameStatusFilters(listedGames)}
         <div class="game-list">
           ${gameList}
         </div>
