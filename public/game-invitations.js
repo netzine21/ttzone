@@ -11,7 +11,7 @@
   function makeDraft({ source = null, series = null, venue = null } = {}) {
     const formats = source?.formats || (source?.format ? [source.format] : null) || series?.defaultFormats || ['singles'];
     return {
-      title: '', scheduledAt: '',
+      title: source?.title || '', titleEdited: Boolean(source?.title), scheduledAt: '',
       venueName: source?.venueName || source?.location || venue?.name || '',
       venueAddress: source?.venueAddress || venue?.address || '',
       venuePhone: source?.venuePhone || venue?.phone || '',

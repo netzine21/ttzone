@@ -5,7 +5,8 @@ const { makeDraft, inviteUrl, routeUrl, suggestedTitle, localDateTime } = requir
 test('copy retains only editable settings and starts a fresh independent game', () => {
   const source = { id: 'old', title: '지난 경기', scheduledAt: '2026-01-01', seriesId: 'old-series', formats: ['doubles'], formatModes: { doubles: 'leagueOnly' }, venueName: '구장', venueAddress: '주소', maxParticipants: 12, registrations: [{ nickname: '기존선수' }], qualifyingGroups: {}, completedAt: 'yesterday' };
   const draft = makeDraft({ source });
-  assert.equal(draft.title, '');
+  assert.equal(draft.title, '지난 경기');
+  assert.equal(draft.titleEdited, true);
   assert.equal(draft.scheduledAt, '');
   assert.equal(draft.seriesId, '');
   assert.equal(draft.reuseRoster, false);
