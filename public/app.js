@@ -111,6 +111,12 @@
     pendingGameId: null,
     signupCompleted: false,
     signupSubmitting: false,
+    guestMode: false,
+    guestEntries: {},
+    guestErrors: {},
+    pendingGuestClaim: null,
+    guestSignupDraft: null,
+    signupGuestLinked: false,
     gameFilter: 'all',
     gamePage: 1,
     flash: null,
@@ -186,13 +192,13 @@
 
   async function apiRequest(path, options = {}) {
     const response = await fetch(path, {
+      ...options,
       credentials: 'include',
       cache: options.cache || 'no-store',
       headers: {
         ...(options.body ? { 'Content-Type': 'application/json' } : {}),
         ...(options.headers || {}),
       },
-      ...options,
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw Object.assign(new Error(payload.error || '서버 요청에 실패했습니다.'), { status: response.status });
@@ -902,7 +908,7 @@
       <form class="form-stack auth-signup-form" data-form="signup" novalidate>
         <div class="field">
           <label for="signupNickname">이름(닉네임) <span class="field-requirement field-requirement--required">필수</span></label>
-          <input id="signupNickname" name="nickname" type="text" autocomplete="nickname" required placeholder="표시될 이름 또는 닉네임" />
+          <input id="signupNickname" name="nickname" value="${escapeHtml(state.guestSignupDraft?.nickname || '')}" type="text" autocomplete="nickname" required placeholder="표시될 이름 또는 닉네임" />
         </div>
         <div class="field">
           <label for="signupMemberId">ID <span class="field-requirement field-requirement--required">필수</span></label>
@@ -915,13 +921,13 @@
         <div class="field">
           <label>성별 <span class="field-requirement field-requirement--required">필수</span></label>
           <div class="choice-row">
-            <label class="choice-option">남자 <input type="radio" name="gender" value="male" required /></label>
-            <label class="choice-option">여자 <input type="radio" name="gender" value="female" required /></label>
+            <label class="choice-option">남자 <input type="radio" name="gender" value="male" ${state.guestSignupDraft?.gender === 'male' ? 'checked' : ''} required /></label>
+            <label class="choice-option">여자 <input type="radio" name="gender" value="female" ${state.guestSignupDraft?.gender === 'female' ? 'checked' : ''} required /></label>
           </div>
         </div>
         <div class="field">
           <label for="signupRank">통합부수 <span class="field-requirement field-requirement--required">필수</span></label>
-          <input id="signupRank" name="rank" type="text" autocomplete="off" required placeholder="예: 1부, 2부, 3부" />
+          <input id="signupRank" name="rank" value="${escapeHtml(state.guestSignupDraft?.rank || '')}" type="text" autocomplete="off" required placeholder="예: 1부, 2부, 3부" />
         </div>
         <div class="field">
           <label for="signupPhone">휴대폰번호 <span class="field-requirement field-requirement--required">필수</span></label>
@@ -960,7 +966,7 @@
       <section class="auth-simple">
         <button type="button" class="panel signup-success" data-home-after-signup>
           <span class="signup-success__mark">✓</span>
-          <strong>회원가입이 완료되었습니다.</strong>
+          <strong>회원가입이 완료되었습니다.</strong>${state.signupGuestLinked ? '<span>기존 참가신청도 새 계정에 연결되었습니다.</span>' : ''}
           <span>${state.pendingGameId ? '클릭해서 로그인하면 초대받은 경기의 참가신청으로 돌아갑니다.' : '이 내용을 클릭하면 초기 화면으로 이동합니다.'}</span>
         </button>
       </section>
@@ -1162,9 +1168,9 @@
     const operator = state.users.find((user) => user.id === game.operatorId);
     const formats = getGameFormats(game);
     const isOwner = currentUser?.id === game.operatorId;
-    const hasAppliedAllFormats = currentUser && formats.length > 0 && formats.every((format) => getGameRegistrations(game, format).some((registration) => registration.userId === currentUser.id));
     const allFormatsClosed = formats.length > 0 && formats.every((format) => isRegistrationClosed(game, format));
-    const applyAction = isOwner || allFormatsClosed || hasAppliedAllFormats ? '' : `<div class="public-apply-action"><button type="button" class="btn btn-primary" data-game-apply="${escapeHtml(game.id)}">참가신청</button></div>`;
+    const hasOwnEntry = (currentUser && formats.some((format) => getGameRegistrations(game, format).some((row) => row.userId === currentUser.id))) || state.guestEntries[game.id]?.length;
+    const applyAction = isOwner || (allFormatsClosed && !hasOwnEntry) ? '' : `<div class="public-apply-action"><button type="button" class="btn btn-primary" data-game-apply="${escapeHtml(game.id)}">${hasOwnEntry ? '내 참가신청 확인·수정' : '참가신청'}</button></div>`;
     const editAction = isOwner ? `<div class="game-edit-bottom-action game-rules-actions" aria-label="경기요강 관리"><button type="button" class="game-list-action" data-edit-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h4L19 9l-4-4L5 15v4zM13 7l4 4" /></svg><span>내용 수정</span></button>${state.serverGameIds.includes(game.id) ? `<button type="button" class="game-list-action game-list-action--primary" data-open-invite="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M2 21v-2a6 6 0 0 1 12 0v2M19 7v8M15 11h8" /></svg><span>참가자 초대</span></button>` : ''}</div>` : '';
     const canDelete = currentUser?.role === 'admin' || (isOwner && !formats.some((format) => isRegistrationClosed(game, format)));
     const deleteAction = canDelete ? `<div class="game-edit-bottom-action"><button type="button" class="game-list-action game-list-action--danger" data-delete-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M9 7V4h6v3M7 7l1 13h8l1-13" /></svg><span>${currentUser?.role === 'admin' ? '게임 삭제(관리자)' : '게임 삭제'}</span></button></div>` : '';
@@ -1296,10 +1302,68 @@
     const progressContent = progressSubtab === 'participants' ? `<div class="competition-content-heading"><h3>[${escapeHtml(FORMAT_LABELS[format])} 참가자 목록]</h3><span>총 ${participantCount}명/팀</span></div>${renderPublicParticipantList(game, format)}` : progressSubtab === 'league' ? `${canViewGroups ? renderPublicLeagueStandings(game, format) : '<div class="empty-state">운영자가 조편성을 준비 중입니다.</div>'}` : tournamentContent;
     return `<div class="competition-view"><div class="competition-progress-toolbar"><div class="format-selector" role="tablist" aria-label="경기종목">${getGameFormats(game).map((item) => `<button type="button" class="format-selector__item ${item === format ? 'is-active' : ''}" data-status-format="${escapeHtml(item)}"><svg class="progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${getFormatIconSvg(item)}</svg><span>${escapeHtml(FORMAT_LABELS[item])}</span></button>`).join('')}</div></div><div class="competition-subtabs competition-progress__tabs" role="tablist" aria-label="경기진행 메뉴">${progressTabs.map(([value, label, icon]) => `<button type="button" class="game-list-action progress-tab ${progressSubtab === value ? 'is-active' : ''}" data-status-progress="${value}"><svg class="game-list-action__icon progress-tab__icon" viewBox="0 0 24 24" aria-hidden="true">${icon}</svg><span>${label}</span></button>`).join('')}</div>${progressContent}</div>`;
   }
+  const GUEST_ACCESS_KEY = 'ttgms_guest_access_v1';
+  const guestAccessMemory = {};
+  function guestAccessToken(gameId) {
+    const saved = readJson(GUEST_ACCESS_KEY, {});
+    const token = guestAccessMemory[gameId] || saved?.[gameId];
+    return typeof token === 'string' && /^[A-Za-z0-9_-]{43}$/.test(token) ? token : null;
+  }
+  function saveGuestToken(gameId, token) {
+    guestAccessMemory[gameId] = token;
+    try { writeJson(GUEST_ACCESS_KEY, { ...readJson(GUEST_ACCESS_KEY, {}), [gameId]: token }); } catch { /* The private link remains available when browser storage is disabled. */ }
+  }
+  function getOrCreateGuestToken(gameId) {
+    const existing = guestAccessToken(gameId);
+    if (existing) return existing;
+    const bytes = new Uint8Array(32);
+    window.crypto.getRandomValues(bytes);
+    const token = btoa(String.fromCharCode(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+    saveGuestToken(gameId, token);
+    return token;
+  }
+  function forgetGuestToken(gameId) {
+    delete guestAccessMemory[gameId];
+    const saved = readJson(GUEST_ACCESS_KEY, {});
+    delete saved[gameId];
+    try { writeJson(GUEST_ACCESS_KEY, saved); } catch { /* Revocation is enforced by the server after linking. */ }
+    delete state.guestEntries[gameId];
+  }
+  function guestManagementUrl(gameId) {
+    const url = new URL(window.GameInvitations.inviteUrl(window.location.href, gameId));
+    url.searchParams.set('apply', '1');
+    url.hash = `entry=${guestAccessToken(gameId) || ''}`;
+    return url.href;
+  }
+  async function loadGuestEntries(gameId, shouldRender = true) {
+    const token = guestAccessToken(gameId);
+    if (!token) return;
+    try {
+      const result = await apiRequest(`/api/games/${encodeURIComponent(gameId)}/guest-registrations`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!Array.isArray(result.registrations)) throw new Error('신청 확인에 실패했습니다. 잠시 후 전용 링크로 다시 확인해 주세요.');
+      state.guestEntries[gameId] = result.registrations;
+      delete state.guestErrors[gameId];
+    } catch (error) { state.guestErrors[gameId] = error.message; }
+    if (shouldRender && state.detailTab === 'applications') render();
+  }
+  async function claimGuestEntry(gameId) {
+    const token = guestAccessToken(gameId);
+    if (!token) return;
+    await apiRequest(`/api/games/${encodeURIComponent(gameId)}/guest-registrations/claim`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: '{}' });
+    forgetGuestToken(gameId);
+    delete state.guestErrors[gameId];
+  }
+
   function renderApplicationsView(game, currentUser) {
-    if (!currentUser) return `<div class="public-apply-cta"><p>신청조회·수정 및 참가신청은 로그인 후 이용할 수 있습니다.</p><button type="button" class="btn btn-primary" data-game-apply="${escapeHtml(game.id)}">로그인하고 참가신청</button></div>`;
     const formats = getGameFormats(game);
-    return `<div class="application-view"><p class="subtle-note">현재 로그인한 회원의 신청내역을 확인하고 경기종목별 신청내용을 수정할 수 있습니다.</p>${renderMyApplications(game, currentUser)}<div class="format-registration-list">${formats.map((format) => `<section class="format-registration-card"><div class="format-registration-heading"><h3>${escapeHtml(FORMAT_LABELS[format])} 참가신청</h3><span class="subtle-note">${getGameRegistrations(game, format).length} / ${game.maxParticipants}명</span></div>${renderRegistrationForm(game, currentUser, format)}</section>`).join('')}</div></div>`;
+    const own = state.guestEntries[game.id] || [];
+    const guestToken = guestAccessToken(game.id);
+    const choice = !currentUser && !own.length ? `<div class="participation-choice"><p>회원가입 없이도 바로 신청할 수 있습니다. 이미 회원이라면 로그인해 주세요.</p><div class="button-row"><button type="button" class="btn btn-secondary" data-participation-login="${escapeHtml(game.id)}">로그인하고 신청</button><button type="button" class="btn btn-primary" data-guest-start>비회원으로 신청</button></div></div>` : '';
+    const completed = !currentUser && own.length ? `<section class="guest-completion" role="status"><h3>참가신청이 완료되었습니다!</h3><p>회원가입을 하지 않아도 신청은 유지됩니다. 아래에서 신청 내용을 수정하거나 취소할 수 있습니다.</p><p>회원가입하면 다음 경기부터 선수정보를 다시 입력하지 않고 신청할 수 있습니다.</p><div class="button-row"><button type="button" class="btn btn-primary" data-guest-signup="${escapeHtml(game.id)}">회원가입하고 내 신청 연결하기</button><button type="button" class="btn btn-secondary" data-participation-login="${escapeHtml(game.id)}">기존 계정으로 연결</button><button type="button" class="btn btn-ghost" data-detail-tab="status">경기요강 보기</button></div><label for="guestManagementLink">내 신청 확인·수정 링크</label><input id="guestManagementLink" type="url" readonly value="${escapeHtml(guestManagementUrl(game.id))}" /><button type="button" class="btn btn-secondary" data-copy-guest-link>내 신청 링크 복사</button><p class="field-hint">이 링크를 보관하면 다른 기기에서도 내 신청을 확인할 수 있습니다. 본인 신청을 수정·취소할 수 있는 개인용 링크이므로 단체방에는 공유하지 마세요.</p><p data-guest-link-feedback role="status"></p></section>` : '';
+    const claim = currentUser && guestToken && own.length ? `<div class="guest-completion"><p>이 기기에서 신청한 비회원 참가내역이 있습니다.</p><button type="button" class="btn btn-primary" data-claim-guest="${escapeHtml(game.id)}">내 계정에 신청 연결하기</button></div>` : '';
+    const error = state.guestErrors[game.id] ? `<p class="participation-error" role="alert">${escapeHtml(state.guestErrors[game.id])}</p>` : '';
+    const forms = currentUser || state.guestMode || own.length ? `<div class="format-registration-list">${formats.map((format) => `<section class="format-registration-card"><div class="format-registration-heading"><h3>${escapeHtml(FORMAT_LABELS[format])} 참가신청</h3><span class="subtle-note">${getGameRegistrations(game, format).length} / ${game.maxParticipants}명</span></div>${renderRegistrationForm(game, currentUser, format)}</section>`).join('')}</div>` : '';
+    return `<div class="application-view">${choice}${completed}${claim}${error}${forms}</div>`;
   }
 
   function renderGameScheduleView(game, format) {
@@ -1320,20 +1384,14 @@
   }
 
   function renderRegistrationForm(game, currentUser, format) {
-    const registration = getGameRegistrations(game, format).find((item) => item.userId === currentUser.id);
-    const isFull = getGameRegistrations(game, format).length >= game.maxParticipants;
-    const requiresTeam = format !== 'singles';
-    return `
-      <form class="registration-form" data-form="game-apply" data-game-id="${escapeHtml(game.id)}" data-format="${escapeHtml(format)}">
-        <div class="registration-fields">
-          ${requiresTeam ? `<div class="field"><label for="team-${escapeHtml(format)}">팀명</label><input id="team-${escapeHtml(format)}" name="teamName" type="text" ${registration ? `value="${escapeHtml(registration.teamName || '')}"` : 'required'} placeholder="팀명을 입력하세요" /></div>` : ''}
-          <div class="field"><label for="name-${escapeHtml(format)}">이름</label><input id="name-${escapeHtml(format)}" name="nickname" type="text" required value="${escapeHtml(registration?.nickname || currentUser.nickname)}" /></div>
-          <div class="field"><label for="member-id-${escapeHtml(format)}">ID <span class="optional-label">(선택)</span></label><input id="member-id-${escapeHtml(format)}" name="memberId" type="text" value="${escapeHtml(registration?.memberId || currentUser.memberId || '')}" placeholder="없으면 비워두세요" /></div>
-          <div class="field"><label for="rank-${escapeHtml(format)}">부수</label><input id="rank-${escapeHtml(format)}" name="rank" type="text" required value="${escapeHtml(registration?.rank || currentUser.rank || '')}" placeholder="예: 3부" /></div>
-        </div>
-        <button class="btn btn-primary" type="submit" ${isFull && !registration ? 'disabled' : ''}>${registration ? '신청 내용 수정 저장' : isFull ? '정원 마감' : '참가신청'}</button>
-      </form>
-    `;
+    const registration = currentUser
+      ? getGameRegistrations(game, format).find((item) => item.userId === currentUser.id)
+      : (state.guestEntries[game.id] || []).find((item) => item.format === format);
+    const profile = registration || currentUser || state.guestEntries[game.id]?.[0] || {};
+    const closed = isRegistrationClosed(game, format) || game.qualifyingGroups?.[format]?.groups?.length || game.preliminaryMatches?.[format]?.matches?.length || game.tournaments?.[format];
+    const full = getGameRegistrations(game, format).length >= game.maxParticipants && !registration;
+    const fields = `<div class="registration-fields"><div class="field"><label for="name-${format}">이름</label><input id="name-${format}" name="nickname" maxlength="60" required value="${escapeHtml(profile.nickname || '')}" /></div>${!currentUser ? `<div class="field"><label for="gender-${format}">성별</label><select id="gender-${format}" name="gender" required><option value="">선택</option><option value="male" ${profile.gender === 'male' ? 'selected' : ''}>남자</option><option value="female" ${profile.gender === 'female' ? 'selected' : ''}>여자</option></select></div>` : ''}<div class="field"><label for="rank-${format}">부수</label><input id="rank-${format}" name="rank" maxlength="20" required value="${escapeHtml(profile.rank || '')}" placeholder="예: 7부" /></div></div>`;
+    return `<form class="registration-form" data-form="game-apply" data-game-id="${escapeHtml(game.id)}" data-format="${format}" novalidate>${registration ? '<p class="participation-saved">신청 완료 · 내 참가정보</p>' : ''}${currentUser ? `<p>${escapeHtml(profile.nickname || '')} · ${escapeHtml(genderLabel(currentUser.gender))} · ${escapeHtml(profile.rank || '부수 입력 필요')}</p><details class="participant-profile" ${!profile.nickname || !profile.rank ? 'open' : ''}><summary>선수정보 확인·수정</summary>${fields}</details>` : fields}${format !== 'singles' ? `<div class="field"><label for="team-${format}">팀명</label><input id="team-${format}" name="teamName" maxlength="100" required value="${escapeHtml(registration?.teamName || '')}" /></div>` : ''}<p data-apply-feedback role="alert" tabindex="-1"></p><div class="button-row"><button class="btn btn-primary" type="submit" ${closed || full ? 'disabled' : ''}>${closed ? '신청 마감' : full ? '정원 마감' : registration ? '신청 내용 수정 저장' : currentUser ? '이 정보로 참가신청' : '비회원 참가신청'}</button>${registration ? `<button type="button" class="btn btn-secondary" data-cancel-participation="${format}" data-game-id="${escapeHtml(game.id)}" ${closed ? 'disabled' : ''}>참가 취소</button>` : ''}</div></form>`;
   }
 
   function renderParticipantStatus(game, format) {
@@ -3664,74 +3722,47 @@
   }
 
   function handleGameApply(gameId) {
-    const currentUser = getCurrentUser();
     const game = state.games.find((item) => item.id === gameId);
     if (!game) return;
-    if (!currentUser) {
-      openLoginForGame(gameId);
-      return;
-    }
-    state.selectedGameId = game.id;
+    openGameFromCard(gameId);
+    state.guestMode = false;
     state.detailTab = 'applications';
-    state.statusSubtab = 'info';
-    state.statusFormat = getGameFormats(game)[0] || null;
     render();
+    void loadGuestEntries(gameId);
   }
 
   async function handleRegistrationSubmit(form) {
+    if (form.dataset.submitting) return;
     const currentUser = getCurrentUser();
-    const game = state.games.find((item) => item.id === form.dataset.gameId);
+    const gameId = form.dataset.gameId;
     const format = form.dataset.format;
-    if (!currentUser || !game || !getGameFormats(game).includes(format)) return;
-    if (isRegistrationClosed(game, format)) {
-      setFlash(`${FORMAT_LABELS[format]} 선수등록이 마감되었습니다.`, 'error');
-      render();
+    const values = Object.fromEntries(new FormData(form).entries());
+    const feedback = form.querySelector('[data-apply-feedback]');
+    const showError = (message) => { feedback.textContent = message; feedback.focus(); };
+    if (!trimValue(values.nickname) || !trimValue(values.rank) || (!currentUser && !['male', 'female'].includes(values.gender)) || (format !== 'singles' && !trimValue(values.teamName))) {
+      const details = form.querySelector('details');
+      if (details) details.open = true;
+      showError('이름, 성별, 부수와 필요한 팀명을 입력해 주세요. 입력한 내용은 유지됩니다.');
       return;
     }
-
-    const formData = Object.fromEntries(new FormData(form).entries());
-    const nickname = trimValue(formData.nickname);
-    const memberId = trimValue(formData.memberId);
-    const rank = trimValue(formData.rank);
-    const teamName = trimValue(formData.teamName);
-    if (!nickname || !rank || (format !== 'singles' && !teamName)) {
-      setFlash('이름, 부수와 경기형식에 필요한 팀명을 입력해 주세요. ID는 선택입니다.', 'error');
-      render();
-      return;
-    }
-
+    const submit = form.querySelector('[type="submit"]');
+    const label = submit.textContent;
+    form.dataset.submitting = 'true';
+    submit.disabled = true;
+    submit.textContent = '신청 저장 중…';
+    feedback.textContent = '';
     try {
-      await apiRequest(`/api/games/${encodeURIComponent(game.id)}/registrations`, {
-        method: 'POST',
-        body: JSON.stringify({ format, nickname, memberId, rank, teamName }),
+      const token = !currentUser ? getOrCreateGuestToken(gameId) : null;
+      const result = await apiRequest(`/api/games/${encodeURIComponent(gameId)}/${currentUser ? 'registrations' : 'guest-registrations'}`, {
+        method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {}, body: JSON.stringify({ ...values, format }),
       });
+      if (!result.registration?.id) throw new Error('서버에서 신청 완료를 확인하지 못했습니다. 잠시 후 다시 확인해 주세요.');
+      if (!currentUser) state.guestEntries[gameId] = [...(state.guestEntries[gameId] || []).filter((row) => row.format !== format), result.registration];
       await loadState();
-      setFlash(`${FORMAT_LABELS[format]} 참가신청 내용이 저장되었습니다.`, 'success');
+      setFlash('참가신청 내용이 저장되었습니다.', 'success');
       render();
-      return;
-    } catch (error) {
-      if (!error.message.includes('Failed to fetch') && !error.message.includes('서버 요청')) {
-        setFlash(error.message, 'error');
-        render();
-        return;
-      }
-    }
-
-    const registrations = getGameRegistrations(game);
-    const existingRegistration = registrations.find((item) => item.userId === currentUser.id && item.format === format);
-    if (getGameRegistrations(game, format).length >= game.maxParticipants) {
-      setFlash('해당 경기형식의 참가 정원이 마감되었습니다.', 'error');
-      render();
-      return;
-    }
-    if (existingRegistration) {
-      Object.assign(existingRegistration, { nickname, memberId, rank, teamName, registrationSource: 'online', appliedAt: new Date().toISOString() });
-    } else {
-      game.registrations = [...registrations, { userId: currentUser.id, nickname, gender: currentUser.gender || '', memberId, rank, teamName, format, registrationSource: 'online', appliedAt: new Date().toISOString() }];
-    }
-    persistGames();
-    setFlash(`${FORMAT_LABELS[format]} 참가신청 내용이 ${existingRegistration ? '수정' : '등록'}되었습니다.`, 'success');
-    render();
+    } catch (error) { showError(`${error.message || '신청을 저장하지 못했습니다.'} 입력한 내용은 유지됩니다.`); }
+    finally { delete form.dataset.submitting; submit.disabled = false; submit.textContent = label; }
   }
 
   async function handleOperatorRegistrationSubmit(form) {
@@ -3920,9 +3951,13 @@
     try {
       const result = await apiRequest('/api/auth/signup', {
         method: 'POST',
-        body: JSON.stringify({ nickname, memberId, password, phone, gender, rank, region, regionSido, regionSigungu }),
+        body: JSON.stringify({ nickname, memberId, password, phone, gender, rank, region, regionSido, regionSigungu, ...(state.pendingGuestClaim ? { guestClaim: state.pendingGuestClaim } : {}) }),
       });
       if (!result.user?.id) throw new Error('서버에서 가입 완료를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      state.signupGuestLinked = result.guestLinked === true;
+      if (state.signupGuestLinked && state.pendingGuestClaim) forgetGuestToken(state.pendingGuestClaim.gameId);
+      state.pendingGuestClaim = null;
+      state.guestSignupDraft = null;
       form.reset();
       state.signupCompleted = true;
       state.page = 'signup-success';
@@ -3962,10 +3997,14 @@
       state.users = [result.user];
       state.sessionUserId = result.user.id;
       state.page = 'dashboard';
-      state.selectedGameId = state.pendingGameId;
+      const applicationGameId = state.pendingGameId;
+      state.selectedGameId = applicationGameId;
       state.selectedPublicGameId = null;
       state.pendingGameId = null;
       form.reset();
+      if (applicationGameId && guestAccessToken(applicationGameId)) {
+        try { await claimGuestEntry(applicationGameId); } catch (error) { state.guestErrors[applicationGameId] = error.message; }
+      }
       await loadState();
       clearFlash();
       setFlash(`${result.user.nickname}님, 로그인되었습니다.`, 'success');
@@ -4305,6 +4344,57 @@
   }
 
   async function handleAppClick(event) {
+    const participationLogin = event.target.closest('[data-participation-login]');
+    if (participationLogin) { openLoginForGame(participationLogin.dataset.participationLogin); return; }
+    if (event.target.closest('[data-guest-start]')) { state.guestMode = true; render(); return; }
+    const guestSignup = event.target.closest('[data-guest-signup]');
+    if (guestSignup) {
+      const gameId = guestSignup.dataset.guestSignup;
+      state.guestSignupDraft = state.guestEntries[gameId]?.[0] || null;
+      state.pendingGuestClaim = { gameId, token: guestAccessToken(gameId) };
+      state.pendingGameId = gameId;
+      openAuthTab('signup');
+      return;
+    }
+    if (event.target.closest('[data-copy-guest-link]')) {
+      const field = document.getElementById('guestManagementLink');
+      const feedback = document.querySelector('[data-guest-link-feedback]');
+      try {
+        await navigator.clipboard.writeText(field.value);
+        feedback.textContent = '내 신청 링크를 복사했습니다. 개인적으로 보관해 주세요.';
+      } catch {
+        field.focus(); field.select();
+        feedback.textContent = '선택된 내 신청 링크를 직접 복사하여 보관해 주세요.';
+      }
+      return;
+    }
+    const claimGuest = event.target.closest('[data-claim-guest]');
+    if (claimGuest) {
+      const gameId = claimGuest.dataset.claimGuest;
+      if (claimGuest.disabled) return;
+      claimGuest.disabled = true;
+      try { await claimGuestEntry(gameId); await loadState(); setFlash('기존 참가신청이 내 계정에 연결되었습니다.', 'success'); }
+      catch (error) { state.guestErrors[gameId] = error.message; }
+      render();
+      return;
+    }
+    const cancelParticipation = event.target.closest('[data-cancel-participation]');
+    if (cancelParticipation) {
+      if (cancelParticipation.disabled || !window.confirm('이 종목의 참가신청을 취소하시겠습니까?')) return;
+      const gameId = cancelParticipation.dataset.gameId;
+      const format = cancelParticipation.dataset.cancelParticipation;
+      const member = getCurrentUser();
+      const form = cancelParticipation.closest('form');
+      cancelParticipation.disabled = true;
+      try {
+        await apiRequest(`/api/games/${encodeURIComponent(gameId)}/${member ? 'registrations/self' : 'guest-registrations'}`, {
+          method: 'DELETE', headers: member ? {} : { Authorization: `Bearer ${guestAccessToken(gameId)}` }, body: JSON.stringify({ format }),
+        });
+        if (!member) state.guestEntries[gameId] = (state.guestEntries[gameId] || []).filter((row) => row.format !== format);
+        await loadState(); setFlash('참가신청이 취소되었습니다.', 'success'); render();
+      } catch (error) { form.querySelector('[data-apply-feedback]').textContent = error.message; cancelParticipation.disabled = false; }
+      return;
+    }
     const importGameButton = event.target.closest('[data-import-game]');
     if (importGameButton) {
       const gameId = importGameButton.closest('[data-game-import]').querySelector('[data-reuse-game]').value;
@@ -4871,10 +4961,6 @@
 
     const detailTabButton = event.target.closest('[data-detail-tab]');
     if (detailTabButton) {
-      if (detailTabButton.dataset.detailTab === 'applications' && !getCurrentUser()) {
-        openLoginForGame(state.selectedPublicGameId || state.selectedGameId);
-        return;
-      }
       setDetailTab(detailTabButton.dataset.detailTab);
       return;
     }
@@ -5349,8 +5435,16 @@
 
   async function init() {
     applyTheme(getTheme(), false);
-    await loadState();
     const entryUrl = new URL(window.location.href);
+    const privateToken = new URLSearchParams(entryUrl.hash.slice(1)).get('entry');
+    const privateGameId = entryUrl.searchParams.get('game');
+    if (privateToken && privateGameId && /^[A-Za-z0-9_-]{43}$/.test(privateToken)) {
+      saveGuestToken(privateGameId, privateToken);
+      const cleanUrl = new URL(entryUrl);
+      cleanUrl.hash = '';
+      window.history.replaceState(null, '', cleanUrl.href);
+    }
+    await loadState();
     const entryGameId = entryUrl.searchParams.get('game');
     const savedRoute = readSessionJson(BROWSER_ROUTE_KEY, null);
     if (entryGameId) {
@@ -5365,6 +5459,16 @@
           else { state.selectedGameId = game.id; state.page = 'dashboard'; }
         } else if (getCurrentUser()) { state.selectedGameId = game.id; state.page = 'dashboard'; }
         else state.selectedPublicGameId = game.id;
+        if (entryUrl.searchParams.get('apply') === '1' && state.page !== 'auth') state.detailTab = 'applications';
+        if (guestAccessToken(game.id)) {
+          await loadGuestEntries(game.id, false);
+          state.guestMode = true;
+          if (state.page === 'auth' && savedRoute?.authTab === 'signup' && savedRoute?.pendingGameId === game.id) {
+            state.authTab = 'signup';
+            state.guestSignupDraft = state.guestEntries[game.id]?.[0] || null;
+            if (state.guestSignupDraft) state.pendingGuestClaim = { gameId: game.id, token: guestAccessToken(game.id) };
+          }
+        }
       } else {
         state.page = getCurrentUser() ? 'dashboard' : 'public';
         setFlash('초대받은 경기를 찾을 수 없습니다. 경기 목록에서 확인해 주세요.', 'error');

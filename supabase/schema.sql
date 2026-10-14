@@ -115,6 +115,13 @@ create unique index if not exists registrations_user_format_key
   on public.registrations (game_id, format, user_id)
   where user_id is not null;
 
+-- A private bearer link controls only the guest's own registration(s).
+-- Store its hash, never the link itself. Existing deployments also add this lazily.
+alter table public.registrations add column if not exists guest_token_hash text;
+create unique index if not exists registrations_guest_format_key
+  on public.registrations (game_id, format, guest_token_hash)
+  where guest_token_hash is not null;
+
 create table if not exists public.groups (
   id uuid primary key default gen_random_uuid(),
   game_id uuid not null references public.games(id) on delete cascade,

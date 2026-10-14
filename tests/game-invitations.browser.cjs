@@ -232,6 +232,7 @@ async function bindContext(browser, authenticated) {
     assert.equal(await guest.page.locator('[data-open-operations]').count(), 0);
     await guest.page.reload();
     await guest.page.locator('[data-game-apply]').click();
+    await guest.page.locator('[data-participation-login]').click();
     assert.equal(new URL(guest.page.url()).searchParams.get('join'), '1');
     await guest.page.reload();
     await guest.page.locator('form[data-form="login"]').waitFor();

@@ -34,6 +34,8 @@
     else url.searchParams.delete('game');
     if (route.pendingGameId) url.searchParams.set('join', '1');
     else url.searchParams.delete('join');
+    if (gameId && route.detailTab === 'applications') url.searchParams.set('apply', '1');
+    else url.searchParams.delete('apply');
     return url.href;
   }
   function suggestedTitle(draft, seriesName = '') {

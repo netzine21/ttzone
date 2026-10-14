@@ -2,6 +2,12 @@ const crypto = require('crypto');
 const { getPool } = require('./db');
 const incheonVenues = require('./incheon-venues');
 const bucheonVenues = require('./bucheon-venues');
+const { createParticipantRegistration, publicRegistration } = require('./participant-registration');
+let participantRegistration;
+function participantService(pool) {
+  if (!participantRegistration) participantRegistration = createParticipantRegistration(pool);
+  return participantRegistration;
+}
 
 const SESSION_COOKIE = 'ttgms_session';
 const VISITOR_COOKIE = 'ttgms_visitor';
@@ -455,6 +461,11 @@ async function handleApi(req, res, requestPath) {
     } catch (error) {
       console.error('방문자 접속 기록 저장 실패:', error);
     }
+    if (/^\/api\/games\/[^/]+\/(guest-registrations(?:\/claim)?|registrations(?:\/self)?)$/.test(requestPath)) {
+      await ensureGameAccessColumns();
+      await ensureGameStateColumns();
+      if (await participantService(pool).handle(req, res, requestPath, { readBody, findSession, sendJson })) return;
+    }
     if (requestPath === '/api/access-heartbeat' && req.method === 'GET') {
       return sendJson(res, 200, { ok: true });
     }
@@ -758,13 +769,29 @@ async function handleApi(req, res, requestPath) {
         return sendJson(res, 400, { error: '필수 회원정보를 모두 입력해 주세요.' });
       }
       const passwordHash = await hashPassword(password);
-      const result = await pool.query(
-        `insert into public.users (nickname, member_id, password_hash, gender, rank, phone, region, region_sido, region_sigungu, address)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-         returning *`,
-        [nickname, memberId, passwordHash, gender, rank, phone, region, regionSido, regionSigungu, String(body.address || '').trim() || null]
-      );
-      return sendJson(res, 201, { user: publicUser(result.rows[0]) });
+      if (body.guestClaim) {
+        await ensureGameAccessColumns();
+        await participantService(pool).ensureSchema();
+      }
+      const client = await pool.connect();
+      try {
+        await client.query('begin');
+        const result = await client.query(
+          `insert into public.users (nickname, member_id, password_hash, gender, rank, phone, region, region_sido, region_sigungu, address)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning *`,
+          [nickname, memberId, passwordHash, gender, rank, phone, region, regionSido, regionSigungu, String(body.address || '').trim() || null]
+        );
+        let linked = false;
+        if (body.guestClaim) {
+          await participantService(pool).claimAfterSignup(String(body.guestClaim.gameId || ''), body.guestClaim.token, result.rows[0], client);
+          linked = true;
+        }
+        await client.query('commit');
+        return sendJson(res, 201, { user: publicUser(result.rows[0]), guestLinked: linked });
+      } catch (error) {
+        await client.query('rollback');
+        throw error;
+      } finally { client.release(); }
     }
 
     if (requestPath === '/api/auth/login' && req.method === 'POST') {
@@ -1301,7 +1328,6 @@ async function handleApi(req, res, requestPath) {
       return sendJson(res, 201, { added, skipped, game: games.find((item) => item.id === gameId) });
     }
 
-    const registrationMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations$/);
     const registrationUpdateMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations\/([^/]+)$/);
     const manualRegistrationMatch = requestPath.match(/^\/api\/games\/([^/]+)\/registrations\/manual$/);
     if (manualRegistrationMatch && req.method === 'POST') {
@@ -1345,7 +1371,7 @@ async function handleApi(req, res, requestPath) {
          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'manual') returning *`,
         [gameId, format, userId, nickname, memberResult.rows[0]?.gender || gender, memberId || null, rank, teamName || null, user.id]
       );
-      return sendJson(res, 201, { registration: result.rows[0] });
+      return sendJson(res, 201, { registration: publicRegistration(result.rows[0]) });
     }
     if (registrationUpdateMatch && req.method === 'PATCH') {
       const user = await findSession(req);
@@ -1380,7 +1406,7 @@ async function handleApi(req, res, requestPath) {
           returning *`,
         [userId, nickname, memberResult.rows[0]?.gender || gender, memberId || null, rank, teamName || null, registrationId, gameId]
       );
-      return sendJson(res, 200, { registration: updated.rows[0] });
+      return sendJson(res, 200, { registration: publicRegistration(updated.rows[0]) });
     }
     if (registrationUpdateMatch && req.method === 'DELETE') {
       const user = await findSession(req);
@@ -1401,35 +1427,6 @@ async function handleApi(req, res, requestPath) {
       await pool.query('delete from public.registrations where id = $1 and game_id = $2', [registrationId, gameId]);
       return sendJson(res, 200, { ok: true, registrationId });
     }
-    if (registrationMatch && req.method === 'POST') {
-      const user = await findSession(req);
-      if (!user) return sendJson(res, 401, { error: '로그인이 필요합니다.' });
-      const body = await readBody(req);
-      const gameId = registrationMatch[1];
-      const format = String(body.format || '');
-      if (!['singles', 'doubles', 'team'].includes(format) || !String(body.nickname || '').trim() || !String(body.rank || '').trim() || (format !== 'singles' && !String(body.teamName || '').trim())) {
-        return sendJson(res, 400, { error: '참가신청 정보를 확인해 주세요.' });
-      }
-      const gameStatus = await pool.query('select registration_closed from public.games where id = $1', [gameId]);
-      if (gameStatus.rows[0]?.registration_closed?.[format] === true) return sendJson(res, 400, { error: '해당 경기종목의 선수등록이 마감되었습니다.' });
-      const existing = await pool.query('select id from public.registrations where game_id = $1 and format = $2 and user_id = $3', [gameId, format, user.id]);
-      let result;
-      if (existing.rows[0]) {
-        result = await pool.query(
-          `update public.registrations set nickname = $1, gender = $2, member_id = $3, rank = $4, team_name = $5, registration_source = 'online', updated_at = now()
-            where id = $6 returning *`,
-          [String(body.nickname).trim(), user.gender, String(body.memberId || '').trim() || null, String(body.rank).trim(), String(body.teamName || '').trim() || null, existing.rows[0].id]
-        );
-      } else {
-        result = await pool.query(
-          `insert into public.registrations (game_id, format, user_id, nickname, gender, member_id, rank, team_name, registered_by, registration_source)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $3, 'online') returning *`,
-          [gameId, format, user.id, String(body.nickname).trim(), user.gender, String(body.memberId || '').trim() || null, String(body.rank).trim(), String(body.teamName || '').trim() || null]
-        );
-      }
-      return sendJson(res, 201, { registration: result.rows[0] });
-    }
-
     if (gameUpdateMatch && req.method === 'DELETE') {
       await ensureGameAccessColumns();
       const user = await findSession(req);

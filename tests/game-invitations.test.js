@@ -50,3 +50,11 @@ test('suggested title and quick date use local calendar values', () => {
   assert.equal(suggestedTitle({ scheduledAt: '2026-10-17T14:30', venueName: '우리탁구장' }), '10월 17일 우리탁구장 게임');
   assert.equal(suggestedTitle({ scheduledAt: '2026-10-17T14:30' }, '월례리그'), '10월 17일 월례리그');
 });
+
+test('guest application route survives reload while public invitation strips private access', () => {
+  const href = routeUrl('https://ttground.com/', { selectedPublicGameId: 'game', detailTab: 'applications' });
+  assert.equal(new URL(href).searchParams.get('apply'), '1');
+  const privateHref = `${href}#entry=private-proof`;
+  assert.equal(inviteUrl(privateHref, 'game'), 'https://ttground.com/?game=game');
+  assert.equal(new URL(routeUrl(href, { selectedPublicGameId: 'game', detailTab: 'status' })).searchParams.has('apply'), false);
+});

@@ -2649,6 +2649,16 @@ html[data-theme="light"] .league-series-card__logo {
 .invite-qr-help { padding: 16px; margin-top: 16px; border: 1px solid var(--border-strong); border-radius: 12px; line-height: 1.7; }
 .invite-qr-help h3 { margin: 0 0 10px; font-size: 1rem; }
 .invite-qr-help p { margin: 8px 0 0; }
+.participation-choice, .guest-completion { padding: 18px; margin-bottom: 18px; border: 1px solid var(--border-strong); border-radius: 14px; line-height: 1.7; }
+.guest-completion { border-color: var(--primary); }
+.guest-completion h3 { margin-top: 0; }
+.guest-completion input { display: block; width: 100%; min-width: 0; min-height: 44px; margin: 8px 0; padding: 12px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-strong); color: var(--text); font: inherit; font-size: .85rem; }
+.guest-completion .button-row { margin: 14px 0; }
+.participation-error, [data-apply-feedback]:not(:empty) { padding: 12px; border: 1px solid var(--danger); border-radius: 10px; line-height: 1.6; overflow-wrap: anywhere; }
+.participant-profile { margin: 12px 0; }
+.participant-profile summary { cursor: pointer; margin-bottom: 12px; }
+.participation-saved { color: var(--primary); }
+.registration-form [data-apply-feedback]:empty { display: none; }
 .game-rules-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .game-rules-actions > .game-list-action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; min-height: 52px; padding: 12px 8px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-strong); color: var(--text); }
 .game-rules-actions > .game-list-action--primary { border-color: var(--primary); color: var(--primary); }
