@@ -68,8 +68,30 @@ async function bindContext(browser, authenticated) {
     const page = owner.page;
     await page.goto('http://localhost:4177/');
     await page.locator('[data-show-create-game]').click();
+    assert.equal(await page.locator('[data-reuse-game]').isVisible(), false);
+    assert.equal(await page.locator('#gameTitle').isVisible(), true);
+    await page.screenshot({ path: path.join(output, 'create-direct-start-mobile.png'), fullPage: true });
+    await page.locator('#gameTitle').fill('직접 작성 중인 새 게임');
+    await page.locator('[data-game-import] > summary').click();
+    assert.equal(await page.locator('[data-import-game]').isDisabled(), true);
     await page.locator('[data-reuse-game]').selectOption('source');
+    assert.equal(await page.locator('#gameTitle').inputValue(), '직접 작성 중인 새 게임');
+    assert.equal(await page.locator('#gameVenueName').inputValue(), '');
+    assert.equal(createRequests.length, 0);
+    await page.locator('[data-reuse-game]').selectOption('');
+    assert.equal(await page.locator('[data-import-game]').isDisabled(), true);
+    assert.equal(await page.locator('#gameTitle').inputValue(), '직접 작성 중인 새 게임');
+    await page.locator('[data-reuse-game]').selectOption('source');
+    for (const width of [320, 390, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: path.join(output, 'create-import-picker-mobile.png'), fullPage: true });
+    await page.locator('[data-import-game]').click();
     assert.equal(await page.locator('[data-reuse-game]').inputValue(), 'source');
+    assert.equal(await page.locator('[data-reuse-game]').isVisible(), false);
+    await page.locator('.create-source-banner').getByText('이전 정기리그', { exact: false }).waitFor();
     assert.equal(await page.locator('#gameTitle').inputValue(), '이전 정기리그');
     await page.locator('#gameTitle').fill('수정한 게임 이름');
     await page.locator('[data-create-day="1"]').click();
@@ -77,13 +99,14 @@ async function bindContext(browser, authenticated) {
     await page.locator('#gameMaxParticipants').press('Tab');
     assert.equal(await page.locator('#gameTitle').inputValue(), '수정한 게임 이름');
     assert.equal(await page.locator('[data-reuse-game]').inputValue(), 'source');
-    await page.locator('[data-reuse-game]').selectOption('');
+    await page.screenshot({ path: path.join(output, 'create-imported-mobile.png'), fullPage: true });
+    await page.locator('[data-create-fresh]').click();
     assert.equal(await page.locator('#gameTitle').inputValue(), '');
     assert.equal(await page.locator('#gameVenueName').inputValue(), '');
     assert.equal(await page.locator('#gameScheduledAt').inputValue(), '');
     assert.equal(await page.locator('#gameMaxParticipants').inputValue(), '16');
     assert.equal(await page.locator('[name="reuseRoster"]').count(), 0);
-    console.log('PASS: previous-game choice remains selected, title is editable, start fresh resets copied settings');
+    console.log('PASS: fresh form is default; optional import is separate and explicit; selection alone preserves edits; imported source is labeled; reset creates blank draft');
     await page.locator('#gameVenueName').fill('테스트탁구장');
     await page.locator('#gameVenueName').press('Tab');
     assert.equal(await page.locator('#gameVenueAddress').inputValue(), '테스트시 테스트로 1');
