@@ -2646,6 +2646,14 @@ html[data-theme="light"] .league-series-card__logo {
 .game-invite-toolbar { justify-content: flex-end; margin-top: 10px; }
 .invite-qr { width: 240px; max-width: 100%; margin: 20px auto 0; background: #fff; }
 .invite-qr svg { display: block; width: 100%; height: auto; }
+.invite-qr-help { padding: 16px; margin-top: 16px; border: 1px solid var(--border-strong); border-radius: 12px; line-height: 1.7; }
+.invite-qr-help h3 { margin: 0 0 10px; font-size: 1rem; }
+.invite-qr-help p { margin: 8px 0 0; }
+.game-rules-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.game-rules-actions > .game-list-action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; min-height: 52px; padding: 12px 8px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-strong); color: var(--text); }
+.game-rules-actions > .game-list-action--primary { border-color: var(--primary); color: var(--primary); }
+.game-rules-actions > .game-list-action:hover { border-color: var(--primary); color: var(--primary); }
+.game-rules-actions .game-list-action__icon { flex-shrink: 0; width: 20px; height: 20px; }
 
 @media (max-width: 560px) {
   .create-import__controls { grid-template-columns: minmax(0, 1fr); }

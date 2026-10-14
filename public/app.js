@@ -103,6 +103,7 @@
     createSubmitting: false,
     inviteGameId: null,
     inviteQrOpen: false,
+    inviteSharing: false,
     gameCreationNotice: null,
     showLeagueSeries: false,
     selectedSeriesId: null,
@@ -1164,7 +1165,7 @@
     const hasAppliedAllFormats = currentUser && formats.length > 0 && formats.every((format) => getGameRegistrations(game, format).some((registration) => registration.userId === currentUser.id));
     const allFormatsClosed = formats.length > 0 && formats.every((format) => isRegistrationClosed(game, format));
     const applyAction = isOwner || allFormatsClosed || hasAppliedAllFormats ? '' : `<div class="public-apply-action"><button type="button" class="btn btn-primary" data-game-apply="${escapeHtml(game.id)}">참가신청</button></div>`;
-    const editAction = isOwner ? `<div class="game-edit-bottom-action"><button type="button" class="game-list-action" data-edit-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h4L19 9l-4-4L5 15v4zM13 7l4 4" /></svg><span>내용 수정</span></button>${state.serverGameIds.includes(game.id) ? `<button type="button" class="game-list-action game-list-action--primary" data-open-invite="${escapeHtml(game.id)}">참가자 초대</button>` : ''}</div>` : '';
+    const editAction = isOwner ? `<div class="game-edit-bottom-action game-rules-actions" aria-label="경기요강 관리"><button type="button" class="game-list-action" data-edit-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h4L19 9l-4-4L5 15v4zM13 7l4 4" /></svg><span>내용 수정</span></button>${state.serverGameIds.includes(game.id) ? `<button type="button" class="game-list-action game-list-action--primary" data-open-invite="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3" /><path d="M2 21v-2a6 6 0 0 1 12 0v2M19 7v8M15 11h8" /></svg><span>참가자 초대</span></button>` : ''}</div>` : '';
     const canDelete = currentUser?.role === 'admin' || (isOwner && !formats.some((format) => isRegistrationClosed(game, format)));
     const deleteAction = canDelete ? `<div class="game-edit-bottom-action"><button type="button" class="game-list-action game-list-action--danger" data-delete-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M9 7V4h6v3M7 7l1 13h8l1-13" /></svg><span>${currentUser?.role === 'admin' ? '게임 삭제(관리자)' : '게임 삭제'}</span></button></div>` : '';
     const creationNotice = isOwner && state.gameCreationNotice?.gameId === game.id
@@ -1551,12 +1552,59 @@
         const code = window.qrcode(0, 'M');
         code.addData(url);
         code.make();
-        qr = `<div class="invite-qr" role="img" aria-label="${escapeHtml(game.title)} 초대 QR">${code.createSvgTag({ cellSize: 5, margin: 20, scalable: true })}</div><p class="muted">스마트폰 카메라로 QR을 비추면 이 경기가 열립니다.</p>`;
+        qr = `<div class="invite-qr" role="img" aria-label="${escapeHtml(game.title)} 초대 QR">${code.createSvgTag({ cellSize: 5, margin: 20, scalable: true })}</div><div class="invite-qr-help"><h3>현장에서 QR로 초대하기</h3><p>1. 이 QR 화면을 참가자에게 보여 주세요.</p><p>2. 참가자가 다른 스마트폰의 카메라로 QR을 비추고 표시되는 링크를 누르면 경기요강이 열립니다. 참가신청은 로그인 후 할 수 있습니다.</p><p>같은 휴대폰에서 단체방으로 보낼 때는 위의 ‘초대 링크 복사’를 이용해 주세요.</p></div>`;
       } catch {
         qr = '<p role="status">QR을 표시하지 못했습니다. 초대 링크를 사용해 주세요.</p>';
       }
     }
-    return `<section class="panel section-card game-invitation"><p class="section-kicker">함께할 사람을 초대하세요</p><h1>참가자 초대</h1><h2>${escapeHtml(game.title)}</h2><p>${escapeHtml(formatDateTime(game.scheduledAt))}</p><p>${escapeHtml(game.venueName || game.location)} · ${escapeHtml(getGameFormats(game).map((format) => FORMAT_LABELS[format]).join(' · '))} · 모집 ${game.maxParticipants}명</p><label for="gameInviteLink">초대 링크</label><input id="gameInviteLink" type="url" readonly value="${escapeHtml(url)}" /><div class="invite-actions"><button type="button" class="btn btn-primary" data-invite-copy="link">초대 링크 복사</button><button type="button" class="btn btn-secondary" data-invite-share>공유하기</button><button type="button" class="btn btn-secondary" data-invite-qr aria-expanded="${Boolean(state.inviteQrOpen)}">QR ${state.inviteQrOpen ? '닫기' : '보기'}</button></div>${qr}<details class="create-extra"><summary>단체방 초대 문구</summary><textarea aria-label="단체방 초대 문구" readonly rows="6">${escapeHtml(gameInviteText(game))}</textarea><button type="button" class="btn btn-secondary" data-invite-copy="text">초대 문구 복사</button></details><p data-invite-feedback role="status" aria-live="polite"></p><div class="invite-actions"><button type="button" class="btn btn-secondary" data-invite-open>참가자 확인</button>${getCurrentUser()?.id === game.operatorId ? '<button type="button" class="btn btn-primary" data-invite-prepare>경기 준비</button>' : ''}<button type="button" class="btn btn-ghost" data-invite-close>경기요강으로 돌아가기</button></div></section>`;
+    return `<section class="panel section-card game-invitation"><p class="section-kicker">함께할 사람을 초대하세요</p><h1>참가자 초대</h1><h2>${escapeHtml(game.title)}</h2><p>${escapeHtml(formatDateTime(game.scheduledAt))}</p><p>${escapeHtml(game.venueName || game.location)} · ${escapeHtml(getGameFormats(game).map((format) => FORMAT_LABELS[format]).join(' · '))} · 모집 ${game.maxParticipants}명</p><label for="gameInviteLink">초대 링크</label><input id="gameInviteLink" type="url" readonly value="${escapeHtml(url)}" /><div class="invite-actions"><button type="button" class="btn btn-primary" data-invite-copy="link">초대 링크 복사</button><button type="button" class="btn btn-secondary" data-invite-share ${state.inviteSharing ? 'disabled aria-busy="true"' : ''}>${state.inviteSharing ? '공유 창 확인 중…' : '공유하기'}</button><button type="button" class="btn btn-secondary" data-invite-qr aria-expanded="${Boolean(state.inviteQrOpen)}">현장 초대 QR ${state.inviteQrOpen ? '닫기' : '보기'}</button></div><p class="field-hint">단체방 초대는 링크 복사·공유하기를, 현장에서 직접 초대할 때는 QR을 이용해 주세요.</p>${qr}<details class="create-extra"><summary>단체방 초대 문구</summary><textarea aria-label="단체방 초대 문구" readonly rows="6">${escapeHtml(gameInviteText(game))}</textarea><button type="button" class="btn btn-secondary" data-invite-copy="text">초대 문구 복사</button></details><p data-invite-feedback role="status" aria-live="polite"></p><div class="invite-actions"><button type="button" class="btn btn-secondary" data-invite-open>참가자 확인</button>${getCurrentUser()?.id === game.operatorId ? '<button type="button" class="btn btn-primary" data-invite-prepare>경기 준비</button>' : ''}<button type="button" class="btn btn-ghost" data-invite-close>경기요강으로 돌아가기</button></div></section>`;
+  }
+
+  async function shareInvitation(game) {
+    if (state.inviteSharing) return;
+    const data = {
+      title: game.title,
+      text: gameInviteText(game).split('\n참가하기:')[0],
+      url: window.GameInvitations.inviteUrl(window.location.href, game.id),
+    };
+    let timer;
+    const updateFeedback = (message) => {
+      if (state.page !== 'invite' || state.inviteGameId !== game.id) return;
+      const feedback = document.querySelector('[data-invite-feedback]');
+      if (feedback) feedback.textContent = message;
+    };
+    const updateButton = () => {
+      const button = document.querySelector('[data-invite-share]');
+      if (!button) return;
+      button.disabled = state.inviteSharing;
+      button.textContent = state.inviteSharing ? '공유 창 확인 중…' : '공유하기';
+      if (state.inviteSharing) button.setAttribute('aria-busy', 'true');
+      else button.removeAttribute('aria-busy');
+    };
+    try {
+      if (!navigator.share || (navigator.canShare && !navigator.canShare(data))) {
+        await copyInvitation(game, 'text');
+        return;
+      }
+      state.inviteSharing = true;
+      updateButton();
+      updateFeedback('기기의 공유 창에서 보낼 앱을 선택해 주세요. 창이 열리지 않으면 초대 링크 복사를 이용해 주세요.');
+      // Some host share dialogs never settle their promise. Keep the page usable.
+      const outcome = await Promise.race([
+        navigator.share(data).then(() => 'shared'),
+        new Promise((resolve) => { timer = window.setTimeout(() => resolve('timeout'), 8000); }),
+      ]);
+      updateFeedback(outcome === 'timeout'
+        ? '공유 창의 응답이 지연되고 있습니다. 열린 공유 창을 닫고 ‘초대 링크 복사’로 단체방에 붙여넣어 주세요.'
+        : '기기의 공유 창 처리가 완료되었습니다. 선택한 앱에서 전송 여부를 확인해 주세요.');
+    } catch (error) {
+      if (error.name === 'AbortError') updateFeedback('공유를 취소했습니다. 다시 공유하거나 초대 링크를 복사할 수 있습니다.');
+      else updateFeedback('기기의 공유 창을 열 수 없습니다. ‘초대 링크 복사’ 또는 ‘초대 문구 복사’를 이용해 주세요.');
+    } finally {
+      window.clearTimeout(timer);
+      state.inviteSharing = false;
+      updateButton();
+    }
   }
 
   async function copyInvitation(game, kind = 'link') {
@@ -4315,15 +4363,7 @@
     if (invitation) {
       const copy = event.target.closest('[data-invite-copy]');
       if (copy) { await copyInvitation(invitation, copy.dataset.inviteCopy); return; }
-      if (event.target.closest('[data-invite-share]')) {
-        try {
-          if (navigator.share) await navigator.share({ title: invitation.title, text: gameInviteText(invitation).split('\n참가하기:')[0], url: window.GameInvitations.inviteUrl(window.location.href, invitation.id) });
-          else await copyInvitation(invitation, 'text');
-        } catch (error) {
-          if (error.name !== 'AbortError') await copyInvitation(invitation, 'text');
-        }
-        return;
-      }
+      if (event.target.closest('[data-invite-share]')) { await shareInvitation(invitation); return; }
       if (event.target.closest('[data-invite-qr]')) { state.inviteQrOpen = !state.inviteQrOpen; render(); return; }
       const prepare = event.target.closest('[data-invite-prepare]');
       const participants = event.target.closest('[data-invite-open]');

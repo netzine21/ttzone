@@ -19,7 +19,7 @@ async function bindContext(browser, authenticated) {
   await context.addInitScript(() => {
     window.copiedInvitations = [];
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (value) => window.copiedInvitations.push(value) } });
-    Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+    Object.defineProperty(navigator, 'share', { configurable: true, writable: true, value: undefined });
   });
   await context.route('**/*', async (route) => {
     const request = route.request();
@@ -131,6 +131,17 @@ async function bindContext(browser, authenticated) {
     assert.equal(await page.locator('[data-detail-tab="status"]').getAttribute('class').then((value) => value.includes('is-active')), true);
     assert.equal(await page.locator('.public-detail-meta').getByText('24명', { exact: true }).isVisible(), true);
     await page.screenshot({ path: path.join(output, 'game-created-rules-mobile.png'), fullPage: true });
+    const actionLayout = await page.locator('.game-rules-actions').evaluate((element) => {
+      const buttons = [...element.querySelectorAll('button')];
+      return {
+        gap: buttons[1].getBoundingClientRect().left - buttons[0].getBoundingClientRect().right,
+        borders: buttons.map((button) => getComputedStyle(button).borderTopWidth),
+        icons: buttons.map((button) => Boolean(button.querySelector('svg'))),
+      };
+    });
+    assert.ok(actionLayout.gap >= 16);
+    assert.deepEqual(actionLayout.borders, ['1px', '1px']);
+    assert.deepEqual(actionLayout.icons, [true, true]);
     for (const width of [320, 390, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
@@ -156,11 +167,47 @@ async function bindContext(browser, authenticated) {
     await page.locator('[data-invite-copy="text"]').click();
     assert.match(await page.evaluate(() => window.copiedInvitations.at(-1)), /확인 후 수정한 게임.*\n일시:.*\n장소:/);
     await page.locator('[data-invite-share]').click();
+    // Exercise native sharing without launching an OS dialog or sending messages.
+    await page.evaluate(() => {
+      window.shareCalls = 0;
+      Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => true });
+      navigator.share = async () => { window.shareCalls++; };
+    });
+    await page.locator('[data-invite-share]').click();
+    await page.getByText('기기의 공유 창 처리가 완료되었습니다. 선택한 앱에서 전송 여부를 확인해 주세요.', { exact: true }).waitFor();
+    assert.equal(await page.locator('[data-invite-share]').isEnabled(), true);
+    await page.evaluate(() => { navigator.share = async () => { throw new DOMException('cancelled', 'AbortError'); }; });
+    await page.locator('[data-invite-share]').click();
+    await page.getByText(/공유를 취소했습니다/).waitFor();
+    await page.evaluate(() => { navigator.share = async () => { throw new Error('host failure'); }; });
+    await page.locator('[data-invite-share]').click();
+    await page.getByText(/공유 창을 열 수 없습니다/).waitFor();
+    await page.evaluate(() => {
+      window.shareCalls = 0;
+      navigator.share = () => { window.shareCalls++; return new Promise((resolve, reject) => { window.rejectPendingShare = reject; }); };
+    });
+    await page.locator('[data-invite-share]').evaluate((button) => { button.click(); button.click(); });
+    assert.equal(await page.locator('[data-invite-share]').isDisabled(), true);
+    assert.equal(await page.evaluate(() => window.shareCalls), 1);
+    await page.getByText(/공유 창의 응답이 지연되고 있습니다/).waitFor({ timeout: 12000 });
+    assert.equal(await page.locator('[data-invite-share]').isEnabled(), true);
+    await page.evaluate(() => window.rejectPendingShare(new Error('late host error')));
+    await page.locator('[data-invite-copy="link"]').click();
+    assert.equal(await page.evaluate(() => window.copiedInvitations.at(-1)), invite);
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => false });
+      navigator.share = () => { throw new Error('unsupported share must not be called'); };
+    });
+    await page.locator('[data-invite-share]').click();
+    await page.getByText('초대 문구를 복사했습니다. 단체방에 붙여넣어 주세요.', { exact: true }).waitFor();
     await page.evaluate(() => { navigator.clipboard.writeText = async () => { throw new Error('denied'); }; });
     await page.locator('[data-invite-copy="link"]').click();
     await page.getByText(/자동 복사를 사용할 수 없습니다/).waitFor();
     await page.locator('[data-invite-qr]').click();
     await page.locator('.invite-qr svg').waitFor();
+    await page.getByRole('heading', { name: '현장에서 QR로 초대하기' }).waitFor();
+    assert.match(await page.locator('.invite-qr-help').textContent(), /다른 스마트폰의 카메라/);
+    assert.match(await page.locator('.invite-qr-help').textContent(), /같은 휴대폰/);
     await page.locator('.invite-qr').screenshot({ path: path.join(output, 'game-invite-qr.png') });
     for (const width of [320, 390, 1280]) {
       await page.setViewportSize({ width, height: 844 });
