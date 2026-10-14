@@ -2568,6 +2568,62 @@ html[data-theme="light"] .league-series-card__logo {
   color: #04101a;
 }
 
+.quick-options,
+.invite-actions,
+.game-invite-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-options .btn { padding: 8px 12px; }
+.quick-game-form .quick-options { margin-bottom: 8px; }
+.quick-formats { margin: 0; padding: 0; border: 0; min-width: 0; }
+.quick-formats legend { margin-bottom: 10px; font-weight: 700; }
+.quick-formats label,
+.roster-reuse-choice { display: flex; align-items: center; gap: 8px; }
+.quick-formats label { padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; }
+.quick-formats input,
+.roster-reuse-choice input { width: 18px; height: 18px; flex: 0 0 18px; }
+.create-extra,
+.create-location-details { padding: 14px; border: 1px solid var(--border); border-radius: 14px; min-width: 0; }
+.create-extra summary,
+.create-location-details summary { cursor: pointer; font-weight: 600; }
+.create-extra[open] summary,
+.create-location-details[open] summary { margin-bottom: 16px; }
+.create-extra .field + .field { margin-top: 12px; }
+.quick-create-submit { width: 100%; min-height: 48px; }
+.create-game-heading > div { min-width: 0; }
+.create-game-heading > [data-cancel-create-game] { flex: 0 0 auto; padding: 8px 12px; white-space: nowrap; }
+.quick-game-form [data-create-feedback]:empty,
+.game-invitation .field-hint:empty { display: none; }
+.game-invitation { max-width: 760px; margin-inline: auto; }
+.game-invitation h1 { font-size: clamp(1.3rem, 4vw, 2rem); }
+.game-invitation h2 { overflow-wrap: anywhere; }
+.game-invitation > input,
+.game-invitation textarea { width: 100%; min-width: 0; margin-block: 10px; }
+.game-invitation > input,
+.game-invitation textarea {
+  padding: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--bg-1);
+  color: var(--text);
+  font: inherit;
+}
+.game-invitation > input { font-size: 0.85rem; }
+.game-invitation .create-extra { margin-top: 18px; }
+.game-invitation textarea { resize: vertical; line-height: 1.65; }
+.game-invite-toolbar { justify-content: flex-end; margin-top: 10px; }
+.invite-qr { width: 240px; max-width: 100%; margin: 20px auto 0; background: #fff; }
+.invite-qr svg { display: block; width: 100%; height: auto; }
+
+@media (max-width: 560px) {
+  .game-invitation .invite-actions > .btn { flex: 1 1 130px; }
+  .game-invite-toolbar { justify-content: flex-start; }
+}
+
 .game-list-actions {
   display: inline-flex;
   align-items: center;

@@ -74,6 +74,7 @@
     leagueSeries: [],
     selectedPublicSeriesId: null,
     games: [],
+    serverGameIds: [],
     sessionUserId: null,
     authTab: 'signup',
     page: 'public',
@@ -98,6 +99,11 @@
     operationMenu: 'groups',
     operationSubmenu: 'qualifying',
     showCreateGame: false,
+    createDraft: null,
+    createSubmitting: false,
+    inviteGameId: null,
+    inviteQrOpen: false,
+    inviteCreated: false,
     showLeagueSeries: false,
     selectedSeriesId: null,
     editingSeriesId: null,
@@ -324,6 +330,7 @@
       // Older/local deployments can continue without the optional series directory.
     }
     if (games) {
+      state.serverGameIds = (Array.isArray(games.games) ? games.games : []).map((game) => game.id);
       const currentUser = session?.user || null;
       state.users = currentUser ? [currentUser] : [];
       const registrationClosures = readJson(STORAGE_KEYS.registrationClosures, {});
@@ -339,6 +346,7 @@
     }
 
     const storedUsers = readJson(STORAGE_KEYS.users, []);
+    state.serverGameIds = [];
     const storedGames = readJson(STORAGE_KEYS.games, []);
     state.users = Array.isArray(storedUsers) ? storedUsers : [];
     state.games = Array.isArray(storedGames) ? storedGames : [];
@@ -376,6 +384,8 @@
       selectedPublicGameId: state.selectedPublicGameId,
       selectedPublicSeriesId: state.selectedPublicSeriesId,
       selectedGameId: state.selectedGameId,
+      inviteGameId: state.page === 'invite' ? state.inviteGameId : null,
+      pendingGameId: state.pendingGameId,
       detailTab: state.detailTab,
       statusSubtab: state.statusSubtab,
       progressSubtab: state.progressSubtab,
@@ -399,19 +409,20 @@
     writeSessionJson(BROWSER_ROUTE_KEY, route);
     const routeKey = JSON.stringify(route);
     const historyState = { ttgmsRoute: route };
+    const routeUrl = window.GameInvitations.routeUrl(window.location.href, route);
     if (!browserHistoryReady) {
-      window.history.replaceState(historyState, '', window.location.href);
+      window.history.replaceState(historyState, '', routeUrl);
       browserHistoryReady = true;
       lastBrowserRouteKey = routeKey;
       return;
     }
     if (restoringBrowserHistory) {
-      window.history.replaceState(historyState, '', window.location.href);
+      window.history.replaceState(historyState, '', routeUrl);
       lastBrowserRouteKey = routeKey;
       return;
     }
     if (routeKey !== lastBrowserRouteKey) {
-      window.history.pushState(historyState, '', window.location.href);
+      window.history.pushState(historyState, '', routeUrl);
       lastBrowserRouteKey = routeKey;
     }
   }
@@ -423,6 +434,8 @@
       selectedPublicGameId: route.selectedPublicGameId || null,
       selectedPublicSeriesId: route.selectedPublicSeriesId || null,
       selectedGameId: route.selectedGameId || null,
+      inviteGameId: route.inviteGameId || null,
+      pendingGameId: route.pendingGameId || null,
       detailTab: route.detailTab || 'status',
       statusSubtab: route.statusSubtab || 'info',
       progressSubtab: route.progressSubtab || 'participants',
@@ -944,7 +957,7 @@
         <button type="button" class="panel signup-success" data-home-after-signup>
           <span class="signup-success__mark">✓</span>
           <strong>회원가입이 완료되었습니다.</strong>
-          <span>이 내용을 클릭하면 초기 화면으로 이동합니다.</span>
+          <span>${state.pendingGameId ? '클릭해서 로그인하면 초대받은 경기의 참가신청으로 돌아갑니다.' : '이 내용을 클릭하면 초기 화면으로 이동합니다.'}</span>
         </button>
       </section>
     `;
@@ -1292,7 +1305,8 @@
     const format = getPublicFormat(game);
     const isOwner = currentUser && game.operatorId === currentUser.id;
     const isOperating = isOwner && state.operationGameId === game.id;
-    return `<section class="panel section-card public-game-detail"><div class="game-detail-header"><h1 class="game-detail-title">${escapeHtml(game.title)}</h1>${renderGameDetailMenu(game, isOwner)}</div>${isOperating ? renderOperationsPage(currentUser, true) : ''}${!isOperating && state.detailTab === 'status' ? renderGameRules(game, currentUser) : ''}${!isOperating && state.detailTab === 'progress' ? renderCompetitionView(game, currentUser, format) : ''}${!isOperating && state.detailTab === 'applications' ? renderApplicationsView(game, currentUser) : ''}</section>`;
+    const inviteActions = `<div class="game-invite-toolbar">${state.serverGameIds.includes(game.id) ? `<button type="button" class="game-list-action" data-open-invite="${escapeHtml(game.id)}">링크로 초대</button>` : ''}${isOwner ? `<button type="button" class="game-list-action" data-clone-game="${escapeHtml(game.id)}">같은 설정으로 새 게임</button>${game.seriesId ? `<button type="button" class="game-list-action" data-next-round="${escapeHtml(game.id)}">다음 회차 만들기</button>` : ''}` : ''}</div>`;
+    return `<section class="panel section-card public-game-detail"><div class="game-detail-header"><h1 class="game-detail-title">${escapeHtml(game.title)}</h1>${renderGameDetailMenu(game, isOwner)}${inviteActions}</div>${isOperating ? renderOperationsPage(currentUser, true) : ''}${!isOperating && state.detailTab === 'status' ? renderGameRules(game, currentUser) : ''}${!isOperating && state.detailTab === 'progress' ? renderCompetitionView(game, currentUser, format) : ''}${!isOperating && state.detailTab === 'applications' ? renderApplicationsView(game, currentUser) : ''}</section>`;
   }
 
   function renderPublicGameDetail(game) {
@@ -1475,77 +1489,105 @@
     `;
   }
 
+  function startGameCreation(source = null, series = null) {
+    state.signupCompleted = false;
+    const venue = series ? state.venues.find((item) => item.id === series.venueId) : null;
+    state.createDraft = window.GameInvitations.makeDraft({ source, series, venue });
+    state.selectedSeriesId = series?.id || null;
+    state.page = 'dashboard';
+    state.showCreateGame = true;
+    state.showLeagueSeries = false;
+    state.selectedGameId = null;
+    state.selectedPublicGameId = null;
+    state.selectedPublicSeriesId = null;
+    state.operationGameId = null;
+    state.editingGameId = null;
+    state.inviteGameId = null;
+    render();
+  }
+
+  function captureCreateDraft(form) {
+    const values = new FormData(form);
+    state.createDraft = {
+      ...Object.fromEntries(values.entries()),
+      formats: values.getAll('formats'),
+      formatModes: Object.fromEntries(Object.keys(FORMAT_LABELS).map((format) => [format, values.get(`formatMode_${format}`) || 'leagueTournament'])),
+      titleEdited: form.dataset.titleEdited === 'true',
+      sourceGameId: state.createDraft?.sourceGameId || '',
+      reuseRoster: values.get('reuseRoster') === 'on',
+    };
+    return state.createDraft;
+  }
+
+  function updateCreateSuggestion(form) {
+    if (!form || form.dataset.form !== 'game') return;
+    const title = form.elements.namedItem('title');
+    const series = state.leagueSeries.find((item) => item.id === form.elements.namedItem('seriesId').value);
+    if (form.dataset.titleEdited !== 'true') {
+      title.value = window.GameInvitations.suggestedTitle({
+        scheduledAt: form.elements.namedItem('scheduledAt').value,
+        venueName: form.elements.namedItem('venueName').value,
+      }, series?.name);
+    }
+    const address = form.elements.namedItem('venueAddress').value;
+    const summary = form.querySelector('[data-venue-summary]');
+    if (summary) summary.textContent = address || '탁구장을 검색하면 주소가 입력됩니다. 없는 장소는 아래에서 직접 입력해 주세요.';
+  }
+
+  function gameInviteText(game) {
+    return `🏓 ${game.title}\n일시: ${formatDateTime(game.scheduledAt)}\n장소: ${game.venueName || game.location}\n방식: ${getGameFormats(game).map((format) => FORMAT_LABELS[format]).join(' · ')} / 모집 ${game.maxParticipants}명\n참가하기: ${window.GameInvitations.inviteUrl(window.location.href, game.id)}`;
+  }
+
+  function renderGameInvitation(game) {
+    const url = window.GameInvitations.inviteUrl(window.location.href, game.id);
+    let qr = '';
+    if (state.inviteQrOpen) {
+      try {
+        const code = window.qrcode(0, 'M');
+        code.addData(url);
+        code.make();
+        qr = `<div class="invite-qr" role="img" aria-label="${escapeHtml(game.title)} 초대 QR">${code.createSvgTag({ cellSize: 5, margin: 20, scalable: true })}</div><p class="muted">스마트폰 카메라로 QR을 비추면 이 경기가 열립니다.</p>`;
+      } catch {
+        qr = '<p role="status">QR을 표시하지 못했습니다. 초대 링크를 사용해 주세요.</p>';
+      }
+    }
+    return `<section class="panel section-card game-invitation"><p class="section-kicker">함께할 사람을 초대하세요</p><h1>${state.inviteCreated ? '게임이 만들어졌어요!' : '게임 초대'}</h1><h2>${escapeHtml(game.title)}</h2><p>${escapeHtml(formatDateTime(game.scheduledAt))}</p><p>${escapeHtml(game.venueName || game.location)} · ${escapeHtml(getGameFormats(game).map((format) => FORMAT_LABELS[format]).join(' · '))} · 모집 ${game.maxParticipants}명</p><label for="gameInviteLink">초대 링크</label><input id="gameInviteLink" type="url" readonly value="${escapeHtml(url)}" /><div class="invite-actions"><button type="button" class="btn btn-primary" data-invite-copy="link">초대 링크 복사</button><button type="button" class="btn btn-secondary" data-invite-share>공유하기</button><button type="button" class="btn btn-secondary" data-invite-qr aria-expanded="${Boolean(state.inviteQrOpen)}">QR ${state.inviteQrOpen ? '닫기' : '보기'}</button></div>${qr}<details class="create-extra"><summary>단체방 초대 문구</summary><textarea aria-label="단체방 초대 문구" readonly rows="6">${escapeHtml(gameInviteText(game))}</textarea><button type="button" class="btn btn-secondary" data-invite-copy="text">초대 문구 복사</button></details><p class="field-hint">${escapeHtml(state.inviteRosterMessage || "")}</p><p data-invite-feedback role="status" aria-live="polite"></p><div class="invite-actions"><button type="button" class="btn btn-secondary" data-invite-open>참가자 확인</button>${getCurrentUser()?.id === game.operatorId ? '<button type="button" class="btn btn-primary" data-invite-prepare>경기 준비</button>' : ''}<button type="button" class="btn btn-ghost" data-invite-close>경기 보기</button></div></section>`;
+  }
+
+  async function copyInvitation(game, kind = 'link') {
+    const text = kind === 'text' ? gameInviteText(game) : window.GameInvitations.inviteUrl(window.location.href, game.id);
+    const feedback = document.querySelector('[data-invite-feedback]');
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('clipboard unavailable');
+      await navigator.clipboard.writeText(text);
+      if (feedback) feedback.textContent = kind === 'text' ? '초대 문구를 복사했습니다. 단체방에 붙여넣어 주세요.' : '초대 링크를 복사했습니다.';
+    } catch {
+      const field = kind === 'text' ? document.querySelector('[aria-label="단체방 초대 문구"]') : document.getElementById('gameInviteLink');
+      if (field?.closest('details')) field.closest('details').open = true;
+      field?.focus();
+      field?.select();
+      if (feedback) feedback.textContent = '자동 복사를 사용할 수 없습니다. 선택된 내용을 길게 눌러 복사해 주세요.';
+    }
+  }
+
   function renderCreateGameForm(currentUser) {
-    const selectedSeries = state.leagueSeries.find((series) => series.id === state.selectedSeriesId) || null;
-    const seriesDefaults = selectedSeries ? {
-      formats: selectedSeries.defaultFormats,
-      formatModes: selectedSeries.defaultFormatModes,
-    } : null;
-    return `
-      <section class="panel section-card create-game-panel">
-        <div class="section-heading create-game-heading">
-          <div>
-            <h2>새 게임 생성</h2>
-          </div>
-          <button type="button" class="create-game-close" aria-label="게임 생성 닫기" data-cancel-create-game><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg></button>
-        </div>
-
-        <form class="form-stack" data-form="game">
-          <div class="field">
-            <label for="gameTitle"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10l4 4v12H5zM14 4v5h5" /></svg>게임명</span></label>
-            <input id="gameTitle" name="title" type="text" required />
-          </div>
-
-          <div class="field">
-            <label for="gameVenueName"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>탁구장명</span></label>
-            <input id="gameVenueName" name="venueName" type="search" list="gameVenueSuggestions" data-venue-name data-venue-address-target="gameVenueAddress" data-venue-phone-target="gameVenuePhone" required placeholder="탁구장 이름 검색" />
-            <datalist id="gameVenueSuggestions">${renderVenueSuggestions()}</datalist>
-          </div>
-
-          <div class="field">
-            <label for="gameVenueAddress"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.2" /></svg>탁구장 주소</span></label>
-            <input id="gameVenueAddress" name="venueAddress" type="text" required placeholder="도로명 주소를 입력하세요" />
-            <small class="field-hint">등록된 탁구장을 선택하면 주소가 자동으로 입력됩니다.</small>
-          </div>
-
-          <div class="field">
-            <label for="gameVenuePhone"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h3l1.2 4-2 1.5a14 14 0 0 0 5.3 5.3l1.5-2 4 1.2v3c0 1.1-.9 2-2 2C11.4 19 5 12.6 5 5c0-1.1.9-2 2-2z" /></svg>탁구장 전화번호</span></label>
-            <input id="gameVenuePhone" name="venuePhone" type="tel" placeholder="예: 032-123-4567" />
-          </div>
-
-          <div class="field">
-            <label for="gameSeriesId"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="8" cy="6" r="1.5" /><circle cx="14" cy="12" r="1.5" /><circle cx="10" cy="18" r="1.5" /></svg>정기리그 연결</span></label>
-            <select id="gameSeriesId" name="seriesId">${renderSeriesOptions(state.selectedSeriesId || '')}</select>
-            <small class="field-hint">정기리그를 선택하면 이 경기가 해당 탁구장의 회차로 관리됩니다.</small>
-          </div>
-
-          <div class="field">
-            <span class="field-label"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4c3 0 5 2 5 5v4M17 20c-3 0-5-2-5-5V9" /><ellipse cx="7" cy="4" rx="3" ry="2" /><ellipse cx="17" cy="20" rx="3" ry="2" /></svg>경기형식</span></span>
-            ${renderFormatOptionsWithModes(seriesDefaults)}
-          </div>
-
-          <div class="field-grid create-game-date-row">
-            <div class="field">
-              <label for="gameMaxParticipants"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3" /><path d="M5 20c.8-3.3 3.2-5 7-5s6.2 1.7 7 5" /></svg>최대참가인원</span></label>
-              <input id="gameMaxParticipants" name="maxParticipants" type="number" min="1" step="1" required value="${escapeHtml(String(selectedSeries?.defaultMaxParticipants || ''))}" />
-            </div>
-            <div class="field">
-              <label for="gameScheduledAt"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M8 3v4M16 3v4M4 10h16" /></svg>게임일시</span></label>
-              <input id="gameScheduledAt" name="scheduledAt" type="datetime-local" required />
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="gameNote"><span class="form-field-label"><svg class="form-field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /></svg>게임안내(선택)</span></label>
-            <textarea id="gameNote" name="note"></textarea>
-          </div>
-
-          <div class="game-edit-bottom-action">
-            <button class="game-list-action game-list-action--primary" type="submit"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg><span>게임 생성</span></button>
-          </div>
-        </form>
-      </section>
-    `;
+    if (!state.createDraft) state.createDraft = window.GameInvitations.makeDraft();
+    const draft = state.createDraft;
+    const recentGames = state.games.filter((game) => game.operatorId === currentUser.id).slice().sort((a, b) => new Date(b.createdAt || b.scheduledAt) - new Date(a.createdAt || a.scheduledAt));
+    const recentVenues = recentGames.filter((game, index, all) => all.findIndex((item) => item.venueName === game.venueName && item.venueAddress === game.venueAddress) === index).slice(0, 5);
+    const modeOptions = Object.keys(FORMAT_LABELS).map((format) => `<div class="field"><label for="createMode_${format}">${escapeHtml(FORMAT_LABELS[format])} 진행방식</label><select id="createMode_${format}" name="formatMode_${format}"><option value="leagueTournament" ${draft.formatModes[format] !== 'leagueOnly' ? 'selected' : ''}>예선리그 후 토너먼트</option><option value="leagueOnly" ${draft.formatModes[format] === 'leagueOnly' ? 'selected' : ''}>리그전만</option></select></div>`).join('');
+    return `<section class="panel section-card create-game-panel"><div class="section-heading create-game-heading"><div><h2>${draft.seriesId ? '다음 회차 만들기' : '새 게임 만들기'}</h2><p class="muted">장소와 시간, 함께할 인원을 정해 보세요.</p></div><button type="button" class="btn btn-ghost" data-cancel-create-game aria-label="게임 만들기 닫기">닫기</button></div>
+      <form class="form-stack quick-game-form" data-form="game" data-title-edited="${Boolean(draft.titleEdited)}">
+        ${recentGames.length ? `<div class="field"><label for="reuseGame">지난 게임으로 빠르게 시작</label><select id="reuseGame" data-reuse-game><option value="">새로 입력하기</option>${recentGames.map((game) => `<option value="${escapeHtml(game.id)}">${escapeHtml(game.title)}</option>`).join('')}</select><small class="field-hint">장소·종목·인원·안내만 가져옵니다. 참가자와 결과는 복사하지 않습니다.</small></div>` : ''}
+        <div class="field"><label for="gameVenueName">어디서 하나요?</label>${recentVenues.length ? `<select aria-label="최근 사용 장소" data-recent-venue><option value="">최근 사용 장소 선택</option>${recentVenues.map((game) => `<option value="${escapeHtml(game.id)}">${escapeHtml(game.venueName || game.location)}</option>`).join('')}</select>` : ''}<input id="gameVenueName" name="venueName" type="search" list="gameVenueSuggestions" data-venue-name data-venue-address-target="gameVenueAddress" data-venue-phone-target="gameVenuePhone" required value="${escapeHtml(draft.venueName)}" placeholder="탁구장 검색 또는 장소 직접 입력" /><datalist id="gameVenueSuggestions">${renderVenueSuggestions()}</datalist><small class="field-hint" data-venue-summary>${escapeHtml(draft.venueAddress || '탁구장을 검색하면 주소가 입력됩니다. 없는 장소는 아래에서 직접 입력해 주세요.')}</small><details class="create-location-details" ${draft.venueName && !draft.venueAddress ? 'open' : ''}><summary>장소 주소·전화번호 직접 입력 / 수정</summary><div class="field"><label for="gameVenueAddress">주소</label><input id="gameVenueAddress" name="venueAddress" type="text" required value="${escapeHtml(draft.venueAddress)}" placeholder="도로명 주소" /></div><div class="field"><label for="gameVenuePhone">전화번호 (선택)</label><input id="gameVenuePhone" name="venuePhone" type="tel" value="${escapeHtml(draft.venuePhone)}" /></div></details></div>
+        <div class="field"><label for="gameScheduledAt">언제 하나요?</label><div class="quick-options"><button type="button" class="btn btn-secondary" data-create-day="0">오늘</button><button type="button" class="btn btn-secondary" data-create-day="1">내일</button><span class="field-hint">날짜 선택 후 시간을 확인해 주세요.</span></div><input id="gameScheduledAt" name="scheduledAt" type="datetime-local" required value="${escapeHtml(draft.scheduledAt)}" /></div>
+        <div class="field"><label for="gameTitle">게임명 <span class="optional-label">날짜·장소로 자동 제안</span></label><input id="gameTitle" name="title" required value="${escapeHtml(draft.title)}" placeholder="예: 토요일 함께 탁구해요" /></div>
+        <fieldset class="quick-formats"><legend>어떤 종목으로 하나요?</legend><div class="quick-options">${Object.entries(FORMAT_LABELS).map(([format, label]) => `<label><input type="checkbox" name="formats" value="${format}" ${draft.formats.includes(format) ? 'checked' : ''} /> ${label}</label>`).join('')}</div><p class="field-hint">기본은 예선리그 후 토너먼트입니다. 아래 추가 설정에서 종목별로 바꿀 수 있습니다.</p></fieldset>
+        <div class="field"><label for="gameMaxParticipants">몇 명을 모집하나요?</label><div class="quick-options">${[8, 16, 24, 32, 48].map((count) => `<button type="button" class="btn btn-secondary" data-create-capacity="${count}">${count}명</button>`).join('')}</div><input id="gameMaxParticipants" name="maxParticipants" type="number" min="1" step="1" required value="${escapeHtml(String(draft.maxParticipants))}" /><small class="field-hint">직접 입력할 수 있습니다. 여러 종목 선택 시 정원은 종목별로 적용됩니다.</small></div>
+        <details class="create-extra" ${draft.seriesId ? 'open' : ''}><summary>추가 설정 · 진행방식 / 정기리그 / 안내</summary>${modeOptions}<div class="field"><label for="gameSeriesId">정기리그 연결</label><select id="gameSeriesId" name="seriesId">${renderSeriesOptions(draft.seriesId)}</select></div><div class="field"><label for="gameNote">게임 안내 (선택)</label><textarea id="gameNote" name="note">${escapeHtml(draft.note)}</textarea></div></details>
+        ${draft.sourceGameId ? `<label class="roster-reuse-choice"><input type="checkbox" name="reuseRoster" ${draft.reuseRoster ? 'checked' : ''} /> 이전 경기 참가 명단도 등록하기 (선택)</label><p class="field-hint">선택한 종목의 선수만 정원 안에서 등록합니다. 점수·대진·마감 상태는 가져오지 않습니다.</p>` : ''}
+        <p data-create-feedback role="status"></p><button class="btn btn-primary quick-create-submit" type="submit" ${state.createSubmitting ? 'disabled' : ''}>${state.createSubmitting ? '게임을 저장하고 있어요…' : '게임 만들고 초대하기'}</button>
+      </form></section>`;
   }
 
   function renderEditGameForm(game) {
@@ -3454,6 +3496,7 @@
 
     if (!app) return;
 
+    const invitationGame = state.page === 'invite' ? state.games.find((game) => game.id === state.inviteGameId) : null;
     const publicGame = state.games.find((game) => game.id === state.selectedPublicGameId);
     const publicSeries = state.leagueSeries.find((series) => series.id === state.selectedPublicSeriesId);
     app.className = currentUser ? 'app app--dashboard' : state.page === 'auth' ? 'app app--auth' : 'app app--public';
@@ -3466,7 +3509,7 @@
       const nextSection = template.content.firstElementChild;
       if (nextSection) fullscreenTarget.replaceChildren(...Array.from(nextSection.childNodes));
     } else {
-      app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : state.page === 'venues' ? renderVenueFinderPage(currentUser) : showPublicHome ? renderPublicGamesPage() : publicSeries ? renderPublicSeriesDetail(publicSeries) : publicGame ? renderPublicGameDetail(publicGame) : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : state.page === 'auth' ? renderAuthPage() : renderPublicGamesPage()}`;
+      app.innerHTML = `${renderFlash()}${state.signupCompleted ? renderSignupSuccess() : state.page === 'auth' ? renderAuthPage() : invitationGame ? renderGameInvitation(invitationGame) : state.page === 'venues' ? renderVenueFinderPage(currentUser) : showPublicHome ? renderPublicGamesPage() : publicSeries ? renderPublicSeriesDetail(publicSeries) : publicGame ? renderPublicGameDetail(publicGame) : currentUser && state.page === 'mypage' ? renderMyPage(currentUser) : currentUser ? renderDashboard(currentUser) : renderPublicGamesPage()}`;
     }
     updateProgressFullscreenButton();
     window.requestAnimationFrame(() => {
@@ -3490,6 +3533,8 @@
     state.operationFormat = null;
     state.selectedScheduleGroup = null;
     state.pendingGameId = null;
+    state.inviteGameId = null;
+    state.showCreateGame = false;
     state.signupCompleted = false;
     state.detailTab = 'status';
     state.statusSubtab = 'info';
@@ -3509,6 +3554,10 @@
 
   function openLoginForGame(gameId = null) {
     state.pendingGameId = gameId;
+    state.selectedGameId = null;
+    state.selectedPublicGameId = null;
+    state.selectedPublicSeriesId = null;
+    state.inviteGameId = null;
     if (gameId) state.detailTab = 'applications';
     state.page = 'auth';
     state.authTab = 'login';
@@ -3537,6 +3586,11 @@
     if (!game) return;
     // Leave the series route so it cannot take precedence over the game detail.
     state.selectedPublicSeriesId = null;
+    state.inviteGameId = null;
+    state.showCreateGame = false;
+    state.showLeagueSeries = false;
+    state.operationGameId = null;
+    state.editingGameId = null;
     state.detailTab = 'status';
     state.statusSubtab = 'info';
     state.progressSubtab = 'participants';
@@ -3871,6 +3925,7 @@
       state.sessionUserId = result.user.id;
       state.page = 'dashboard';
       state.selectedGameId = state.pendingGameId;
+      state.selectedPublicGameId = null;
       state.pendingGameId = null;
       form.reset();
       await loadState();
@@ -3906,6 +3961,7 @@
     persistSession();
     state.page = 'dashboard';
     state.selectedGameId = state.pendingGameId;
+    state.selectedPublicGameId = null;
     state.pendingGameId = null;
     form.reset();
     clearFlash();
@@ -4039,90 +4095,74 @@
   }
 
   async function handleGameCreate(form) {
+    if (state.createSubmitting) return;
     const currentUser = getCurrentUser();
+    const feedback = form.querySelector('[data-create-feedback]');
     if (!currentUser) {
-      setFlash('로그인이 필요합니다.', 'error');
-      render();
+      if (feedback) feedback.textContent = '로그인 후 게임을 만들어 주세요.';
       return;
     }
-
-    const submittedData = new FormData(form);
-    const formData = Object.fromEntries(submittedData.entries());
-    const title = trimValue(formData.title);
-    const venueName = trimValue(formData.venueName);
-    const venueAddress = trimValue(formData.venueAddress);
-    const venuePhone = trimValue(formData.venuePhone);
-    const seriesId = trimValue(formData.seriesId);
-    const selectedSeries = state.leagueSeries.find((series) => series.id === seriesId);
-    const location = venueName && venueAddress ? `${venueName} · ${venueAddress}` : venueName;
-    const formats = submittedData.getAll('formats').map(trimValue);
-    const formatModes = Object.fromEntries(formats.map((format) => [format, submittedData.get(`formatMode_${format}`) === 'leagueOnly' ? 'leagueOnly' : 'leagueTournament']));
-    const scheduledAt = trimValue(formData.scheduledAt);
-    const note = trimValue(formData.note);
-    const maxParticipants = Number.parseInt(trimValue(formData.maxParticipants), 10);
-
-    if (!title || !venueName || !venueAddress || !formats.length || !scheduledAt || !Number.isInteger(maxParticipants) || maxParticipants < 1) {
-      setFlash('게임 생성에 필요한 항목과 경기형식을 하나 이상 선택해 주세요.', 'error');
-      render();
+    updateCreateSuggestion(form);
+    const draft = captureCreateDraft(form);
+    const maxParticipants = Number(draft.maxParticipants);
+    if (!draft.title.trim() || !draft.venueName.trim() || !draft.venueAddress.trim() || !draft.formats.length || !draft.scheduledAt || !Number.isFinite(new Date(draft.scheduledAt).getTime()) || !Number.isInteger(maxParticipants) || maxParticipants < 1) {
+      if (feedback) feedback.textContent = '장소·주소·날짜·시간·게임명·종목·모집인원을 확인해 주세요.';
       return;
     }
-
-    if (formats.some((format) => !Object.prototype.hasOwnProperty.call(FORMAT_LABELS, format))) {
-      setFlash('경기형식을 개인전, 복식, 단체전 중에서 선택해 주세요.', 'error');
-      render();
-      return;
-    }
-
-    rememberVenue(location);
-
+    const payload = {
+      title: draft.title.trim(), venueName: draft.venueName.trim(), venueAddress: draft.venueAddress.trim(), venuePhone: draft.venuePhone.trim(),
+      location: `${draft.venueName.trim()} · ${draft.venueAddress.trim()}`,
+      seriesId: draft.seriesId || null, formats: draft.formats, formatModes: draft.formatModes,
+      scheduledAt: new Date(draft.scheduledAt).toISOString(), maxParticipants, note: draft.note.trim(),
+    };
+    state.createSubmitting = true;
+    const submit = form.querySelector('[type="submit"]');
+    if (submit) { submit.disabled = true; submit.textContent = '게임을 저장하고 있어요…'; }
+    if (feedback) feedback.textContent = '';
     try {
-      await apiRequest('/api/games', {
-        method: 'POST',
-        body: JSON.stringify({ title, location, venueName, venueAddress, venuePhone, seriesId: seriesId || null, formats, formatModes, scheduledAt, maxParticipants, note }),
-      });
-      await loadState();
-      form.reset();
-      state.showCreateGame = false;
-      state.selectedSeriesId = null;
-      setFlash('새 게임이 생성되었습니다. 생성한 회원이 해당 게임의 운영자입니다.', 'success');
-      render();
-      return;
-    } catch (error) {
-      if (!error.message.includes('Failed to fetch') && !error.message.includes('서버 요청')) {
-        setFlash(error.message, 'error');
-        render();
-        return;
+      const result = await apiRequest('/api/games', { method: 'POST', body: JSON.stringify(payload) });
+      if (!result.game?.id) throw new Error('저장 결과를 확인할 수 없습니다. 경기 목록을 확인해 주세요.');
+      state.games = [result.game, ...state.games.filter((game) => game.id !== result.game.id)];
+      state.serverGameIds = [...new Set([...state.serverGameIds, result.game.id])];
+      try { rememberVenue(payload.location); } catch { /* A storage quota must not invalidate a server save. */ }
+      let rosterMessage = '';
+      const sourceGame = draft.reuseRoster && state.games.find((game) => game.id === draft.sourceGameId && game.operatorId === currentUser.id);
+      if (sourceGame) {
+        let added = 0;
+        let skipped = 0;
+        try {
+          for (const format of draft.formats) {
+            const registrations = getGameRegistrations(sourceGame, format).map((row) => ({ nickname: row.nickname, memberId: row.memberId, rank: row.rank, gender: row.gender, teamName: row.teamName }));
+            if (!registrations.length) continue;
+            const copied = await apiRequest(`/api/games/${encodeURIComponent(result.game.id)}/registrations/bulk`, { method: 'POST', body: JSON.stringify({ format, registrations }) });
+            added += Number(copied.added || 0);
+            skipped += Number(copied.skipped || 0);
+            if (copied.game) state.games = state.games.map((game) => game.id === copied.game.id ? copied.game : game);
+          }
+          rosterMessage = `이전 명단 ${added}명 등록${skipped ? ` · 정원·중복·입력정보 확인 필요 ${skipped}명 제외` : ''}`;
+        } catch {
+          rosterMessage = '게임은 생성되었습니다. 일부 참가 명단은 등록되지 않았을 수 있으니 참가자 확인에서 점검해 주세요.';
+        }
       }
+      state.inviteRosterMessage = rosterMessage;
+      state.showCreateGame = false;
+      state.createDraft = null;
+      state.selectedSeriesId = null;
+      state.selectedGameId = result.game.id;
+      state.selectedPublicGameId = null;
+      state.selectedPublicSeriesId = null;
+      state.page = 'invite';
+      state.inviteGameId = result.game.id;
+      state.inviteCreated = true;
+      state.inviteQrOpen = false;
+      state.createSubmitting = false;
+      render();
+    } catch (error) {
+      if (feedback) feedback.textContent = `${error.message || '게임 저장에 실패했습니다.'} 입력 내용은 유지됩니다. 경기 목록에서 생성 여부를 확인한 뒤 다시 시도해 주세요.`;
+    } finally {
+      state.createSubmitting = false;
+      if (submit) { submit.disabled = false; submit.textContent = '게임 만들고 초대하기'; }
     }
-
-    state.games.push({
-      id: makeId('game'),
-      title,
-      location,
-      venueName,
-      venueAddress,
-      venuePhone,
-      seriesId: seriesId || null,
-      seriesName: selectedSeries?.name || '',
-      seriesScheduleLabel: selectedSeries?.scheduleLabel || '',
-      formats,
-      formatModes,
-      format: formats[0],
-      scheduledAt,
-      maxParticipants,
-      note,
-      operatorId: currentUser.id,
-      operatorNickname: currentUser.nickname,
-      participants: [],
-      createdAt: new Date().toISOString(),
-    });
-
-    persistGames();
-    form.reset();
-    state.showCreateGame = false;
-    state.selectedSeriesId = null;
-    setFlash('새 게임이 생성되었습니다. 생성한 회원이 해당 게임의 운영자입니다.', 'success');
-    render();
   }
 
   async function handleGameUpdate(form) {
@@ -4222,6 +4262,69 @@
   }
 
   async function handleAppClick(event) {
+    const copyGame = event.target.closest('[data-clone-game], [data-next-round]');
+    if (copyGame) {
+      const game = state.games.find((item) => item.id === (copyGame.dataset.cloneGame || copyGame.dataset.nextRound));
+      if (game && game.operatorId === getCurrentUser()?.id) {
+        const series = copyGame.dataset.nextRound ? state.leagueSeries.find((item) => item.id === game.seriesId) : null;
+        startGameCreation(game, series);
+      }
+      return;
+    }
+    const reuse = event.target.closest('[data-create-day], [data-create-capacity]');
+    if (reuse) {
+      const form = reuse.closest('form');
+      if (reuse.dataset.createCapacity) form.elements.namedItem('maxParticipants').value = reuse.dataset.createCapacity;
+      else {
+        const date = new Date();
+        date.setDate(date.getDate() + Number(reuse.dataset.createDay));
+        const existing = form.elements.namedItem('scheduledAt').value;
+        if (existing) {
+          const time = new Date(existing);
+          date.setHours(time.getHours(), time.getMinutes(), 0, 0);
+        } else {
+          date.setHours(date.getHours() + 1, 0, 0, 0);
+        }
+        form.elements.namedItem('scheduledAt').value = window.GameInvitations.localDateTime(date);
+      }
+      updateCreateSuggestion(form);
+      captureCreateDraft(form);
+      return;
+    }
+    const openInvite = event.target.closest('[data-open-invite]');
+    if (openInvite) {
+      if (!state.serverGameIds.includes(openInvite.dataset.openInvite)) return;
+      state.page = 'invite';
+      state.inviteGameId = openInvite.dataset.openInvite;
+      state.inviteCreated = false;
+      state.inviteRosterMessage = '';
+      state.inviteQrOpen = false;
+      render();
+      return;
+    }
+    const invitation = state.games.find((item) => item.id === state.inviteGameId);
+    if (invitation) {
+      const copy = event.target.closest('[data-invite-copy]');
+      if (copy) { await copyInvitation(invitation, copy.dataset.inviteCopy); return; }
+      if (event.target.closest('[data-invite-share]')) {
+        try {
+          if (navigator.share) await navigator.share({ title: invitation.title, text: gameInviteText(invitation).split('\n참가하기:')[0], url: window.GameInvitations.inviteUrl(window.location.href, invitation.id) });
+          else await copyInvitation(invitation, 'text');
+        } catch (error) {
+          if (error.name !== 'AbortError') await copyInvitation(invitation, 'text');
+        }
+        return;
+      }
+      if (event.target.closest('[data-invite-qr]')) { state.inviteQrOpen = !state.inviteQrOpen; render(); return; }
+      const prepare = event.target.closest('[data-invite-prepare]');
+      const participants = event.target.closest('[data-invite-open]');
+      if (prepare || participants || event.target.closest('[data-invite-close]')) {
+        openGameFromCard(invitation.id);
+        if (prepare && getCurrentUser()?.id === invitation.operatorId) openOperations(invitation.id, 'groups');
+        else if (participants) { state.detailTab = 'progress'; state.progressSubtab = 'participants'; render(); }
+        return;
+      }
+    }
     const themeToggle = event.target.closest('[data-theme-toggle]');
     if (themeToggle) {
       applyTheme(getTheme() === 'dark' ? 'light' : 'dark');
@@ -4374,11 +4477,7 @@
 
     const showCreateGameButton = event.target.closest('[data-show-create-game]');
     if (showCreateGameButton) {
-      state.showCreateGame = true;
-      state.showLeagueSeries = false;
-      state.selectedSeriesId = null;
-      state.selectedGameId = null;
-      render();
+      startGameCreation();
       return;
     }
 
@@ -4411,18 +4510,16 @@
 
     const seriesCreateGameButton = event.target.closest('[data-series-create-game]');
     if (seriesCreateGameButton) {
-      state.showLeagueSeries = false;
-      state.showCreateGame = true;
-      state.editingSeriesId = null;
-      state.selectedSeriesId = seriesCreateGameButton.dataset.seriesCreateGame || null;
-      state.selectedGameId = null;
-      render();
+      const series = state.leagueSeries.find((item) => item.id === seriesCreateGameButton.dataset.seriesCreateGame);
+      const latest = state.games.filter((game) => game.seriesId === series?.id).slice().sort((a, b) => new Date(b.scheduledAt) - new Date(a.scheduledAt))[0];
+      startGameCreation(latest || null, series || null);
       return;
     }
 
     const cancelCreateGameButton = event.target.closest('[data-cancel-create-game]');
     if (cancelCreateGameButton) {
       state.showCreateGame = false;
+      state.createDraft = null;
       state.selectedSeriesId = null;
       state.editingSeriesId = null;
       render();
@@ -4630,6 +4727,7 @@
 
     const signupSuccessButton = event.target.closest('[data-home-after-signup]');
     if (signupSuccessButton) {
+      if (state.pendingGameId) { state.signupCompleted = false; openLoginForGame(state.pendingGameId); render(); return; }
       goToHome(event);
       return;
     }
@@ -4896,6 +4994,31 @@
 
   async function handleAppChange(event) {
     const input = event.target;
+    const createForm = input.closest('form[data-form="game"]');
+    if (createForm) {
+      if (input.matches('[data-reuse-game]') && input.value) {
+        const source = state.games.find((game) => game.id === input.value && game.operatorId === getCurrentUser()?.id);
+        if (source) startGameCreation(source, state.leagueSeries.find((item) => item.id === state.createDraft?.seriesId));
+        return;
+      }
+      if (input.matches('[data-recent-venue]') && input.value) {
+        const previous = state.games.find((game) => game.id === input.value);
+        if (previous) {
+          createForm.elements.namedItem('venueName').value = previous.venueName || previous.location;
+          createForm.elements.namedItem('venueAddress').value = previous.venueAddress || '';
+          createForm.elements.namedItem('venuePhone').value = previous.venuePhone || '';
+        }
+      }
+      if (input.name === 'seriesId') state.selectedSeriesId = input.value || null;
+      if (input.matches('[data-venue-name]')) {
+        const venue = findVenueByName(input.value);
+        createForm.elements.namedItem('venueAddress').value = venue?.address || '';
+        createForm.elements.namedItem('venuePhone').value = venue?.phone || '';
+        createForm.querySelector('.create-location-details').open = !venue;
+      }
+      updateCreateSuggestion(createForm);
+      captureCreateDraft(createForm);
+    }
     if (input.matches('[data-admin-venue-import-file]')) {
       await handleAdminVenueImportFile(input);
       return;
@@ -4990,6 +5113,12 @@
 
   function handleAppInput(event) {
     const input = event.target;
+    const createForm = input.closest('form[data-form="game"]');
+    if (createForm) {
+      if (input.name === 'title') createForm.dataset.titleEdited = 'true';
+      updateCreateSuggestion(createForm);
+      captureCreateDraft(createForm);
+    }
     if (!(input instanceof HTMLInputElement)) return;
     if (input.matches('[data-match-score], [data-tournament-score]')) {
       const digits = input.value.replace(/\D/g, '').slice(0, 2);
@@ -5172,8 +5301,26 @@
   async function init() {
     applyTheme(getTheme(), false);
     await loadState();
+    const entryUrl = new URL(window.location.href);
+    const entryGameId = entryUrl.searchParams.get('game');
     const savedRoute = readSessionJson(BROWSER_ROUTE_KEY, null);
-    if (savedRoute) {
+    if (entryGameId) {
+      const game = state.games.find((item) => item.id === entryGameId);
+      if (game) {
+        state.detailTab = 'status';
+        state.statusSubtab = 'info';
+        state.statusFormat = getGameFormats(game)[0] || null;
+        if (entryUrl.searchParams.get('join') === '1') {
+          state.detailTab = 'applications';
+          if (!getCurrentUser()) { state.pendingGameId = game.id; state.page = 'auth'; state.authTab = 'login'; }
+          else { state.selectedGameId = game.id; state.page = 'dashboard'; }
+        } else if (getCurrentUser()) { state.selectedGameId = game.id; state.page = 'dashboard'; }
+        else state.selectedPublicGameId = game.id;
+      } else {
+        state.page = getCurrentUser() ? 'dashboard' : 'public';
+        setFlash('초대받은 경기를 찾을 수 없습니다. 경기 목록에서 확인해 주세요.', 'error');
+      }
+    } else if (savedRoute) {
       restoreBrowserRoute(savedRoute);
       if (state.page === 'admin' && getCurrentUser()?.role === 'admin') {
         await refreshAdminData();

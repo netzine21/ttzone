@@ -24,6 +24,7 @@ function createApp(user = null) {
       querySelectorAll: () => [],
     },
     window: {
+      GameInvitations: require('../public/game-invitations'),
       sessionStorage,
       location: { href: 'http://localhost/' },
       history: {
