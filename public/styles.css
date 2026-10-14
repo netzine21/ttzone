@@ -2608,6 +2608,16 @@ html[data-theme="light"] .league-series-card__logo {
 .create-location-details[open] summary { margin-bottom: 16px; }
 .create-extra .field + .field { margin-top: 12px; }
 .quick-create-submit { width: 100%; min-height: 48px; }
+.signup-feedback:not([hidden]) {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--danger);
+  border-radius: 12px;
+  color: var(--text);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.auth-signup-form [aria-invalid="true"] { outline: 2px solid var(--danger); outline-offset: 2px; }
 .create-game-heading > div { min-width: 0; }
 .create-game-heading > [data-cancel-create-game] { flex: 0 0 auto; padding: 8px 12px; white-space: nowrap; }
 .quick-game-form [data-create-feedback]:empty,

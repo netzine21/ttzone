@@ -109,6 +109,7 @@
     editingSeriesId: null,
     pendingGameId: null,
     signupCompleted: false,
+    signupSubmitting: false,
     gameFilter: 'all',
     gamePage: 1,
     flash: null,
@@ -193,7 +194,7 @@
       ...options,
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.error || '서버 요청에 실패했습니다.');
+    if (!response.ok) throw Object.assign(new Error(payload.error || '서버 요청에 실패했습니다.'), { status: response.status });
     return payload;
   }
 
@@ -847,7 +848,8 @@
     flashTimer = window.setTimeout(() => {
       if (state.flash && state.flash.id === flashId) {
         state.flash = null;
-        render();
+        // Dismissing a notification must not recreate the form being edited.
+        app?.querySelector('.flash')?.remove();
       }
     }, 3200);
   }
@@ -925,6 +927,7 @@
           <input id="signupPhone" name="phone" type="tel" autocomplete="tel" required placeholder="예: 010-1234-5678" />
         </div>
         ${renderRegionFields('signup', {}, true)}
+        <p class="signup-feedback" data-signup-feedback role="alert" tabindex="-1" hidden></p>
         <div class="helper-row">
           <span>필수 항목을 모두 입력해야 가입할 수 있습니다.</span>
           <span>활동지역을 기준으로 주변 탁구장을 우선 안내합니다.</span>
@@ -3826,8 +3829,17 @@
   }
 
   async function handleSignup(form) {
-    const submittedData = new FormData(form);
-    const formData = Object.fromEntries(submittedData.entries());
+    if (state.signupSubmitting) return;
+    clearFlash();
+    const feedback = form.querySelector('[data-signup-feedback]');
+    const showError = (message) => {
+      feedback.textContent = message;
+      feedback.hidden = false;
+      feedback.focus();
+    };
+    feedback.hidden = true;
+    form.querySelectorAll('[aria-invalid]').forEach((input) => input.removeAttribute('aria-invalid'));
+    const formData = Object.fromEntries(new FormData(form).entries());
     const nickname = trimValue(formData.nickname);
     const memberId = trimValue(formData.memberId).toLowerCase();
     const password = trimValue(formData.password);
@@ -3837,71 +3849,44 @@
     const regionSigungu = trimValue(formData.regionSigungu);
     const region = regionLabel(regionSido, regionSigungu);
     const rank = trimValue(formData.rank);
-    const memberIdKey = normalizeId(memberId);
-
-    const missingFields = [
-      !nickname ? '이름(닉네임)' : '',
-      !memberId ? 'ID' : '',
-      !password ? '비밀번호' : '',
-      !gender ? '성별' : '',
-      !rank ? '통합부수' : '',
-      !phone ? '휴대폰번호' : '',
-      !regionSido || !regionSigungu ? '활동지역' : '',
-    ].filter(Boolean);
-    if (missingFields.length) {
-      setFlash(`회원가입 실패: ${missingFields.join(', ')} 항목을 입력해 주세요.`, 'error');
-      render();
+    const requiredFields = [
+      ['nickname', nickname, '이름(닉네임)'], ['memberId', memberId, 'ID'], ['password', password, '비밀번호'],
+      ['gender', ['male', 'female'].includes(gender), '성별'], ['rank', rank, '통합부수'], ['phone', phone, '휴대폰번호'],
+      ['regionSido', regionSido, '활동지역 시·도'], ['regionSigungu', regionSigungu, '활동지역 시·군·구'],
+    ];
+    const missing = requiredFields.filter(([, value]) => !value);
+    if (missing.length) {
+      for (const [name] of missing) form.querySelectorAll(`[name="${name}"]`).forEach((input) => input.setAttribute('aria-invalid', 'true'));
+      showError(`회원가입을 완료하지 못했습니다. ${missing.map(([, , label]) => label).join(', ')} 항목을 입력해 주세요. 입력한 내용은 유지됩니다.`);
       return;
     }
-
+    state.signupSubmitting = true;
+    const submit = form.querySelector('[type="submit"]');
+    const originalButton = submit.innerHTML;
+    submit.disabled = true;
+    submit.textContent = '회원가입 처리 중…';
     try {
-      await apiRequest('/api/auth/signup', {
+      const result = await apiRequest('/api/auth/signup', {
         method: 'POST',
         body: JSON.stringify({ nickname, memberId, password, phone, gender, rank, region, regionSido, regionSigungu }),
       });
+      if (!result.user?.id) throw new Error('서버에서 가입 완료를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.');
       form.reset();
       state.signupCompleted = true;
       state.page = 'signup-success';
-      setFlash('회원가입이 완료되었습니다.', 'success');
       render();
-      return;
     } catch (error) {
-      if (!error.message.includes('Failed to fetch') && !error.message.includes('서버 요청')) {
-        setFlash(`회원가입 실패: ${error.message}`, 'error');
-        render();
-        return;
-      }
+      const message = error.status === 409
+        ? '이미 사용 중인 ID입니다. 기존에 가입했다면 로그인하거나 다른 ID로 가입해 주세요.'
+        : error instanceof TypeError
+          ? '회원가입 서버에 연결하지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.'
+          : error.message || '회원가입 처리 중 오류가 발생했습니다.';
+      showError(`회원가입 실패: ${message} 입력한 내용은 유지됩니다.`);
+    } finally {
+      state.signupSubmitting = false;
+      submit.disabled = false;
+      submit.innerHTML = originalButton;
     }
-
-    if (state.users.some((user) => user.memberIdKey === memberIdKey)) {
-      setFlash('이미 사용 중인 아이디입니다. 다른 아이디를 입력해 주세요.', 'error');
-      render();
-      return;
-    }
-
-    const passwordHash = await hashPassword(password);
-
-    state.users.push({
-      id: makeId('user'),
-      nickname,
-      memberId,
-      memberIdKey,
-      passwordHash,
-      phone,
-      gender,
-      region,
-      regionSido,
-      regionSigungu,
-      rank,
-      createdAt: new Date().toISOString(),
-    });
-
-    persistUsers();
-    form.reset();
-    state.signupCompleted = true;
-    state.page = 'signup-success';
-    setFlash('회원가입이 완료되었습니다.', 'success');
-    render();
   }
 
   async function handleLogin(form) {

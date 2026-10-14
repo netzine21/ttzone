@@ -111,6 +111,8 @@ npm 사용 환경에서는 `npm test`로도 실행할 수 있습니다. 테스�
 
 Playwright 사용 환경에서는 `node tests/game-invitations.browser.cjs`로 합성 API 데이터를 사용하는 브라우저 통합 검증을 실행합니다. Playwright는 로컬 개발 의존성 또는 `NODE_PATH`로 공급하며, 설치된 Edge를 사용하려면 환경변수 `TTGMS_BROWSER_CHANNEL=msedge`를 지정합니다. 결과 스크린샷 위치는 `TTGMS_UI_OUTPUT`으로 지정할 수 있습니다. 운영 사이트나 실제 DB에 테스트 경기를 생성하지 않습니다.
 
+회원가입 UI는 `node tests/signup.browser.cjs`로 검증합니다. 같은 Playwright 설정을 사용하며, 연락처 공백과 각 필수 항목 누락, 입력값과 오류 표시 유지, 중복 ID·서버·네트워크 오류, 가입 완료 응답 확인과 중복 제출 방지를 합성 API로 검사합니다. 실제 운영 DB의 회원 저장 여부를 확인하는 테스트는 아닙니다.
+
 QR 라이브러리: [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) 1.4.4, MIT. 원본 소스와 라이선스는 `public/vendor/`에 포함했습니다.
 
 ## 참고
