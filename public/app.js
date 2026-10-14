@@ -1045,7 +1045,7 @@
     const series = getPublicSeries();
     if (!series.length) return '';
     return `
-      <section class="series-directory" aria-labelledby="seriesDirectoryTitle">
+      <section class="series-directory" aria-label="정기리그 목록">
         <div class="series-directory__heading"><div><p class="section-kicker">정기적으로 진행되는 경기</p><h2 id="seriesDirectoryTitle">정기리그 목록</h2></div><span class="subtle-note">${series.length}개 리그</span></div>
         <div class="series-directory__grid">${series.map(renderPublicSeriesCard).join('')}</div>
       </section>
@@ -1080,12 +1080,7 @@
       : `<div class="empty-state">${allGames.length ? '선택한 상태의 게임이 없습니다.' : '아직 생성된 게임이 없습니다. 운영자가 게임을 생성하면 이곳에 표시됩니다.'}</div>`;
 
     return `
-      <section class="panel section-card">
-        <div class="section-heading public-game-list-heading">
-          <div>
-            <h2>탁구경기 목록</h2>
-          </div>
-        </div>
+      <section class="panel section-card game-directory" aria-label="탁구경기 목록">
         ${renderSeriesDirectory()}
         ${renderGameStatusFilters(allGames)}
         <div class="game-list">${gameList}</div>
@@ -1437,7 +1432,6 @@
     const currentPage = Math.min(Math.max(state.gamePage, 1), totalPages);
     const pageStart = (currentPage - 1) * gamesPerPage;
     const visibleGames = filteredGames.slice(pageStart, pageStart + gamesPerPage);
-    const listTitle = state.gameFilter === 'mine' ? '내가 생성한 게임' : '탁구경기 목록';
 
     const gameList = visibleGames.length
       ? visibleGames.map((game) => renderGameCard(game, currentUser)).join('')
@@ -1462,11 +1456,9 @@
       : '<button type="button" class="game-list-action" data-game-filter="mine" aria-pressed="false"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3" /><path d="M5 20c.8-3.3 3.2-5 7-5s6.2 1.7 7 5" /></svg><span>내 게임</span></button>';
 
     return `
-      <section class="panel section-card">
-        <div class="section-heading dashboard-game-list-heading">
-          <div>
-            <h2>${listTitle}</h2>
-          </div>
+      <section class="panel section-card game-directory" aria-label="${state.gameFilter === 'mine' ? '내가 생성한 게임' : '탁구경기 목록'}">
+        <div class="section-heading dashboard-game-list-heading dashboard-game-list-heading--compact">
+          ${state.gameFilter === 'mine' ? '<h2>내가 생성한 게임</h2>' : ''}
           <div class="game-list-actions" aria-label="게임 목록 작업">
             <button type="button" class="game-list-action game-list-action--primary" data-show-create-game><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg><span>게임 생성</span></button>
             <button type="button" class="game-list-action" data-show-league-series><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="8" cy="6" r="1.5" /><circle cx="14" cy="12" r="1.5" /><circle cx="10" cy="18" r="1.5" /></svg><span>정기리그 관리</span></button>
