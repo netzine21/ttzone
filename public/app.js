@@ -103,7 +103,7 @@
     createSubmitting: false,
     inviteGameId: null,
     inviteQrOpen: false,
-    inviteCreated: false,
+    gameCreationNotice: null,
     showLeagueSeries: false,
     selectedSeriesId: null,
     editingSeriesId: null,
@@ -1164,14 +1164,16 @@
     const hasAppliedAllFormats = currentUser && formats.length > 0 && formats.every((format) => getGameRegistrations(game, format).some((registration) => registration.userId === currentUser.id));
     const allFormatsClosed = formats.length > 0 && formats.every((format) => isRegistrationClosed(game, format));
     const applyAction = isOwner || allFormatsClosed || hasAppliedAllFormats ? '' : `<div class="public-apply-action"><button type="button" class="btn btn-primary" data-game-apply="${escapeHtml(game.id)}">참가신청</button></div>`;
-    const editAction = currentUser?.id === game.operatorId ? `<div class="game-edit-bottom-action"><button type="button" class="game-list-action" data-edit-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h4L19 9l-4-4L5 15v4zM13 7l4 4" /></svg><span>게임수정</span></button></div>` : '';
+    const editAction = isOwner ? `<div class="game-edit-bottom-action"><button type="button" class="game-list-action" data-edit-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h4L19 9l-4-4L5 15v4zM13 7l4 4" /></svg><span>내용 수정</span></button>${state.serverGameIds.includes(game.id) ? `<button type="button" class="game-list-action game-list-action--primary" data-open-invite="${escapeHtml(game.id)}">참가자 초대</button>` : ''}</div>` : '';
     const canDelete = currentUser?.role === 'admin' || (isOwner && !formats.some((format) => isRegistrationClosed(game, format)));
     const deleteAction = canDelete ? `<div class="game-edit-bottom-action"><button type="button" class="game-list-action game-list-action--danger" data-delete-game="${escapeHtml(game.id)}"><svg class="game-list-action__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M9 7V4h6v3M7 7l1 13h8l1-13" /></svg><span>${currentUser?.role === 'admin' ? '게임 삭제(관리자)' : '게임 삭제'}</span></button></div>` : '';
+    const creationNotice = isOwner && state.gameCreationNotice?.gameId === game.id
+      ? `<div class="game-creation-notice" role="status"><p>게임이 생성되었습니다. 내용을 확인한 후 참가자를 초대해 주세요.</p>${state.gameCreationNotice.rosterMessage ? `<p>${escapeHtml(state.gameCreationNotice.rosterMessage)}</p>` : ''}</div>` : '';
     const venueName = game.venueName || game.location;
     const venueAddress = game.venueAddress || '';
     const venuePhone = game.venuePhone || '';
     const operatorPhone = game.operatorPhone || operator?.phone || '';
-    return `<dl class="meta-grid public-detail-meta"><div><dt>게임장소</dt><dd>${escapeHtml(venueName)}</dd></div><div><dt>탁구장 주소</dt><dd>${escapeHtml(venueAddress || '미입력')}</dd></div><div><dt>탁구장 전화번호</dt><dd>${escapeHtml(venuePhone || '미입력')}</dd></div><div><dt>게임일시</dt><dd>${escapeHtml(formatDateTime(game.scheduledAt))}</dd></div><div><dt>운영자</dt><dd>${escapeHtml(game.operatorNickname)}</dd></div><div><dt>운영자 휴대폰</dt><dd>${escapeHtml(operatorPhone || '미입력')}</dd></div><div><dt>경기방식</dt><dd class="format-detail-list">${formats.map((format) => `<span class="format-detail-item">${escapeHtml(FORMAT_LABELS[format])} <span class="format-detail-mode">(${escapeHtml(getFormatModeLabel(game, format))})</span></span>`).join(' · ')}</dd></div><div><dt>최대참가인원</dt><dd>${escapeHtml(String(game.maxParticipants))}명</dd></div></dl><div class="public-detail-note"><p class="section-kicker">게임안내</p><p>${game.note ? escapeHtml(game.note) : '<span class="muted">추가 안내가 없습니다.</span>'}</p></div>${applyAction}${editAction}${deleteAction}`;
+    return `${creationNotice}<dl class="meta-grid public-detail-meta"><div><dt>게임장소</dt><dd>${escapeHtml(venueName)}</dd></div><div><dt>탁구장 주소</dt><dd>${escapeHtml(venueAddress || '미입력')}</dd></div><div><dt>탁구장 전화번호</dt><dd>${escapeHtml(venuePhone || '미입력')}</dd></div><div><dt>게임일시</dt><dd>${escapeHtml(formatDateTime(game.scheduledAt))}</dd></div><div><dt>운영자</dt><dd>${escapeHtml(game.operatorNickname)}</dd></div><div><dt>운영자 휴대폰</dt><dd>${escapeHtml(operatorPhone || '미입력')}</dd></div><div><dt>경기방식</dt><dd class="format-detail-list">${formats.map((format) => `<span class="format-detail-item">${escapeHtml(FORMAT_LABELS[format])} <span class="format-detail-mode">(${escapeHtml(getFormatModeLabel(game, format))})</span></span>`).join(' · ')}</dd></div><div><dt>최대참가인원</dt><dd>${escapeHtml(String(game.maxParticipants))}명</dd></div></dl><div class="public-detail-note"><p class="section-kicker">게임안내</p><p>${game.note ? escapeHtml(game.note) : '<span class="muted">추가 안내가 없습니다.</span>'}</p></div>${applyAction}${editAction}${deleteAction}`;
   }
 
   function getPublicGroupStandings(game, format) {
@@ -1308,8 +1310,8 @@
     const format = getPublicFormat(game);
     const isOwner = currentUser && game.operatorId === currentUser.id;
     const isOperating = isOwner && state.operationGameId === game.id;
-    const inviteActions = `<div class="game-invite-toolbar">${state.serverGameIds.includes(game.id) ? `<button type="button" class="game-list-action" data-open-invite="${escapeHtml(game.id)}">링크로 초대</button>` : ''}${isOwner ? `<button type="button" class="game-list-action" data-clone-game="${escapeHtml(game.id)}">같은 설정으로 새 게임</button>${game.seriesId ? `<button type="button" class="game-list-action" data-next-round="${escapeHtml(game.id)}">다음 회차 만들기</button>` : ''}` : ''}</div>`;
-    return `<section class="panel section-card public-game-detail"><div class="game-detail-header"><h1 class="game-detail-title">${escapeHtml(game.title)}</h1>${renderGameDetailMenu(game, isOwner)}${inviteActions}</div>${isOperating ? renderOperationsPage(currentUser, true) : ''}${!isOperating && state.detailTab === 'status' ? renderGameRules(game, currentUser) : ''}${!isOperating && state.detailTab === 'progress' ? renderCompetitionView(game, currentUser, format) : ''}${!isOperating && state.detailTab === 'applications' ? renderApplicationsView(game, currentUser) : ''}</section>`;
+    const inviteActions = `<div class="game-invite-toolbar">${!isOwner && state.serverGameIds.includes(game.id) ? `<button type="button" class="game-list-action" data-open-invite="${escapeHtml(game.id)}">참가자 초대</button>` : ''}${isOwner ? `<button type="button" class="game-list-action" data-clone-game="${escapeHtml(game.id)}">같은 설정으로 새 게임</button>${game.seriesId ? `<button type="button" class="game-list-action" data-next-round="${escapeHtml(game.id)}">다음 회차 만들기</button>` : ''}` : ''}</div>`;
+    return `<section class="panel section-card public-game-detail"><div class="game-detail-header"><h1 class="game-detail-title">${escapeHtml(game.title)}</h1>${renderGameDetailMenu(game, isOwner)}${!isOperating && state.detailTab === 'status' ? inviteActions : ''}</div>${isOperating ? renderOperationsPage(currentUser, true) : ''}${!isOperating && state.detailTab === 'status' ? renderGameRules(game, currentUser) : ''}${!isOperating && state.detailTab === 'progress' ? renderCompetitionView(game, currentUser, format) : ''}${!isOperating && state.detailTab === 'applications' ? renderApplicationsView(game, currentUser) : ''}</section>`;
   }
 
   function renderPublicGameDetail(game) {
@@ -1554,7 +1556,7 @@
         qr = '<p role="status">QR을 표시하지 못했습니다. 초대 링크를 사용해 주세요.</p>';
       }
     }
-    return `<section class="panel section-card game-invitation"><p class="section-kicker">함께할 사람을 초대하세요</p><h1>${state.inviteCreated ? '게임이 만들어졌어요!' : '게임 초대'}</h1><h2>${escapeHtml(game.title)}</h2><p>${escapeHtml(formatDateTime(game.scheduledAt))}</p><p>${escapeHtml(game.venueName || game.location)} · ${escapeHtml(getGameFormats(game).map((format) => FORMAT_LABELS[format]).join(' · '))} · 모집 ${game.maxParticipants}명</p><label for="gameInviteLink">초대 링크</label><input id="gameInviteLink" type="url" readonly value="${escapeHtml(url)}" /><div class="invite-actions"><button type="button" class="btn btn-primary" data-invite-copy="link">초대 링크 복사</button><button type="button" class="btn btn-secondary" data-invite-share>공유하기</button><button type="button" class="btn btn-secondary" data-invite-qr aria-expanded="${Boolean(state.inviteQrOpen)}">QR ${state.inviteQrOpen ? '닫기' : '보기'}</button></div>${qr}<details class="create-extra"><summary>단체방 초대 문구</summary><textarea aria-label="단체방 초대 문구" readonly rows="6">${escapeHtml(gameInviteText(game))}</textarea><button type="button" class="btn btn-secondary" data-invite-copy="text">초대 문구 복사</button></details><p class="field-hint">${escapeHtml(state.inviteRosterMessage || "")}</p><p data-invite-feedback role="status" aria-live="polite"></p><div class="invite-actions"><button type="button" class="btn btn-secondary" data-invite-open>참가자 확인</button>${getCurrentUser()?.id === game.operatorId ? '<button type="button" class="btn btn-primary" data-invite-prepare>경기 준비</button>' : ''}<button type="button" class="btn btn-ghost" data-invite-close>경기 보기</button></div></section>`;
+    return `<section class="panel section-card game-invitation"><p class="section-kicker">함께할 사람을 초대하세요</p><h1>참가자 초대</h1><h2>${escapeHtml(game.title)}</h2><p>${escapeHtml(formatDateTime(game.scheduledAt))}</p><p>${escapeHtml(game.venueName || game.location)} · ${escapeHtml(getGameFormats(game).map((format) => FORMAT_LABELS[format]).join(' · '))} · 모집 ${game.maxParticipants}명</p><label for="gameInviteLink">초대 링크</label><input id="gameInviteLink" type="url" readonly value="${escapeHtml(url)}" /><div class="invite-actions"><button type="button" class="btn btn-primary" data-invite-copy="link">초대 링크 복사</button><button type="button" class="btn btn-secondary" data-invite-share>공유하기</button><button type="button" class="btn btn-secondary" data-invite-qr aria-expanded="${Boolean(state.inviteQrOpen)}">QR ${state.inviteQrOpen ? '닫기' : '보기'}</button></div>${qr}<details class="create-extra"><summary>단체방 초대 문구</summary><textarea aria-label="단체방 초대 문구" readonly rows="6">${escapeHtml(gameInviteText(game))}</textarea><button type="button" class="btn btn-secondary" data-invite-copy="text">초대 문구 복사</button></details><p data-invite-feedback role="status" aria-live="polite"></p><div class="invite-actions"><button type="button" class="btn btn-secondary" data-invite-open>참가자 확인</button>${getCurrentUser()?.id === game.operatorId ? '<button type="button" class="btn btn-primary" data-invite-prepare>경기 준비</button>' : ''}<button type="button" class="btn btn-ghost" data-invite-close>경기요강으로 돌아가기</button></div></section>`;
   }
 
   async function copyInvitation(game, kind = 'link') {
@@ -1590,7 +1592,7 @@
         <div class="field"><label for="gameMaxParticipants">몇 명을 모집하나요?</label><div class="quick-options">${[8, 16, 24, 32, 48].map((count) => `<button type="button" class="btn btn-secondary" data-create-capacity="${count}">${count}명</button>`).join('')}</div><input id="gameMaxParticipants" name="maxParticipants" type="number" min="1" step="1" required value="${escapeHtml(String(draft.maxParticipants))}" /><small class="field-hint">직접 입력할 수 있습니다. 여러 종목 선택 시 정원은 종목별로 적용됩니다.</small></div>
         <details class="create-extra" ${draft.seriesId ? 'open' : ''}><summary>추가 설정 · 진행방식 / 정기리그 / 안내</summary>${modeOptions}<div class="field"><label for="gameSeriesId">정기리그 연결</label><select id="gameSeriesId" name="seriesId">${renderSeriesOptions(draft.seriesId)}</select></div><div class="field"><label for="gameNote">게임 안내 (선택)</label><textarea id="gameNote" name="note">${escapeHtml(draft.note)}</textarea></div></details>
         ${draft.sourceGameId ? `<label class="roster-reuse-choice"><input type="checkbox" name="reuseRoster" ${draft.reuseRoster ? 'checked' : ''} /> 이전 경기 참가 명단도 등록하기 (선택)</label><p class="field-hint">선택한 종목의 선수만 정원 안에서 등록합니다. 점수·대진·마감 상태는 가져오지 않습니다.</p>` : ''}
-        <p data-create-feedback role="status"></p><button class="btn btn-primary quick-create-submit" type="submit" ${state.createSubmitting ? 'disabled' : ''}>${state.createSubmitting ? '게임을 저장하고 있어요…' : '게임 만들고 초대하기'}</button>
+        <p data-create-feedback role="status"></p><button class="btn btn-primary quick-create-submit" type="submit" ${state.createSubmitting ? 'disabled' : ''}>${state.createSubmitting ? '게임을 저장하고 있어요…' : '게임 만들기'}</button>
       </form></section>`;
   }
 
@@ -3538,6 +3540,7 @@
     state.selectedScheduleGroup = null;
     state.pendingGameId = null;
     state.inviteGameId = null;
+    state.gameCreationNotice = null;
     state.showCreateGame = false;
     state.signupCompleted = false;
     state.detailTab = 'status';
@@ -3591,6 +3594,7 @@
     // Leave the series route so it cannot take precedence over the game detail.
     state.selectedPublicSeriesId = null;
     state.inviteGameId = null;
+    state.gameCreationNotice = null;
     state.showCreateGame = false;
     state.showLeagueSeries = false;
     state.operationGameId = null;
@@ -4130,16 +4134,21 @@
           rosterMessage = '게임은 생성되었습니다. 일부 참가 명단은 등록되지 않았을 수 있으니 참가자 확인에서 점검해 주세요.';
         }
       }
-      state.inviteRosterMessage = rosterMessage;
+      state.gameCreationNotice = { gameId: result.game.id, rosterMessage };
       state.showCreateGame = false;
       state.createDraft = null;
       state.selectedSeriesId = null;
       state.selectedGameId = result.game.id;
       state.selectedPublicGameId = null;
       state.selectedPublicSeriesId = null;
-      state.page = 'invite';
-      state.inviteGameId = result.game.id;
-      state.inviteCreated = true;
+      state.page = 'dashboard';
+      state.inviteGameId = null;
+      state.operationGameId = null;
+      state.editingGameId = null;
+      state.showLeagueSeries = false;
+      state.detailTab = 'status';
+      state.statusSubtab = 'info';
+      state.statusFormat = getGameFormats(result.game)[0] || null;
       state.inviteQrOpen = false;
       state.createSubmitting = false;
       render();
@@ -4147,7 +4156,7 @@
       if (feedback) feedback.textContent = `${error.message || '게임 저장에 실패했습니다.'} 입력 내용은 유지됩니다. 경기 목록에서 생성 여부를 확인한 뒤 다시 시도해 주세요.`;
     } finally {
       state.createSubmitting = false;
-      if (submit) { submit.disabled = false; submit.textContent = '게임 만들고 초대하기'; }
+      if (submit) { submit.disabled = false; submit.textContent = '게임 만들기'; }
     }
   }
 
@@ -4298,8 +4307,6 @@
       if (!state.serverGameIds.includes(openInvite.dataset.openInvite)) return;
       state.page = 'invite';
       state.inviteGameId = openInvite.dataset.openInvite;
-      state.inviteCreated = false;
-      state.inviteRosterMessage = '';
       state.inviteQrOpen = false;
       render();
       return;

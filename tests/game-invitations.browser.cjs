@@ -40,6 +40,11 @@ async function bindContext(browser, authenticated) {
         games.push(game);
         data = { game };
       }
+      if (/^\/api\/games\/[^/]+$/.test(url.pathname) && request.method() === 'PATCH') {
+        const game = games.find((item) => item.id === decodeURIComponent(url.pathname.split('/').at(-1)));
+        Object.assign(game, request.postDataJSON());
+        data = { game };
+      }
       const bulk = url.pathname.match(/^\/api\/games\/([^/]+)\/registrations\/bulk$/);
       if (bulk) {
         bulkRequests++;
@@ -120,18 +125,36 @@ async function bindContext(browser, authenticated) {
     const localSchedule = await page.locator('#gameScheduledAt').inputValue();
     // Two submit events while the save is pending must create only one game.
     await page.locator('form[data-form="game"]').evaluate((form) => { form.requestSubmit(); form.requestSubmit(); });
-    await page.locator('.game-invitation').waitFor();
+    await page.locator('.game-creation-notice').waitFor();
+    assert.equal(await page.locator('.game-invitation').count(), 0);
+    assert.match(await page.locator('.game-creation-notice').textContent(), /게임이 생성되었습니다.*내용을 확인한 후 참가자를 초대/);
+    assert.equal(await page.locator('[data-detail-tab="status"]').getAttribute('class').then((value) => value.includes('is-active')), true);
+    assert.equal(await page.locator('.public-detail-meta').getByText('24명', { exact: true }).isVisible(), true);
+    await page.screenshot({ path: path.join(output, 'game-created-rules-mobile.png'), fullPage: true });
+    for (const width of [320, 390, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(createRequests.length, 1);
     assert.equal(createRequests[0].maxParticipants, 24);
     assert.equal(createRequests[0].scheduledAt, new Date(`${localSchedule}:00+09:00`).toISOString());
     assert.equal('registrations' in createRequests[0], false);
     assert.equal('preliminaryMatches' in createRequests[0], false);
+    // Review, edit and save before opening the invitation. Shares use the saved game.
+    await page.locator('[data-edit-game]').click();
+    await page.locator('#editGameTitle').fill('확인 후 수정한 게임');
+    await page.locator('form[data-form="game-edit"] [type="submit"]').click();
+    await page.locator('.public-game-detail').waitFor();
+    await page.getByRole('heading', { name: '확인 후 수정한 게임', exact: true }).waitFor();
+    await page.locator('[data-open-invite]').click();
+    await page.locator('.game-invitation').waitFor();
     await page.locator('[data-invite-copy="link"]').click();
     const invite = await page.locator('#gameInviteLink').inputValue();
     assert.equal(await page.evaluate(() => window.copiedInvitations.at(-1)), invite);
     await page.getByText('단체방 초대 문구', { exact: true }).click();
     await page.locator('[data-invite-copy="text"]').click();
-    assert.match(await page.evaluate(() => window.copiedInvitations.at(-1)), /함께 탁구해요.*\n일시:.*\n장소:/);
+    assert.match(await page.evaluate(() => window.copiedInvitations.at(-1)), /확인 후 수정한 게임.*\n일시:.*\n장소:/);
     await page.locator('[data-invite-share]').click();
     await page.evaluate(() => { navigator.clipboard.writeText = async () => { throw new Error('denied'); }; });
     await page.locator('[data-invite-copy="link"]').click();
@@ -145,11 +168,20 @@ async function bindContext(browser, authenticated) {
     }
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: path.join(output, 'game-invite-mobile.png'), fullPage: true });
-    console.log('PASS: quick creation, duplicate-submit guard, link/text copy, QR, responsive layout');
+    await page.locator('[data-invite-close]').click();
+    await page.locator('.public-detail-meta').waitFor();
+    assert.equal(await page.locator('.game-invitation').count(), 0);
+    await page.locator('[data-detail-tab="progress"]').click();
+    assert.equal(await page.locator('[data-open-invite]').count(), 0);
+    await page.locator('[data-detail-tab="status"]').click();
+    await page.locator('[data-open-invite]').click();
+    assert.equal(await page.locator('#gameInviteLink').inputValue(), invite);
+    console.log('PASS: creation opens rules; review/edit/save before inviting; duplicate-submit guard, link/text copy, QR, responsive layout');
 
     const guest = await bindContext(browser, false);
     await guest.page.goto(invite);
-    await guest.page.getByRole('heading', { name: '함께 탁구해요', exact: true }).waitFor();
+    await guest.page.getByRole('heading', { name: '확인 후 수정한 게임', exact: true }).waitFor();
+    assert.equal(await guest.page.locator('[data-edit-game]').count(), 0);
     assert.equal(await guest.page.locator('[data-open-operations]').count(), 0);
     await guest.page.reload();
     await guest.page.locator('[data-game-apply]').click();
@@ -170,7 +202,7 @@ async function bindContext(browser, authenticated) {
     assert.equal(await page.locator('[name="reuseRoster"]').isChecked(), false);
     await page.locator('[data-create-day="1"]').click();
     await page.locator('.quick-create-submit').click();
-    await page.locator('.game-invitation').waitFor();
+    await page.locator('.game-creation-notice').waitFor();
     assert.equal(bulkRequests, 0);
     assert.equal(games.at(-1).registrations.length, 0);
     assert.equal('preliminaryMatches' in games.at(-1), false);
@@ -182,10 +214,12 @@ async function bindContext(browser, authenticated) {
     await page.locator('[data-create-day="1"]').click();
     await page.locator('[name="reuseRoster"]').check();
     await page.locator('.quick-create-submit').click();
-    await page.locator('.game-invitation').waitFor();
+    await page.locator('.game-creation-notice').waitFor();
+    assert.match(await page.locator('.game-creation-notice').textContent(), /이전 명단 1명 등록/);
     assert.equal(bulkRequests, 1);
     assert.equal(games.at(-1).registrations.length, 1);
     assert.equal(games.at(-1).seriesRound, 2);
+    await page.locator('[data-open-invite]').click();
     await page.locator('[data-invite-open]').click();
     await page.getByText('테스트선수', { exact: true }).first().waitFor();
     assert.equal(await page.locator('.game-invitation').count(), 0);
