@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "description": "탁구장 게임관리 시스템",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "pg": "^8.16.3"

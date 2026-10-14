@@ -3543,6 +3543,8 @@
     const currentUser = getCurrentUser();
     const game = state.games.find((item) => item.id === gameId);
     if (!game) return;
+    // Leave the series route so it cannot take precedence over the game detail.
+    state.selectedPublicSeriesId = null;
     state.detailTab = 'status';
     state.statusSubtab = 'info';
     state.progressSubtab = 'participants';
@@ -4650,8 +4652,9 @@
     if (publicSeriesButton) {
       state.selectedPublicSeriesId = publicSeriesButton.dataset.publicSeries || null;
       state.selectedPublicGameId = null;
+      state.selectedGameId = null;
       state.page = 'public';
-      await loadState();
+      // Both the series and its games were loaded with the directory.
       render();
       return;
     }
