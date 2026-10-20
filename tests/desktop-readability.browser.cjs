@@ -33,7 +33,11 @@ const games = titles.map((title, index) => ({ id: `game-${index}`, title, series
     const home = async () => { await page.goto('http://localhost:4177/'); await page.locator('.series-directory-card').first().waitFor(); };
     const fonts = () => page.evaluate(() => Object.fromEntries([
       ['root', 'html'], ['body', 'body'], ['title', '.game-title-link'], ['date', '.game-list-item__date'], ['status', '.game-format-status'], ['series', '.series-directory-card__body strong'], ['menu', '[data-show-league-series]'],
-    ].map(([key, selector]) => [key, parseFloat(getComputedStyle(document.querySelector(selector)).fontSize)])));
+    ].map(([key, selector]) => {
+      const element = document.querySelector(selector);
+      if (!element) throw new Error(`Missing fixture element: ${selector}`);
+      return [key, parseFloat(getComputedStyle(element).fontSize)];
+    })));
     await home();
     const before = await fonts();
     await page.screenshot({ path: path.join(output, 'desktop-readability-before.png'), fullPage: true });
