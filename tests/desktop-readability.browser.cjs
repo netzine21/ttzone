@@ -12,6 +12,9 @@ const newCss = fs.readFileSync(path.join(root, 'public/styles.css'), 'utf8');
 const series = ['동인천 탁구 정기 수요리그', '라니핑퐁 목요 정기리그', '오늘도핑퐁 월례정기모임'].map((name, index) => ({ id: `series-${index}`, name, ownerId: 'owner', status: 'active', scheduleLabel: index === 1 ? '매주 목요일' : '매월 토요일', defaultFormats: ['singles'], gameCount: 2 }));
 const titles = ['티티그라운드 Open 기념 탁구대회', '26년 TTK70-솔개 10월 번개모임(테스트)', '26년 TTK70-솔개 10월 정기모임', '74년 호랑이 탁구동호인 인천지역 번개모임(테스트)', '26년 10월 오늘도 핑퐁 정기월례 모임', '라니핑퐁 목요 정기리그 새로운 경기'];
 const games = titles.map((title, index) => ({ id: `game-${index}`, title, seriesId: null, operatorId: 'owner', operatorNickname: '운영자', formats: ['singles'], scheduledAt: '2026-10-22T10:00:00Z', venueName: '테스트 탁구장', venueAddress: '테스트 주소', maxParticipants: 24, registrations: [], registrationClosed: {}, formatStatuses: index % 3 === 1 ? { singles: 'completed' } : {} }));
+series[0].defaultFormats = ['doubles', 'team'];
+series[0].defaultFormatModes = { doubles: 'leagueOnly', team: 'leagueTournament' };
+const seriesWrites = [];
 
 (async () => {
   const browser = await chromium.launch({ headless: true, ...(process.env.TTGMS_BROWSER_CHANNEL ? { channel: process.env.TTGMS_BROWSER_CHANNEL } : {}) });
@@ -21,6 +24,13 @@ const games = titles.map((title, index) => ({ id: `game-${index}`, title, series
     await context.addInitScript(() => sessionStorage.clear());
     await context.route('**/*', (route) => {
       const url = new URL(route.request().url());
+      if (url.pathname.startsWith('/api/league-series') && route.request().method() !== 'GET') {
+        const payload = route.request().postDataJSON();
+        seriesWrites.push(payload);
+        if (route.request().method() === 'POST') series.push({ ...payload, id: 'new-series', ownerId: 'owner', status: 'active' });
+        else Object.assign(series.find((item) => item.id === url.pathname.split('/').at(-1)), payload);
+        return route.fulfill({ json: { ok: true } });
+      }
       if (url.pathname.startsWith('/api/')) return route.fulfill({ json: url.pathname === '/api/auth/me' ? { user: { id: 'owner', nickname: '운영자', gender: 'male', rank: '7부' } } : url.pathname === '/api/games' ? { games } : url.pathname === '/api/league-series' ? { series } : { venues: [] } });
       if (url.pathname === '/public/styles.css') return route.fulfill({ body: baseline ? oldCss : newCss, contentType: 'text/css' });
       const file = path.resolve(root, '.' + (url.pathname === '/' ? '/index.html' : url.pathname));
@@ -60,6 +70,8 @@ const games = titles.map((title, index) => ({ id: `game-${index}`, title, series
       }
       await page.locator('[data-show-league-series]').click();
       await page.locator('#leagueSeriesLogo').waitFor();
+      assert.equal(await page.getByText('정기 경기 관리', { exact: true }).count(), 0);
+      assert.equal(await page.locator('[name="scheduleLabel"], [name="defaultFormats"]').count(), 0);
       const sizes = await page.evaluate(() => ['.field label', '.field input', '.field-hint'].map((selector) => parseFloat(getComputedStyle(document.querySelector(selector)).fontSize)));
       assert.ok(sizes[0] >= 18 && sizes[1] >= 18 && sizes[2] >= 16);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
@@ -68,7 +80,25 @@ const games = titles.map((title, index) => ({ id: `game-${index}`, title, series
     }
     await page.emulateMedia({ media: 'print' });
     assert.equal((await fonts()).root, 16);
+    await page.emulateMedia({ media: 'screen' });
+    await page.locator('[data-show-league-series]').click();
+    await page.locator('#leagueSeriesName').fill('간편 등록 정기리그');
+    await page.locator('[data-form="league-series"] [type="submit"]').click();
+    await page.getByText(/정기리그가 등록되었습니다/).waitFor();
+    assert.deepEqual(seriesWrites[0].defaultFormats, ['singles']);
+    await page.locator('[data-edit-series="series-0"]').click();
+    assert.equal(await page.locator('[data-form="league-series-edit"] [name="scheduleLabel"], [data-form="league-series-edit"] [name="defaultFormats"]').count(), 0);
+    await page.locator('#editLeagueSeriesName').fill('설정 유지 정기리그');
+    await page.locator('[data-form="league-series-edit"] [type="submit"]').click();
+    await page.getByText('정기리그 정보가 수정되었습니다.', { exact: true }).waitFor();
+    assert.equal(seriesWrites[1].scheduleLabel, '매월 토요일');
+    assert.deepEqual(seriesWrites[1].defaultFormats, ['doubles', 'team']);
+    assert.deepEqual(seriesWrites[1].defaultFormatModes, { doubles: 'leagueOnly', team: 'leagueTournament' });
+    await page.locator('[data-series-create-game="series-0"]').click();
+    assert.equal(await page.locator('[name="formats"][value="doubles"]').isChecked(), true);
+    assert.equal(await page.locator('[name="formats"][value="team"]').isChecked(), true);
     assert.deepEqual(errors, []);
     console.log('PASS: desktop readability at 821–1920px, long titles/form layout, mobile font sizes unchanged, print scale unchanged');
+    console.log('PASS: simplified series forms create successfully; editing preserves hidden schedule/formats/modes and next-round defaults');
   } finally { await browser.close(); }
 })().catch((error) => { console.error(error); process.exitCode = 1; });

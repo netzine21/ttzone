@@ -1455,35 +1455,30 @@
   function renderLeagueSeriesPage(currentUser) {
     const ownedSeries = state.leagueSeries.filter((series) => series.ownerId === currentUser.id || currentUser.role === 'admin');
     const editingSeries = ownedSeries.find((series) => series.id === state.editingSeriesId) || null;
-    const editingFormats = editingSeries?.defaultFormats || [];
     return `
       <section class="panel section-card league-series-page">
         <div class="section-heading">
-          <div><p class="section-kicker">정기 경기 관리</p><h1>정기리그 관리</h1><p class="section-note">정기리그를 등록해 두고 매 회차 경기를 연결해서 운영할 수 있습니다.</p></div>
+          <div><h1>정기리그 관리</h1><p class="section-note">정기리그를 등록해 두고 매 회차 경기를 연결해서 운영할 수 있습니다.</p></div>
           <button type="button" class="create-game-close" aria-label="정기리그 관리 닫기" data-back-dashboard><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg></button>
         </div>
         <form class="league-series-create" data-form="league-series">
           <div class="league-series-create__heading"><strong>새 정기리그 등록</strong><span>금요리그, 월정기리그처럼 반복 운영하는 경기 묶음입니다.</span></div>
           <div class="field-grid league-series-create__fields">
             <div class="field"><label for="leagueSeriesName">정기리그명</label><input id="leagueSeriesName" name="name" required placeholder="예: 금요리그" /></div>
-            <div class="field"><label for="leagueSeriesSchedule">운영 일정</label><input id="leagueSeriesSchedule" name="scheduleLabel" placeholder="예: 매주 금요일" /></div>
             <div class="field"><label for="leagueSeriesMax">기본 참가인원</label><input id="leagueSeriesMax" name="defaultMaxParticipants" type="number" min="1" placeholder="선택 입력" /></div>
           </div>
           <div class="field"><label for="leagueSeriesLogo">리그 대표 로고</label><input id="leagueSeriesLogo" name="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-league-series-logo /><small class="field-hint">PNG, JPG, WEBP, SVG 이미지 · 최대 2MB</small></div>
           <div class="field"><label for="leagueSeriesDescription">운영 안내</label><textarea id="leagueSeriesDescription" name="description" placeholder="정기리그 운영 규칙이나 참가 안내"></textarea></div>
-          <div class="field"><span class="field-label">기본 경기형식</span><div class="choice-row"><label class="choice-option">개인전 <input type="checkbox" name="defaultFormats" value="singles" checked /></label><label class="choice-option">복식 <input type="checkbox" name="defaultFormats" value="doubles" /></label><label class="choice-option">단체전 <input type="checkbox" name="defaultFormats" value="team" /></label></div></div>
           <div class="button-row"><button class="btn btn-primary" type="submit">정기리그 등록</button></div>
         </form>
         ${editingSeries ? `<form class="league-series-create league-series-edit" data-form="league-series-edit" data-series-id="${escapeHtml(editingSeries.id)}">
           <div class="league-series-create__heading"><strong>정기리그 정보 수정</strong><button type="button" class="btn btn-secondary" data-cancel-series-edit>수정 취소</button></div>
           <div class="field-grid league-series-create__fields">
             <div class="field"><label for="editLeagueSeriesName">정기리그명</label><input id="editLeagueSeriesName" name="name" required value="${escapeHtml(editingSeries.name)}" /></div>
-            <div class="field"><label for="editLeagueSeriesSchedule">운영 일정</label><input id="editLeagueSeriesSchedule" name="scheduleLabel" value="${escapeHtml(editingSeries.scheduleLabel || '')}" /></div>
             <div class="field"><label for="editLeagueSeriesMax">기본 참가인원</label><input id="editLeagueSeriesMax" name="defaultMaxParticipants" type="number" min="1" value="${escapeHtml(String(editingSeries.defaultMaxParticipants || ''))}" /></div>
           </div>
           <div class="field"><label for="editLeagueSeriesLogo">리그 대표 로고</label><input id="editLeagueSeriesLogo" name="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-league-series-logo /><input type="hidden" name="logoUrl" value="${escapeHtml(getSeriesLogo(editingSeries))}" /><small class="field-hint">새 이미지를 선택하지 않으면 기존 로고가 유지됩니다.</small></div>
           <div class="field"><label for="editLeagueSeriesDescription">운영 안내</label><textarea id="editLeagueSeriesDescription" name="description">${escapeHtml(editingSeries.description || '')}</textarea></div>
-          <div class="field"><span class="field-label">기본 경기형식</span><div class="choice-row"><label class="choice-option">개인전 <input type="checkbox" name="defaultFormats" value="singles" ${editingFormats.includes('singles') ? 'checked' : ''} /></label><label class="choice-option">복식 <input type="checkbox" name="defaultFormats" value="doubles" ${editingFormats.includes('doubles') ? 'checked' : ''} /></label><label class="choice-option">단체전 <input type="checkbox" name="defaultFormats" value="team" ${editingFormats.includes('team') ? 'checked' : ''} /></label></div></div>
           <div class="button-row"><button class="btn btn-primary" type="submit">변경사항 저장</button></div>
         </form>` : ''}
         <div class="league-series-list">
@@ -4102,7 +4097,7 @@
     const currentUser = getCurrentUser();
     if (!currentUser) return;
     const submittedData = new FormData(form);
-    const defaultFormats = submittedData.getAll('defaultFormats').map(trimValue).filter(Boolean);
+    const defaultFormats = ['singles'];
     let logoUrl = '';
     try {
       logoUrl = await readLeagueSeriesLogo(form);
@@ -4119,8 +4114,8 @@
       defaultMaxParticipants: trimValue(submittedData.get('defaultMaxParticipants')) || null,
       defaultFormats,
     };
-    if (!payload.name || !defaultFormats.length) {
-      setFlash('정기리그명과 기본 경기형식을 입력해 주세요.', 'error');
+    if (!payload.name) {
+      setFlash('정기리그명을 입력해 주세요.', 'error');
       render();
       return;
     }
@@ -4138,7 +4133,9 @@
     const currentUser = getCurrentUser();
     if (!currentUser) return;
     const submittedData = new FormData(form);
-    const defaultFormats = submittedData.getAll('defaultFormats').map(trimValue).filter(Boolean);
+    const existingSeries = state.leagueSeries.find((series) => series.id === form.dataset.seriesId);
+    if (!existingSeries) return;
+    const defaultFormats = existingSeries.defaultFormats?.length ? existingSeries.defaultFormats : ['singles'];
     let logoUrl = '';
     try {
       logoUrl = await readLeagueSeriesLogo(form);
@@ -4150,13 +4147,14 @@
     const payload = {
       name: trimValue(submittedData.get('name')),
       logoUrl,
-      scheduleLabel: trimValue(submittedData.get('scheduleLabel')),
+      scheduleLabel: existingSeries.scheduleLabel || '',
+      defaultFormatModes: existingSeries.defaultFormatModes || {},
       description: trimValue(submittedData.get('description')),
       defaultMaxParticipants: trimValue(submittedData.get('defaultMaxParticipants')) || null,
       defaultFormats,
     };
-    if (!payload.name || !defaultFormats.length) {
-      setFlash('정기리그명과 기본 경기형식을 입력해 주세요.', 'error');
+    if (!payload.name) {
+      setFlash('정기리그명을 입력해 주세요.', 'error');
       render();
       return;
     }
