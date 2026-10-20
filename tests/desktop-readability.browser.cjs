@@ -11,7 +11,7 @@ const oldCss = execFileSync('git', ['show', 'HEAD:public/styles.css'], { cwd: ro
 const newCss = fs.readFileSync(path.join(root, 'public/styles.css'), 'utf8');
 const series = ['동인천 탁구 정기 수요리그', '라니핑퐁 목요 정기리그', '오늘도핑퐁 월례정기모임'].map((name, index) => ({ id: `series-${index}`, name, ownerId: 'owner', status: 'active', scheduleLabel: index === 1 ? '매주 목요일' : '매월 토요일', defaultFormats: ['singles'], gameCount: 2 }));
 const titles = ['티티그라운드 Open 기념 탁구대회', '26년 TTK70-솔개 10월 번개모임(테스트)', '26년 TTK70-솔개 10월 정기모임', '74년 호랑이 탁구동호인 인천지역 번개모임(테스트)', '26년 10월 오늘도 핑퐁 정기월례 모임', '라니핑퐁 목요 정기리그 새로운 경기'];
-const games = titles.map((title, index) => ({ id: `game-${index}`, title, seriesId: `series-${index % 3}`, operatorId: 'owner', operatorNickname: '운영자', formats: ['singles'], scheduledAt: '2026-10-22T10:00:00Z', venueName: '테스트 탁구장', venueAddress: '테스트 주소', maxParticipants: 24, registrations: [], registrationClosed: {}, formatStatuses: index % 3 === 1 ? { singles: 'completed' } : {} }));
+const games = titles.map((title, index) => ({ id: `game-${index}`, title, seriesId: null, operatorId: 'owner', operatorNickname: '운영자', formats: ['singles'], scheduledAt: '2026-10-22T10:00:00Z', venueName: '테스트 탁구장', venueAddress: '테스트 주소', maxParticipants: 24, registrations: [], registrationClosed: {}, formatStatuses: index % 3 === 1 ? { singles: 'completed' } : {} }));
 
 (async () => {
   const browser = await chromium.launch({ headless: true, ...(process.env.TTGMS_BROWSER_CHANNEL ? { channel: process.env.TTGMS_BROWSER_CHANNEL } : {}) });
