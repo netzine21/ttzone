@@ -2659,11 +2659,12 @@ html[data-theme="light"] .league-series-card__logo {
 .participant-profile summary { cursor: pointer; margin-bottom: 12px; }
 .participation-saved { color: var(--primary); }
 .registration-form [data-apply-feedback]:empty { display: none; }
-.game-rules-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.game-rules-actions > .game-list-action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; min-height: 52px; padding: 12px 8px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-strong); color: var(--text); }
-.game-rules-actions > .game-list-action--primary { border-color: var(--primary); color: var(--primary); }
-.game-rules-actions > .game-list-action:hover { border-color: var(--primary); color: var(--primary); }
-.game-rules-actions .game-list-action__icon { flex-shrink: 0; width: 20px; height: 20px; }
+.game-rules-actions { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 10px; margin: 16px 0 20px; }
+.game-rules-actions > .game-list-action { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; gap: 7px; width: auto; min-width: 0; min-height: 42px; padding: 8px 12px; border: 1px solid rgba(124, 200, 255, .35); border-radius: 9px; background: rgba(124, 200, 255, .12); color: var(--text); font-size: .9rem; line-height: 1.4; }
+.game-rules-actions > .game-list-action--primary { border-color: var(--primary); background: var(--primary); color: var(--bg-0); }
+.game-rules-actions > .game-list-action:hover { border-color: var(--primary); background: rgba(118, 240, 196, .18); color: var(--text); }
+.game-rules-actions > .game-list-action--primary:hover { background: var(--primary-strong); color: var(--bg-0); }
+.game-rules-actions .game-list-action__icon { flex-shrink: 0; width: 18px; height: 18px; }
 
 @media (max-width: 560px) {
   .create-import__controls { grid-template-columns: minmax(0, 1fr); }

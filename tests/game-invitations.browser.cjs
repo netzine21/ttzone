@@ -139,12 +139,27 @@ async function bindContext(browser, authenticated) {
         icons: buttons.map((button) => Boolean(button.querySelector('svg'))),
       };
     });
-    assert.ok(actionLayout.gap >= 16);
-    assert.deepEqual(actionLayout.borders, ['1px', '1px']);
-    assert.deepEqual(actionLayout.icons, [true, true]);
-    for (const width of [320, 390, 1280]) {
+    assert.ok(actionLayout.gap >= 10);
+    assert.deepEqual(actionLayout.borders, ['1px', '1px', '1px']);
+    assert.deepEqual(actionLayout.icons, [true, true, true]);
+    for (const width of [320, 390, 1280, 1440]) {
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      const toolbar = await page.locator('.game-rules-actions').evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        const first = element.querySelector('button').getBoundingClientRect();
+        const meta = document.querySelector('.public-detail-meta').getBoundingClientRect();
+        const deletion = document.querySelector('[data-delete-game]').getBoundingClientRect();
+        return { leftAligned: Math.abs(first.left - bounds.left) < 1, beforeRules: bounds.bottom <= meta.top, compact: first.width < bounds.width * .7 && first.height < 48, deletionBelow: deletion.top > meta.bottom };
+      });
+      assert.deepEqual(toolbar, { leftAligned: true, beforeRules: true, compact: true, deletionBelow: true });
+      if (width === 1280) {
+        await page.screenshot({ path: path.join(output, 'owner-actions-desktop-dark.png'), fullPage: true });
+        await page.evaluate(() => { document.documentElement.dataset.theme = 'light'; });
+        assert.equal(await page.locator('[data-open-invite]').evaluate((element) => getComputedStyle(element).backgroundColor === 'rgb(255, 255, 255)'), false);
+        await page.screenshot({ path: path.join(output, 'owner-actions-desktop-light.png'), fullPage: true });
+        await page.evaluate(() => { document.documentElement.dataset.theme = 'dark'; });
+      }
     }
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(createRequests.length, 1);
@@ -229,6 +244,7 @@ async function bindContext(browser, authenticated) {
     await guest.page.goto(invite);
     await guest.page.getByRole('heading', { name: '확인 후 수정한 게임', exact: true }).waitFor();
     assert.equal(await guest.page.locator('[data-edit-game]').count(), 0);
+    assert.equal(await guest.page.locator('.game-rules-actions').count(), 0);
     assert.equal(await guest.page.locator('[data-open-operations]').count(), 0);
     await guest.page.reload();
     await guest.page.locator('[data-game-apply]').click();
