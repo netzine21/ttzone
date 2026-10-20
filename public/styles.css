@@ -7893,6 +7893,55 @@ html[data-theme="dark"] .public-game-detail .tournament-bracket--split .tourname
   }
 }
 
+/* Desktop reading scale; mobile and printed result sheets retain their own scale. */
+@media screen and (min-width: 821px) {
+  html { font-size: 125%; }
+  body { font-size: .9rem; line-height: 1.55; }
+
+  .field label,
+  .field-label,
+  .field input,
+  .field select,
+  .field textarea,
+  .btn,
+  .game-list-action,
+  .filter-btn,
+  .format-options label,
+  .format-option-with-mode__choice,
+  .format-option-with-mode select { font-size: .9rem; }
+
+  .field-hint,
+  .subtle-note,
+  .section-kicker,
+  .helper-row,
+  .league-series-create__heading span,
+  .series-directory-card__body span,
+  .series-directory-card__body small,
+  .league-series-card__body small,
+  .game-list-item__date,
+  .game-format-status,
+  .game-series-label,
+  .game-status,
+  .public-game-filter,
+  .site-footer { font-size: .8rem; line-height: 1.5; }
+
+  .field-hint,
+  .series-directory-card__body span,
+  .series-directory-card__body small,
+  .game-list-item__date { color: var(--muted); }
+
+  .series-directory-card__body strong,
+  .league-series-card__body strong { font-size: 1.05rem; }
+  .game-list-item .game-title-link { font-size: 1.1rem; line-height: 1.4; }
+  .series-directory-card__body strong,
+  .game-list-item .game-title-link { white-space: normal; overflow-wrap: anywhere; }
+  .series-directory-card { padding: 16px; }
+  .series-directory-card__body { gap: 5px; }
+  .game-list-item { padding: 16px; }
+  .game-list-item__title-row { align-items: flex-start; }
+  .game-list-action__icon { width: 18px; height: 18px; }
+}
+
 .schedule-print-root {
   display: none;
 }
