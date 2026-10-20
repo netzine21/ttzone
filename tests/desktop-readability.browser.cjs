@@ -70,18 +70,36 @@ const seriesWrites = [];
       }
       await page.locator('[data-show-league-series]').click();
       await page.locator('#leagueSeriesLogo').waitFor();
+      const aligned = await page.locator('.league-series-card').evaluateAll((cards) => cards.every((card) => {
+        const logo = card.querySelector('.league-series-card__logo').getBoundingClientRect();
+        const body = card.querySelector('.league-series-card__body');
+        const bounds = body.getBoundingClientRect();
+        return Math.abs(bounds.left - logo.right - 18) < 1 && [...body.children].every((child) => Math.abs(child.getBoundingClientRect().left - bounds.left) < 1);
+      }));
+      assert.equal(aligned, true);
       assert.equal(await page.getByText('정기 경기 관리', { exact: true }).count(), 0);
       assert.equal(await page.locator('[name="scheduleLabel"], [name="defaultFormats"]').count(), 0);
       const sizes = await page.evaluate(() => ['.field label', '.field input', '.field-hint'].map((selector) => parseFloat(getComputedStyle(document.querySelector(selector)).fontSize)));
       assert.ok(sizes[0] >= 18 && sizes[1] >= 18 && sizes[2] >= 16);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-      if (width === 1440) await page.screenshot({ path: path.join(output, 'desktop-readability-league-form.png'), fullPage: true });
+      if (width === 1440) {
+        await page.screenshot({ path: path.join(output, 'desktop-readability-league-form.png'), fullPage: true });
+        await page.evaluate(() => { document.documentElement.dataset.theme = 'light'; });
+        await page.locator('.league-series-list').screenshot({ path: path.join(output, 'league-list-left-aligned-light.png') });
+        await page.evaluate(() => { document.documentElement.dataset.theme = 'dark'; });
+      }
       await home();
     }
     await page.emulateMedia({ media: 'print' });
     assert.equal((await fonts()).root, 16);
     await page.emulateMedia({ media: 'screen' });
     await page.locator('[data-show-league-series]').click();
+    for (const width of [320, 390, 640]) {
+      await page.setViewportSize({ width, height: 844 });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      assert.equal(await page.locator('.league-series-card__body').evaluateAll((bodies) => bodies.every((body) => [...body.children].every((child) => Math.abs(child.getBoundingClientRect().left - body.getBoundingClientRect().left) < 1))), true);
+    }
+    await page.setViewportSize({ width: 1440, height: 1080 });
     await page.locator('#leagueSeriesName').fill('간편 등록 정기리그');
     await page.locator('[data-form="league-series"] [type="submit"]').click();
     await page.getByText(/정기리그가 등록되었습니다/).waitFor();

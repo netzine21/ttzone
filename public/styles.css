@@ -1552,7 +1552,7 @@ html[data-theme="light"] .brand-mark__image--light {
 .league-series-card {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 18px;
   margin-top: 10px;
   padding: 16px 18px;
@@ -1585,8 +1585,12 @@ html[data-theme="light"] .brand-mark__image--light {
 
 .league-series-card__body {
   display: grid;
+  flex: 1;
+  justify-items: start;
   gap: 4px;
   min-width: 0;
+  text-align: left;
+  overflow-wrap: anywhere;
 }
 
 .league-series-card__body strong {
@@ -1601,6 +1605,7 @@ html[data-theme="light"] .brand-mark__image--light {
 
 .league-series-card__actions {
   display: flex;
+  flex-shrink: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
